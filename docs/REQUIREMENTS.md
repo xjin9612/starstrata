@@ -94,7 +94,7 @@ stateDiagram-v2
 - 路徑：`data/YYYY/MM/DD/{trending,search,repos}.jsonl`。
 - 每次執行後 commit 進 repo。
 - 回補資料存在 `data/backfill/`，每個 repo 一個檔案。
-- 同一天重跑時覆寫當天的檔案。
+- 同一天重跑時與當天既有的檔案合併。
 
 ### SQLite
 
