@@ -8,7 +8,13 @@ import httpx
 import pytest
 
 from starstrata.cli import main
-from starstrata.telegram import Button, TelegramError, TelegramSender, split_message
+from starstrata.telegram import (
+    MAX_RETRY_AFTER_SECONDS,
+    Button,
+    TelegramError,
+    TelegramSender,
+    split_message,
+)
 
 TOKEN = "123456:secret-bot-token"
 
@@ -82,18 +88,20 @@ def test_buttons_are_attached_to_last_chunk_only() -> None:
     }
 
 
-def test_rate_limit_is_retried() -> None:
+@pytest.mark.parametrize("retry_after", [3, MAX_RETRY_AFTER_SECONDS])
+def test_rate_limit_is_retried(retry_after: int) -> None:
     responses = [
-        httpx.Response(429, json={"ok": False, "parameters": {"retry_after": 3}}),
+        httpx.Response(429, json={"ok": False, "parameters": {"retry_after": retry_after}}),
         httpx.Response(200, json={"ok": True}),
     ]
     sleeps: list[float] = []
     _sender(httpx.MockTransport(lambda r: responses.pop(0)), sleeps).send("x")
-    assert sleeps == [3]
+    assert sleeps == [retry_after]
 
 
-def test_long_rate_limit_fails() -> None:
-    response = httpx.Response(429, json={"ok": False, "parameters": {"retry_after": 600}})
+@pytest.mark.parametrize("retry_after", [MAX_RETRY_AFTER_SECONDS + 1, 600])
+def test_long_rate_limit_fails(retry_after: int) -> None:
+    response = httpx.Response(429, json={"ok": False, "parameters": {"retry_after": retry_after}})
     with pytest.raises(TelegramError, match="429"):
         _sender(httpx.MockTransport(lambda r: response)).send("x")
 

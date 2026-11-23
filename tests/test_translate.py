@@ -19,6 +19,7 @@ from starstrata.gemini import GeminiError
 from starstrata.ingest import sync
 from starstrata.translate import (
     FAILURES_FILE,
+    MAX_TRANSLATION_LENGTH,
     TRANSLATIONS_FILE,
     TranslateError,
     load,
@@ -207,20 +208,24 @@ def test_progress_is_logged(conn: Any, tmp_path: Path, caplog: pytest.LogCapture
 
 
 def test_parse_keeps_only_valid_items() -> None:
-    batch = [("k1", "a"), ("k2", "b"), ("k3", "c"), ("k4", "d")]
+    batch = [("k1", "a"), ("k2", "b"), ("k3", "c"), ("k4", "d"), ("k5", "e")]
     text = json.dumps(
         {
             "items": [
                 {"id": "k1", "text": " 甲\n\x07乙 "},
                 {"id": "k2", "text": ""},
-                {"id": "k3", "text": "長" * 601},
+                {"id": "k3", "text": "長" * (MAX_TRANSLATION_LENGTH + 1)},
                 {"id": "k4", "text": 4},
+                {"id": "k5", "text": "長" * MAX_TRANSLATION_LENGTH},
                 {"id": "other", "text": "外"},
                 "junk",
             ]
         }
     )
-    assert parse_translations(text, batch, "T") == {"k1": "甲 乙"}
+    assert parse_translations(text, batch, "T") == {
+        "k1": "甲 乙",
+        "k5": "長" * MAX_TRANSLATION_LENGTH,
+    }
     with pytest.raises(TranslateError, match="T 回應格式不符"):
         parse_translations("[]", batch, "T")
     with pytest.raises(TranslateError, match="items 不是陣列"):
