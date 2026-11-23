@@ -29,9 +29,6 @@ const langKey = l => (l === '全部' ? 'all' : l.toLowerCase());
 const $ = (s, r = document) => r.querySelector(s);
 const fmt = n => n.toLocaleString('en-US');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const DAY = 86400000;
-const toMs = d => Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10));
-const toDate = ms => new Date(ms).toISOString().slice(0, 10);
 const splitName = full => { const i = full.indexOf('/'); return [full.slice(0, i), full.slice(i + 1)]; };
 const repoHref = full => '#/repo/' + full.split('/').map(encodeURIComponent).join('/');
 const nameHtml = full => { const [o, n] = splitName(full); return `<span class="own">${esc(o)}/</span>${esc(n)}`; };
@@ -221,9 +218,8 @@ async function viewAlerts(route, meta) {
   if (meta.is_first_day) return head + emptyHtml('day1', '首日建立基準，明天開始計算', '爆紅警示要拿當日新增和近 7 日平均比較，資料累積幾天後就會開始偵測。');
   const list = (await getData('alerts')).items;
   if (!list.length) return head + emptyHtml('quiet', '最近 30 天沒有爆紅警示', '夜空很平靜。某個 repo 單日新增 star 遠高於它近 7 日平均時，會出現在這裡。', '<a class="btn" href="#/daily">看日增排行</a>');
-  const ratio = a => (a.baseline_7d ? a.added / a.baseline_7d : null);
-  const rows = [...list].sort((a, b) => b.date.localeCompare(a.date) || (ratio(b) ?? -1) - (ratio(a) ?? -1));
-  const maxX = Math.max(1, ...rows.map(a => ratio(a) ?? 0));
+  const rows = [...list].sort((a, b) => b.date.localeCompare(a.date) || (alertRatio(b) ?? -1) - (alertRatio(a) ?? -1));
+  const maxX = Math.max(1, ...rows.map(a => alertRatio(a) ?? 0));
   return head + `<div class="table-wrap"><table class="data">
     <caption class="sr">爆紅警示清單</caption>
     <thead><tr><th scope="col">日期</th><th scope="col">repo</th><th scope="col" class="num">當日新增 star</th><th scope="col" class="num">近 7 日平均</th><th scope="col">倍數</th></tr></thead>
@@ -232,39 +228,8 @@ async function viewAlerts(route, meta) {
         <td class="repo"><a href="${repoHref(a.full_name)}">${nameHtml(a.full_name)}</a></td>
         <td data-label="當日新增" class="num added">+${fmt(a.added)}</td>
         <td data-label="近 7 日平均" class="num">${a.baseline_7d == null ? '資料不足' : fmt(a.baseline_7d)}</td>
-        <td data-label="倍數" class="wide">${ratio(a) == null ? '—' : `<span class="mult-bar" style="width:${Math.round(ratio(a) / maxX * 120)}px" aria-hidden="true"></span><span class="mult">×${ratio(a).toFixed(1)}</span>`}</td>
+        <td data-label="倍數" class="wide">${alertRatio(a) == null ? '—' : `<span class="mult-bar" style="width:${Math.round(alertRatio(a) / maxX * 120)}px" aria-hidden="true"></span><span class="mult">×${alertRatio(a).toFixed(1)}</span>`}</td>
       </tr>`).join('')}</tbody></table></div>`;
-}
-
-// 由 points 與 daily 組出每日序列。points 缺日（某天沒有快照）時線性補齊。
-function buildSeries(d) {
-  if (!d.points?.length) return null;
-  const dailyMap = new Map((d.daily || []).map(([dt, n, s]) => [dt, { n, s }]));
-  const last = d.points[d.points.length - 1];
-  const endMs = toMs(last[0]);
-  const tail = new Map([[endMs, last[1]]]);
-  let ms = endMs, c = last[1];
-  while (dailyMap.has(toDate(ms))) { c -= dailyMap.get(toDate(ms)).n; ms -= DAY; tail.set(ms, c); }
-  const tailStart = ms;
-  const anchors = d.points.filter(p => toMs(p[0]) < tailStart).map(p => [toMs(p[0]), p[1]]);
-  anchors.push([tailStart, tail.get(tailStart)]);
-  const pointSrc = new Map(d.points.map(p => [p[0], p[2]]));
-  const out = [];
-  let ai = 0;
-  for (let t = anchors[0][0]; t <= endMs; t += DAY) {
-    let cum;
-    if (t >= tailStart) cum = tail.get(t);
-    else {
-      while (anchors[ai + 1][0] < t) ai++;
-      const [t0, c0] = anchors[ai], [t1, c1] = anchors[ai + 1];
-      cum = Math.round(c0 + (c1 - c0) * (t - t0) / (t1 - t0));
-    }
-    const date = toDate(t);
-    const prev = out.length ? out[out.length - 1].c : 0;
-    const dm = dailyMap.get(date);
-    out.push({ t, date, c: cum, n: dm ? dm.n : Math.max(0, cum - prev), s: dm ? dm.s : (pointSrc.get(date) || 'b') });
-  }
-  return out;
 }
 
 const RANGES = { '30': ['30 天', 30], '90': ['90 天', 90], '365': ['1 年', 365], all: ['全部', Infinity] };
@@ -287,17 +252,20 @@ async function viewRepo(route) {
   const series = buildSeries(det);
   detailSeries = series;
   const total = series ? series[series.length - 1].c : (det.stargazers ?? null);
-  const sumLast = k => series.slice(-k).reduce((s, p) => s + p.n, 0);
   const hasB = k => series.slice(-k).some(p => p.s === 'b');
   const none = '<dd class="none">尚無資料</dd>';
+  const gainHtml = k => {
+    const v = series && sumLast(series, k);
+    return v === null ? none : `<dd class="acc">+${fmt(v)}${hasB(k) ? '<small>含回補</small>' : ''}</dd>`;
+  };
   const ghUrl = 'https://github.com/' + full.split('/').map(encodeURIComponent).join('/');
   const zh = det.zh_native ? det.description : det.description_zh;
   const range = entry().range || 'all';
 
   const tiles = `<dl class="tiles" aria-label="star 統計">
     <div class="kpi"><dt>總 star</dt>${total !== null ? `<dd>${fmt(total)}</dd>` : none}</div>
-    <div class="kpi"><dt>近 7 日新增</dt>${series ? `<dd class="acc">+${fmt(sumLast(7))}${hasB(7) ? '<small>含回補</small>' : ''}</dd>` : none}</div>
-    <div class="kpi"><dt>近 30 日新增</dt>${series ? `<dd class="acc">+${fmt(sumLast(30))}${hasB(30) ? '<small>含回補</small>' : ''}</dd>` : none}</div>
+    <div class="kpi"><dt>近 7 日新增</dt>${gainHtml(7)}</div>
+    <div class="kpi"><dt>近 30 日新增</dt>${gainHtml(30)}</div>
     <div class="kpi"><dt>Trending 上榜次數</dt><dd>${fmt(det.trending?.length || 0)}<small>次</small></dd></div>
   </dl>`;
 
@@ -406,7 +374,8 @@ function drawChart(box, full, kind, subEl, rangeKey) {
       for (let k = end - 2; k >= start; k--) if (data[k].s !== data[end - 1].s) { start = k + 1; break; }
       const chunk = data.slice(start, end);
       end = start;
-      items.unshift({ from: chunk[0].date, to: chunk[chunk.length - 1].date, v: chunk.reduce((s, p) => s + p.n, 0), s: chunk[0].s });
+      const known = chunk.filter(p => p.n !== null);
+      items.unshift({ from: chunk[0].date, to: chunk[chunk.length - 1].date, v: known.length ? known.reduce((s, p) => s + p.n, 0) : null, s: chunk[0].s });
     }
     if (subEl) subEl.textContent = binDays === 1 ? '每日' : `每 ${binDays} 日合計`;
   } else {
@@ -414,7 +383,7 @@ function drawChart(box, full, kind, subEl, rangeKey) {
     if (subEl) subEl.textContent = `${data[0].date} – ${data[data.length - 1].date}`;
   }
 
-  const vals = kind === 'bar' ? items.map(d => d.v) : items.map(d => d.c);
+  const vals = kind === 'bar' ? items.map(d => d.v ?? 0) : items.map(d => d.c);
   const y = niceTicks(kind === 'bar' ? 0 : Math.min(...vals), Math.max(...vals));
   const sy = v => m.t + ph - (v - y.lo) / (y.hi - y.lo) * ph;
   const n = items.length;
@@ -446,7 +415,7 @@ function drawChart(box, full, kind, subEl, rangeKey) {
   } else {
     const bw = Math.max(1, pw / n - (pw / n > 4 ? 2 : 0));
     items.forEach((d, i) => {
-      const h = Math.max(d.v > 0 ? 1 : 0, m.t + ph - sy(d.v));
+      const h = Math.max(d.v > 0 ? 1 : 0, m.t + ph - sy(d.v ?? 0));
       el('rect', { x: sx(i) - bw / 2, y: m.t + ph - h, width: bw, height: h, rx: bw > 6 ? 2 : 0, class: d.s === 'b' ? 'bar-b' : 'bar-s' }, svg);
     });
   }
@@ -469,7 +438,7 @@ function drawChart(box, full, kind, subEl, rangeKey) {
     if (hl) { const w = pw / n; hl.setAttribute('x', x - w / 2); hl.setAttribute('width', w); }
     const srcLabel = d.s === 's' ? '每日實測' : '回補推算';
     const dateLabel = kind === 'bar' && d.from !== d.to ? `${d.from} – ${d.to}` : (d.date || d.from);
-    const valLabel = kind === 'cum' ? `${fmt(d.c)} ★` : `+${fmt(d.v)}`;
+    const valLabel = kind === 'cum' ? `${fmt(d.c)} ★` : d.v === null ? '無資料' : `+${fmt(d.v)}`;
     tip.innerHTML = `<div class="t-date">${dateLabel}</div><div class="t-val">${valLabel}</div><div class="t-src ${d.s === 's' ? 's' : ''}"><i></i>${srcLabel}</div>`;
     tip.hidden = false;
     const tw = tip.offsetWidth;
