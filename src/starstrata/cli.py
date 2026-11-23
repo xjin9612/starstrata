@@ -1,4 +1,4 @@
-"""命令列入口。指令說明見 docs/DESIGN.md「命令列」。"""
+"""命令列入口。指令說明見 docs/DEVELOPMENT.md「命令列」。"""
 
 from __future__ import annotations
 

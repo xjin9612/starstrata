@@ -1,4 +1,4 @@
-"""追蹤狀態轉換與每日需要快照的 repo。規則見 docs/DESIGN.md「追蹤狀態」。"""
+"""追蹤狀態轉換與每日需要快照的 repo。規則見 docs/DEVELOPMENT.md「追蹤狀態」。"""
 
 from __future__ import annotations
 

@@ -1,6 +1,6 @@
 """從 SQLite 產生 dashboard：複製 web/ 的靜態檔，並寫入 data/ 下的 JSON。
 
-JSON 格式見 docs/DESIGN.md「Dashboard」。
+JSON 格式見 docs/DEVELOPMENT.md「Dashboard」。
 """
 
 from __future__ import annotations

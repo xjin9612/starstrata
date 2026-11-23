@@ -1,4 +1,4 @@
-"""爆紅判定。規則見 docs/DESIGN.md「爆紅判定」。"""
+"""爆紅判定。規則見 docs/DEVELOPMENT.md「爆紅判定」。"""
 
 from __future__ import annotations
 

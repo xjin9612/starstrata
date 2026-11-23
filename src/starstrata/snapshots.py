@@ -1,4 +1,4 @@
-"""每日快照的資料結構、路徑與 JSONL 讀寫。快照格式見 docs/DESIGN.md。"""
+"""每日快照的資料結構、路徑與 JSONL 讀寫。快照格式見 docs/DEVELOPMENT.md。"""
 
 from __future__ import annotations
 
