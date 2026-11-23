@@ -1,0 +1,56 @@
+# starstrata 設定。門檻數值是初始值，依累積的實際資料調整。
+# 載入時會檢查型別與範圍；未知的鍵視為錯誤。
+
+[schedule]
+# 執行日期依此時區判定，快照目錄與報告日期都用這個日期。
+timezone = "Asia/Taipei"
+
+[trending]
+# Trending 網址中的語言代碼，例如 github.com/trending/python。總榜固定會抓，不必列出。
+languages = ["python", "typescript", "javascript", "java", "go", "rust"]
+# 可用值：daily、weekly、monthly。
+periods = ["daily", "weekly", "monthly"]
+
+[search]
+# 只找最近幾天內建立的 repo。
+created_within_days = 30
+min_stars = 100
+# 每日依 star 數取前幾名，上限 1000（Search API 每個查詢最多回傳 1000 筆）。
+limit = 100
+
+[tracking]
+# 連續這麼多天的日增 star 都低於 dormant_daily_stars_below，轉為 dormant。
+dormant_after_days = 14
+dormant_daily_stars_below = 5
+# dormant repo 兩次快照間增加的 star 達到此值，轉回 active。
+reactivate_weekly_stars = 35
+# dormant repo 的快照間隔天數。
+dormant_snapshot_interval_days = 7
+
+[alerts]
+# 日增 star 同時達到「baseline_days 日平均 × multiplier」與 min_daily_stars 才警示。
+baseline_days = 7
+multiplier = 3.0
+min_daily_stars = 200
+# 同一 repo 兩次警示至少相隔的天數；0 表示不設冷卻。
+cooldown_days = 7
+
+[backfill]
+# 每次執行最多花在回補的 API 請求數。
+daily_request_budget = 1000
+
+[notify]
+# 每日摘要列出日增 star 前幾名，上限 50。
+top_gainers = 10
+# 每日摘要最多列出幾個新上榜的 repo，上限 50。
+new_repos_limit = 10
+# 摘要附上的 dashboard 網址；空字串表示不附。
+site_url = "https://xjin9612.github.io/starstrata/"
+
+[reports]
+# 中文解讀的模型供應商：gemini（需要 GEMINI_API_KEY）或 anthropic（需要 ANTHROPIC_API_KEY）。
+provider = "gemini"
+# 供應商的模型名稱，例如 gemini-3.5-flash-lite 或 claude-opus-5-5。
+model = "gemini-3.5-flash-lite"
+# 報告中由模型解讀的前幾名專案，上限 20；0 表示不解讀。
+llm_top_n = 10

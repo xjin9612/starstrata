@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>starstrata</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e3a8a"/>
+      <stop offset="1" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="star" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fef3c7"/>
+      <stop offset="1" stop-color="#fbbf24"/>
+    </linearGradient>
+    <clipPath id="tile">
+      <rect width="512" height="512" rx="112"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="512" height="512" fill="url(#sky)"/>
+    <path d="M0 312 C120 300 180 262 280 250 C380 238 430 196 512 176 V512 H0 Z" fill="#5eead4"/>
+    <path d="M0 362 C110 354 190 322 290 314 C390 306 440 276 512 262 V512 H0 Z" fill="#2dd4bf"/>
+    <path d="M0 410 C120 404 200 384 300 376 C400 368 450 348 512 340 V512 H0 Z" fill="#14b8a6"/>
+    <path d="M0 456 C130 452 210 440 310 434 C410 428 460 418 512 414 V512 H0 Z" fill="#0f766e"/>
+    <polygon points="340.0,56.0 358.8,108.1 414.2,109.9 370.4,143.9 385.8,197.1 340.0,166.0 294.2,197.1 309.6,143.9 265.8,109.9 321.2,108.1" fill="url(#star)" stroke="#fef3c7" stroke-width="6" stroke-linejoin="round"/>
+    <polygon points="150.0,108.0 154.7,121.5 169.0,121.8 157.6,130.5 161.8,144.2 150.0,136.0 138.2,144.2 142.4,130.5 131.0,121.8 145.3,121.5" fill="#fef3c7" opacity="0.85"/>
+    <circle cx="214" cy="190" r="5" fill="#fef3c7" opacity="0.7"/>
+    <circle cx="96" cy="200" r="4" fill="#fef3c7" opacity="0.5"/>
+    <circle cx="446" cy="250" r="4" fill="#fef3c7" opacity="0.5"/>
+  </g>
+</svg>

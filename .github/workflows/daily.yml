@@ -1,0 +1,207 @@
+name: Daily
+
+on:
+  schedule:
+    # 每天 UTC 23:30（台灣時間 07:30）。負載高時 GitHub 會延後排程的執行。
+    - cron: "30 23 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily
+  cancel-in-progress: false
+
+env:
+  DB_TAG: db
+  DB_FILE: starstrata.sqlite
+  TZ: Asia/Taipei
+  # 直接從原始碼執行，不建置套件，避免安裝未經 hash 驗證的建置工具。
+  PYTHONPATH: src
+
+jobs:
+  daily:
+    # 資料與 DB release 只屬於 main，從其他分支手動執行時不做任何事。
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    outputs:
+      site: ${{ steps.site.outputs.uploaded }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # 取分支最新的 commit，重跑或排隊的執行才看得到先前已 push 的當天資料。
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+      - name: 安裝相依套件（驗證 hash）
+        run: python -m pip install --require-hashes -r requirements.txt
+
+      - name: 下載 DB
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release download "$DB_TAG" --pattern "$DB_FILE.gz" --clobber; then
+            gunzip -f "$DB_FILE.gz" || { echo "::warning::DB 解壓失敗，將從快照重建"; rm -f "$DB_FILE" "$DB_FILE.gz"; }
+          else
+            echo "沒有既有的 DB，將從快照重建"
+          fi
+
+      # 讓卡住的步驟提前結束。官方文件沒有說明逾時是否套用 continue-on-error（未查證）。
+      - name: 收集
+        id: collect
+        continue-on-error: true
+        timeout-minutes: 30
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: python -m starstrata collect
+
+      - name: 匯入
+        id: ingest
+        continue-on-error: true
+        run: python -m starstrata ingest
+
+      - name: 回補歷史
+        id: backfill
+        if: steps.ingest.outcome == 'success'
+        continue-on-error: true
+        timeout-minutes: 10
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: python -m starstrata backfill
+
+      - name: 定期報告
+        id: report
+        if: steps.ingest.outcome == 'success'
+        continue-on-error: true
+        timeout-minutes: 10
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python -m starstrata report due
+
+      - name: 通知
+        id: notify
+        if: steps.ingest.outcome == 'success'
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -m starstrata notify
+
+      # 前面任何步驟失敗、甚至 job 被取消，都要嘗試保住當天已收集的快照，Trending 無法事後補抓。
+      - name: commit 並 push 資料
+        id: push
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for dir in data reports; do
+            if [ -d "$dir" ]; then git add "$dir"; fi
+          done
+          if git diff --cached --quiet; then
+            echo "沒有新資料"
+            exit 0
+          fi
+          git commit -q -m "chore(data): $(date +%F) 每日快照"
+          for attempt in 1 2 3; do
+            if git pull --rebase -q origin "$GITHUB_REF_NAME" && git push -q origin "HEAD:$GITHUB_REF_NAME"; then
+              exit 0
+            fi
+            git rebase --abort 2> /dev/null || true
+            sleep $((attempt * 10))
+          done
+          echo "::error::push 失敗三次"
+          exit 1
+
+      # DB 只在快照已 push 後上傳，DB 裡的資料一定能在 git 找到。
+      - name: 上傳 DB
+        if: ${{ !cancelled() && steps.ingest.outcome == 'success' && steps.push.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gzip -kf "$DB_FILE"
+          if ! gh release view "$DB_TAG" > /dev/null 2>&1; then
+            gh release create "$DB_TAG" --latest=false --title "SQLite DB" \
+              --notes "由 daily workflow 每天更新。DB 可由 data/ 的快照重建。"
+          fi
+          gh release upload "$DB_TAG" "$DB_FILE.gz" --clobber
+
+      - name: 產生 dashboard
+        id: build_site
+        if: ${{ !cancelled() && steps.ingest.outcome == 'success' }}
+        run: python -m starstrata site --out _site
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        if: ${{ !cancelled() && steps.build_site.outcome == 'success' }}
+        with:
+          path: _site
+
+      - name: 記錄 dashboard 已上傳
+        id: site
+        if: ${{ !cancelled() && steps.build_site.outcome == 'success' }}
+        run: echo "uploaded=true" >> "$GITHUB_OUTPUT"
+
+      - name: 各步驟結果
+        if: >-
+          ${{ !cancelled() && (
+            steps.collect.outcome == 'failure' ||
+            steps.ingest.outcome == 'failure' ||
+            steps.backfill.outcome == 'failure' ||
+            steps.report.outcome == 'failure' ||
+            steps.notify.outcome == 'failure'
+          ) }}
+        run: |
+          echo "::error::collect ${{ steps.collect.outcome }}、ingest ${{ steps.ingest.outcome }}、backfill ${{ steps.backfill.outcome }}、report ${{ steps.report.outcome }}、notify ${{ steps.notify.outcome }}"
+          exit 1
+
+      - name: 失敗通知
+        if: ${{ failure() || cancelled() }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            exit 0
+          fi
+          curl -sS --fail -o /dev/null \
+            --data-urlencode "chat_id=$TELEGRAM_CHAT_ID" \
+            --data-urlencode "text=starstrata daily workflow 失敗或逾時：$RUN_URL" \
+            "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
+
+  deploy:
+    # daily 因收集失敗而標為失敗時，dashboard 仍照常部署。
+    needs: daily
+    if: ${{ !cancelled() && needs.daily.outputs.site == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+      - name: 失敗通知
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            exit 0
+          fi
+          curl -sS --fail -o /dev/null \
+            --data-urlencode "chat_id=$TELEGRAM_CHAT_ID" \
+            --data-urlencode "text=starstrata dashboard 部署失敗：$RUN_URL" \
+            "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"

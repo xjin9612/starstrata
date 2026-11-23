@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "starstrata"
+version = "0.1.0"
+description = "每日收集 GitHub 趨勢資料，保存成長期時間序列"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+  "anthropic>=2.12",
+  "beautifulsoup4>=4.15",
+  "httpx>=0.28",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=2.4",
+  "pytest>=9.2",
+  "ruff>=0.17",
+]
+
+[project.scripts]
+starstrata = "starstrata.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--strict-markers"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+# 全形標點是繁中文字的正常寫法。
+ignore = ["RUF001", "RUF002", "RUF003"]
+
+[tool.mypy]
+strict = true
+files = ["src", "tests"]

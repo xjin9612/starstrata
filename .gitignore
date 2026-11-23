@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# 執行產物
+*.sqlite
+*.sqlite.gz
+*.sqlite.rebuild
+*.tmp
+_site/
+
+# 機敏設定
+.env
+
+# 本機工具設定
+.claude/
+CLAUDE.local.md
+.idea/
+.vscode/

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <title>starstrata</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e3a8a"/>
+      <stop offset="1" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="star" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fef3c7"/>
+      <stop offset="1" stop-color="#fbbf24"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="640" fill="url(#sky)"/>
+  <path d="M0 470 C300 462 520 430 760 410 C1000 390 1120 330 1280 300 V640 H0 Z" fill="#5eead4"/>
+  <path d="M0 512 C300 506 540 482 780 466 C1020 450 1140 410 1280 390 V640 H0 Z" fill="#2dd4bf"/>
+  <path d="M0 556 C320 552 560 536 800 524 C1040 512 1160 488 1280 476 V640 H0 Z" fill="#14b8a6"/>
+  <path d="M0 600 C340 598 580 590 820 582 C1060 574 1180 562 1280 556 V640 H0 Z" fill="#0f766e"/>
+  <polygon points="1050.0,44.0 1076.5,117.6 1154.6,120.0 1092.8,167.9 1114.7,243.0 1050.0,199.0 985.3,243.0 1007.2,167.9 945.4,120.0 1023.5,117.6" fill="url(#star)" stroke="#fef3c7" stroke-width="8" stroke-linejoin="round"/>
+  <polygon points="860.0,92.0 865.9,107.9 882.8,108.6 869.5,119.1 874.1,135.4 860.0,126.0 845.9,135.4 850.5,119.1 837.2,108.6 854.1,107.9" fill="#fef3c7" opacity="0.85"/>
+  <circle cx="640" cy="372" r="6" fill="#fef3c7" opacity="0.6"/>
+  <circle cx="780" cy="200" r="5" fill="#fef3c7" opacity="0.5"/>
+  <circle cx="1200" cy="250" r="5" fill="#fef3c7" opacity="0.5"/>
+  <text x="96" y="210" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="112" font-weight="700" fill="#f8fafc">starstrata</text>
+  <text x="100" y="282" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="38" fill="#cbd5e1">Daily GitHub trends, layered into long-term history</text>
+  <text x="100" y="340" font-family="Noto Sans CJK TC, sans-serif" font-size="34" fill="#94a3b8">每日 GitHub 趨勢，累積成長期時間序列</text>
+</svg>

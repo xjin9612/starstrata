@@ -1,0 +1,124 @@
+from __future__ import annotations
+
+import json
+import logging
+
+import httpx
+import pytest
+
+from starstrata.cli import main
+from starstrata.telegram import TelegramError, TelegramSender, split_message
+
+TOKEN = "123456:secret-bot-token"
+
+
+def _sender(handler: httpx.MockTransport, sleeps: list[float] | None = None) -> TelegramSender:
+    record = sleeps if sleeps is not None else []
+    return TelegramSender(TOKEN, "42", transport=handler, sleep=record.append)
+
+
+def test_split_keeps_short_message() -> None:
+    assert split_message("a\nb", limit=10) == ["a\nb"]
+
+
+def test_split_on_line_boundaries() -> None:
+    assert split_message("aaaa\nbbbb\ncccc", limit=9) == ["aaaa\nbbbb", "cccc"]
+
+
+def test_split_hard_cuts_overlong_line() -> None:
+    assert split_message("x" * 25, limit=10) == ["x" * 10, "x" * 10, "x" * 5]
+
+
+def test_split_chunks_never_exceed_limit() -> None:
+    text = "\n".join("line" * n for n in range(1, 40))
+    chunks = split_message(text, limit=50)
+    assert all(len(c) <= 50 for c in chunks)
+    assert "\n".join(chunks).replace("\n", "") == text.replace("\n", "")
+
+
+def test_send_posts_html_message() -> None:
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, json={"ok": True})
+
+    _sender(httpx.MockTransport(handler)).send("<b>hi</b>")
+    body = json.loads(seen[0].content)
+    assert seen[0].url.path == f"/bot{TOKEN}/sendMessage"
+    assert body == {
+        "chat_id": "42",
+        "text": "<b>hi</b>",
+        "parse_mode": "HTML",
+        "link_preview_options": {"is_disabled": True},
+    }
+
+
+def test_rate_limit_is_retried() -> None:
+    responses = [
+        httpx.Response(429, json={"ok": False, "parameters": {"retry_after": 3}}),
+        httpx.Response(200, json={"ok": True}),
+    ]
+    sleeps: list[float] = []
+    _sender(httpx.MockTransport(lambda r: responses.pop(0)), sleeps).send("x")
+    assert sleeps == [3]
+
+
+def test_long_rate_limit_fails() -> None:
+    response = httpx.Response(429, json={"ok": False, "parameters": {"retry_after": 600}})
+    with pytest.raises(TelegramError, match="429"):
+        _sender(httpx.MockTransport(lambda r: response)).send("x")
+
+
+def test_errors_do_not_leak_token() -> None:
+    def fail(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError(f"cannot reach {request.url}")
+
+    with pytest.raises(TelegramError) as info:
+        _sender(httpx.MockTransport(fail)).send("x")
+    assert TOKEN not in str(info.value)
+    assert info.value.__cause__ is None
+
+    bad = httpx.Response(400, json={"ok": False, "description": "Bad Request: chat not found"})
+    with pytest.raises(TelegramError, match="chat not found") as info2:
+        _sender(httpx.MockTransport(lambda r: bad)).send("x")
+    assert TOKEN not in str(info2.value)
+
+
+def test_cli_logging_hides_request_urls(caplog: pytest.LogCaptureFixture) -> None:
+    main(["--config", "does-not-exist.toml", "ingest"])
+    caplog.clear()
+    with caplog.at_level(logging.DEBUG, logger="starstrata"):
+        _sender(httpx.MockTransport(lambda r: httpx.Response(200, json={"ok": True}))).send("x")
+    assert TOKEN not in caplog.text
+    assert logging.getLogger("httpx").getEffectiveLevel() >= logging.WARNING
+
+
+def test_transport_errors_are_retried() -> None:
+    attempts: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        attempts.append(1)
+        if len(attempts) < 3:
+            raise httpx.ConnectError("down")
+        return httpx.Response(200, json={"ok": True})
+
+    sleeps: list[float] = []
+    _sender(httpx.MockTransport(handler), sleeps).send("x")
+    assert len(attempts) == 3 and sleeps == [1, 2]
+
+
+def test_server_errors_are_retried_then_fail() -> None:
+    sleeps: list[float] = []
+    response = httpx.Response(502, json={"ok": False})
+    with pytest.raises(TelegramError, match="502"):
+        _sender(httpx.MockTransport(lambda r: response), sleeps).send("x")
+    assert sleeps == [1, 2]
+
+
+def test_client_error_is_not_retried() -> None:
+    sleeps: list[float] = []
+    bad = httpx.Response(400, json={"ok": False, "description": "Bad Request"})
+    with pytest.raises(TelegramError):
+        _sender(httpx.MockTransport(lambda r: bad), sleeps).send("x")
+    assert sleeps == []

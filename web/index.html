@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>starstrata</title>
+  <meta name="description" content="每日 GitHub 趨勢，累積成長期時間序列">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="#/"><img src="icon.svg" alt="" width="28" height="28"> starstrata</a>
+    <span class="as-of" id="as-of"></span>
+    <div class="search">
+      <label class="visually-hidden" for="search-input">搜尋 repo</label>
+      <input id="search-input" type="search" placeholder="搜尋 repo…" autocomplete="off">
+      <ul id="search-results" class="search-results" hidden></ul>
+    </div>
+  </header>
+  <nav class="tabs" aria-label="檢視">
+    <a href="#/" data-route="trending">Trending</a>
+    <a href="#/new" data-route="new">新上榜</a>
+    <a href="#/gainers" data-route="gainers">日增排行</a>
+    <a href="#/alerts" data-route="alerts">爆紅警示</a>
+  </nav>
+  <main id="view" aria-live="polite"></main>
+  <footer class="foot">
+    資料每日由 <a href="https://github.com/xjin9612/starstrata">starstrata</a> 收集。回補資料來自 GitHub star history API。
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>

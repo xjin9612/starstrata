@@ -1,0 +1,2 @@
+# 測試用的真實 Trending 頁面，不計入 GitHub 的語言統計。
+tests/fixtures/*.html linguist-vendored
