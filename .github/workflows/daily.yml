@@ -24,7 +24,7 @@ jobs:
   daily:
     # 資料與 DB release 只屬於 main，從其他分支手動執行時不做任何事。
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:
       contents: write
@@ -179,7 +179,7 @@ jobs:
     # daily 因收集失敗而標為失敗時，dashboard 仍照常部署。
     needs: daily
     if: ${{ !cancelled() && needs.daily.outputs.site == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     permissions:
       pages: write

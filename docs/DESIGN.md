@@ -329,4 +329,6 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 其他：
 
 - 第三方 action 一律固定到 commit SHA。
+- runner 固定為 `ubuntu-26.04`，不用 `ubuntu-latest`。
+- Dependabot 每週檢查 pip 套件與 GitHub Actions 的更新（`.github/dependabot.yml`）。官方文件說明支援 `.txt` 與 PEP 621 的 `pyproject.toml`；能否依 `pyproject.toml` 重新產生含雜湊的 `requirements.txt`，文件沒有說明，尚未驗證。
 - `GITHUB_TOKEN` 權限：`daily` job 為 `contents: write`，`deploy` job 為 `pages: write`、`id-token: write`。
