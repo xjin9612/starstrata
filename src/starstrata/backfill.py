@@ -81,7 +81,7 @@ def run_backfill(
             result.failed.append(node_id)
             continue
         result.requests += client.request_count - before
-        if history.weeks is None:
+        if history.weeks is None or history.requests > remaining:
             result.stopped = "預算不足"
             break
         write_jsonl(

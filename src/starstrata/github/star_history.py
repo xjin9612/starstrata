@@ -38,19 +38,19 @@ def estimate_requests(created_at: str | None, today: date) -> int:
 
 
 def fetch_history(client: GitHubClient, full_name: str, *, max_requests: int) -> History:
-    """抓取完整歷史；需要的請求數超過 max_requests 時停止並回傳 weeks=None。
+    """抓取完整歷史；請求數（含重試）用完 max_requests 時停止並回傳 weeks=None。
 
+    最後一頁的重試可能讓請求數超過 max_requests。
     翻頁期間有新的一週開始時，同一週會出現兩次，保留先抓到的。
     """
     weeks: dict[date, Week] = {}
-    requests = 0
+    used_before = client.request_count
     for page in range(1, MAX_PAGES + 1):
-        if requests >= max_requests:
-            return History(weeks=None, requests=requests)
+        if client.request_count - used_before >= max_requests:
+            return History(weeks=None, requests=client.request_count - used_before)
         items = client.rest_get(
             f"/repos/{full_name}/stargazers/history", {"per_page": PER_PAGE, "page": page}
         )
-        requests += 1
         if not isinstance(items, list):
             raise GitHubError(f"{full_name} 的 star history 回應格式不符")
         for item in items:
@@ -60,7 +60,9 @@ def fetch_history(client: GitHubClient, full_name: str, *, max_requests: int) ->
                 weeks[start] = Week(start=start, days=days)
         if len(items) < PER_PAGE:
             break
-    return History(weeks=[weeks[k] for k in sorted(weeks)], requests=requests)
+    return History(
+        weeks=[weeks[k] for k in sorted(weeks)], requests=client.request_count - used_before
+    )
 
 
 def expand(week: Week) -> list[tuple[date, int]]:

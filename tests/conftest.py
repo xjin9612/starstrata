@@ -81,6 +81,8 @@ class FakeGitHub:
     # full_name → star history API 的週資料，由新到舊。
     histories: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
     history_status: dict[str, int] = field(default_factory=dict)
+    # full_name → 成功之前先回幾次 502。
+    history_failures: dict[str, int] = field(default_factory=dict)
     requests: list[httpx.Request] = field(default_factory=list)
     sleeps: list[float] = field(default_factory=list)
     graphql_calls: int = 0
@@ -112,6 +114,9 @@ class FakeGitHub:
                 status = self.history_status[full_name]
                 headers = {"x-ratelimit-remaining": "0"} if status == 403 else {}
                 return httpx.Response(status, json={"message": "x"}, headers=headers)
+            if self.history_failures.get(full_name, 0) > 0:
+                self.history_failures[full_name] -= 1
+                return httpx.Response(502, json={"message": "x"})
             if full_name not in self.histories:
                 return httpx.Response(404, json={"message": "Not Found"})
             page, per_page = int(url.params["page"]), int(url.params["per_page"])

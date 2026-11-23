@@ -111,6 +111,23 @@ def test_history_longer_than_estimate_is_discarded(
     assert not backfill_path(data, "R_a").exists()
 
 
+def test_retries_count_toward_budget(fake_github: FakeGitHub, setup: tuple[Path, Path]) -> None:
+    data, db_path = setup
+    fake_github.histories["o/a"] = history_weeks("2026-11-15", [[1] * 7])
+    fake_github.history_failures["o/a"] = 1
+    result = _run(fake_github, db_path, data, budget=1)
+    assert result.done == [] and result.stopped == "預算不足" and result.requests == 2
+    assert not backfill_path(data, "R_a").exists()
+
+
+def test_retries_within_budget_are_kept(fake_github: FakeGitHub, setup: tuple[Path, Path]) -> None:
+    data, db_path = setup
+    fake_github.histories["o/a"] = history_weeks("2026-11-15", [[1] * 7])
+    fake_github.history_failures["o/a"] = 1
+    result = _run(fake_github, db_path, data, budget=2)
+    assert result.done == ["R_a"] and result.requests == 2
+
+
 def test_failed_repo_is_skipped(fake_github: FakeGitHub, setup: tuple[Path, Path]) -> None:
     data, db_path = setup
     fake_github.histories["o/c"] = history_weeks("2026-11-15", [[1] * 7])
