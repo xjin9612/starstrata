@@ -1,0 +1,344 @@
+{"key":"0045336d96023fd3","text":"給 AI 程式開發助理的規格驅動開發（SDD）。"}
+{"key":"01ed30ebcbf0d243","text":"LangChain4j 是符合 Java 慣例的開源函式庫，用於在 JVM 上打造 LLM 應用程式。它為熱門 LLM 供應商與向量資料庫提供統一 API，讓工具呼叫（含 MCP 支援）、agent 與 RAG 都容易實作，並與 Quarkus、Spring Boot 等企業 Java 框架無縫整合。"}
+{"key":"03785d453696d2ae","text":"WiFi 安全稽核軟體。"}
+{"key":"03ce3308114d809b","text":"給 AI agent 用的電腦操作 CLI。"}
+{"key":"03d519e20881158c","text":"TradingAgents：多 Agent LLM 金融交易框架"}
+{"key":"04958d5aee458f8a","text":"給文件、知識庫、會議紀錄等資料用的迷你命令列搜尋引擎，追蹤目前最先進的做法，且全部在本機執行。"}
+{"key":"04ff48c93442bd3d","text":"Jan 是 ChatGPT 的開源替代方案，可在你的電腦上 100% 離線執行。"}
+{"key":"054e166cb6b8c198","text":"只留在你電腦上的私人 AI 會議筆記。不需要會議機器人，免費開源，支援 Mac、Windows 與 Linux，是 Granola、Otter 與 Fireflies 的替代方案。"}
+{"key":"057b9bda2ddc59e3","text":"Blender 的 AI 助理與 MCP server：視覺化聊天、場景工具、多 agent 工作流程。支援 ChatGPT/GPT、Claude、Gemini、Ollama、OpenCode。Blender AI 外掛、3D 的 copilot、bpy Python 腳本與 MCP 整合。"}
+{"key":"08526f171638f744","text":"原生建構在物件儲存上的圖資料庫，支援分支與型別化本體論。"}
+{"key":"085d7556e94cec34","text":"ung220z-tool 是針對 UNG220Z 的一鍵憑證擷取工具，另支援中興、烽火、華為、九聯等多家廠商，提供韌體指紋辨識與依產品家族的排錯建議。僅限在你自己的設備上用於找回忘記的管理密碼、遷移寬頻設定或安全自查。"}
+{"key":"087d5271ba074136","text":"🌼 🌼 🌼 🌼 🌼 最受歡迎的免費開源 Tailwind CSS 元件庫。"}
+{"key":"088d1a7c33362a18","text":"讓你的命令列 Agent 在背景自己接任務、自己追蹤到底；平時不打擾你，遇到拿不定主意的事才發卡片請你決定。"}
+{"key":"08a0dbf0846865d0","text":"給 AI agent 用的瀏覽器自動化 CLI。"}
+{"key":"0b098988b4dbc6a7","text":"給 AI Agent 用的即時、可並行、安全且輕量的沙箱。"}
+{"key":"0b3bc108f9d9f77e","text":"從 Google 地圖擷取資料，包含每個地點的名稱、地址、電話、網站、評分、評論數、經緯度、評論、email 等。"}
+{"key":"0b488d24f8a518ef","text":"免費開源的 AI 低程式碼平台，也是 AI 時代建構複雜業務系統的開源基礎。權限、多租戶、工作流程、報表、大螢幕、AI 知識庫等通用功能開箱即用，AI 只需產生業務差異部分。AI Skills 一句話產生完整系統：建表、前後端程式碼、選單權限、BPM 流程、表單、報表、大螢幕全自動。內建 AI 應用平台（聊天、知識庫、流程編排、MCP），相容主流大模型。"}
+{"key":"0d7b5039191ec3c6","text":"看清你的 App 實際上是怎麼組成的：由 Claude 或 Codex 繪製、以白話說明的互動式程式碼地圖。"}
+{"key":"0dbc2c9f6d2698b4","text":"一分鐘架設影視站，支援 Docker 等部署方式。"}
+{"key":"0dc6c5fd662f95de","text":"以 Go 撰寫的漏洞掃描器，使用 https://osv.dev 提供的資料。"}
+{"key":"0e6a6b7e205f6505","text":"iOS／iPadOS 中國版 Apple Intelligence、eSIM 與 MobileGestalt 系統設定工具箱（中英雙語，防止白蘋果的安全強化版）。"}
+{"key":"123e541a1b6d4c06","text":"Cursor 外掛規格與官方外掛。"}
+{"key":"132ec307efb96bc0","text":"給 AI agent 用的安全、快速、可擴充的沙箱執行環境。"}
+{"key":"1500121ba7620a69","text":"OpenAI 的 Codex Security CLI 與 TypeScript SDK，用來找出、驗證並修正安全漏洞。npm：https://www.npmjs.com/package/@openai/codex-security"}
+{"key":"151efcc923acb41c","text":"可執行複雜滲透測試任務的全自主 AI Agent 系統。"}
+{"key":"15661997a7177ed5","text":"25 MB 的輕量跨平台資料庫用戶端，支援 MySQL、PostgreSQL、SQLite、Redis、MongoDB、DuckDB、SQL Server、達夢等 100 多種資料庫，內建 AI、MCP Server、CLI，提供桌面版與 Docker。"}
+{"key":"159677093c9e7a5d","text":"iOS 27.x 的 MobileGestalt 編輯器，提供地區代碼調整、裝置預設與備份功能。"}
+{"key":"15bb7d100d9da5f1","text":"瀏覽器自動化框架與生態系。"}
+{"key":"163e264af7cf050b","text":"一個現代化的 JavaScript 與 TypeScript 執行環境。"}
+{"key":"16bea497cd1c2751","text":"「CLI-Anything：讓所有軟體都能由 Agent 操作」——CLI-Hub：https://clianything.cc/"}
+{"key":"16ca69a1cb8ffb63","text":"開源的健身與自體重量追蹤工具，已上架 App Store（iPhone 與 Apple Watch）並提供 Android APK。可規劃課表、記錄訓練、查看訓練到哪些肌群，並從 Strong、Hevy、FitNotes 匯入。可自架，也可只在手機上使用。"}
+{"key":"1807e46f985f2a3c","text":"你的 coding agent 的設計語彙。用精緻與大膽的風格來引導，透過評論與稽核來審查，在發布前攔截 AI 產出的垃圾內容。"}
+{"key":"1a698a9f146cc71a","text":"開源 AI 影片編輯器：使用 Claude Code、Codex 或免費的 Studio 應用程式來編輯你自己的素材，或是建立與重製任何影片。寫 HTML、算繪 MP4。由 HeyGen 提供。"}
+{"key":"1a6fe7b69e4759ea","text":"把騰訊 WorkBuddy 帳號變成相容 OpenAI API 的多帳號閘道，同時自動完成任務中心的所有任務，附網頁管理面板（帳號池視覺化、積分任務、設定熱更新）。基於 Sliverkiss/workbuddy2api 的增強分支。"}
+{"key":"1b0c650f887d8fed","text":"蜂巢思維式的溝通平台。"}
+{"key":"1c5f2fc3cffa3a08","text":"AIOStreams 把你的 Stremio 外掛、debrid 服務與 Usenet 整合成一份清單，依你的方式過濾、排序與格式化，並在 Stremio 或它自己的各平台 App 中播放。"}
+{"key":"1d83460e782affed","text":"島仔 Daozai：以 Rust 打造的 Windows 桌面資訊島，讓音樂歌詞、郵件驗證碼、行程提醒、待辦事項與 AI 額度等重要資訊輕輕出現在螢幕頂端。"}
+{"key":"1e50c65e3db73d23","text":"全球最快的開放查詢引擎，無論是否在 data lakehouse 上都能做到次秒級分析。StarRocks 彈性支援幾乎所有情境，在多維分析、即時分析與臨時查詢上提供頂尖效能。Linux Foundation 專案。"}
+{"key":"1fb2c3e41c5225b1","text":"向程式開發 agent 描述視覺識別的格式規格。DESIGN.md 讓 agent 持續、結構化地理解設計系統。"}
+{"key":"208f2d23f539bf6b","text":"把《薩爾達傳說 王國之淚》靜態重新編譯成原生 Windows 與 Linux x86-64 程式，使用 Vulkan 繪圖。不含遊戲檔案。"}
+{"key":"2133930d190524e1","text":"找出容器、Kubernetes、程式碼 repository、雲端等環境中的漏洞、錯誤設定、機密資訊與 SBOM。"}
+{"key":"219726a9d34faa5f","text":"開放的 agent skill 工具：npx skills。"}
+{"key":"2200bc92a159edf3","text":"GitHub 官方命令列工具。"}
+{"key":"2224f993f99bfd13","text":"Beads：為你的程式開發 agent 升級記憶。"}
+{"key":"223ae5a6c65cf76a","text":"能用少量 token 搞定，何必用一大堆。給程式開發 agent 的 skill 與本機代理：回答更短、工具輸出更小，所有原始內容都能還原。"}
+{"key":"22bff492dbd082ae","text":"Agent Substrate：核心系統。"}
+{"key":"22e69fb1bd503dcc","text":"給 AI agent（Codex、Claude Code）的證據優先族譜研究 skill：涵蓋前蘇聯地區的教會紀錄、民事、軍事、流放與政治迫害檔案，並以你的語言回覆。"}
+{"key":"238f3c111a4617fc","text":"用 Univer Office SDK 打造自己的 AI 辦公室，把編輯、計算、協作與檔案處理帶進你的產品，供人與 AI agent 使用。建構在可擴充的開源核心上。"}
+{"key":"24620c9fde2981a9","text":"muse.ai 註冊與邀請碼兌換協定研究（純 HTTP 的 Python 實作）。"}
+{"key":"253f931d2f014baa","text":"打造並執行你看得見、理解得了且信得過的 agent。"}
+{"key":"255e355cfff40843","text":"📚 一個指令就把 skill、agent、MCP、外掛同步到所有 AI CLI 工具，簡化團隊分享。"}
+{"key":"25d983fe93f95d10","text":"以 Rust 打造的輕巧、高效、100% 原生 Discord 用戶端。"}
+{"key":"26afd3ad0de656d0","text":"AI agent 工具包：統一的 LLM API、agent loop、TUI、coding agent CLI"}
+{"key":"26c4f850847cdbd3","text":"把舊 Android 手機變成可自訂的桌面面板與觸控控制台，支援 Windows、Linux 與 macOS。提供 124 個小工具與 30 個範本，涵蓋系統狀態、AI 程式開發、媒體與自動化，支援 13 種語言。可用 USB 或配對 Wi-Fi 連線，不需要雲端。"}
+{"key":"27f3f68e63df8b34","text":"在 iOS 上原生執行真正的 Linux 核心。"}
+{"key":"28cef45e1dd36cd5","text":"全世界的法律都在 git 裡：任何條文、任何國家、任何日期，以及寫下每個字的那條法律。"}
+{"key":"2926722ffa59f169","text":"Worktrunk 是管理 Git worktree 的 CLI，專為平行的 AI agent 工作流程設計。"}
+{"key":"2948c35a9fd047d8","text":"在 Android 裝置上執行的 AI agent，會操作 App 與網頁幫你把事情做完。"}
+{"key":"2e9758321ce57821","text":"Claude Code 與 Codex 的 AI 影片 skill：用 Remotion 製作電影感、可編輯的產品宣傳片，含 124 張鏡頭配方卡、150 個動態預覽、節拍同步、音效設計、Motion Workbench 與剪映（CapCut 中國版）匯出。"}
+{"key":"2ee5d5809daddc03","text":"提升 CI/CD 可靠性的開源 agent。"}
+{"key":"2f1029892f0df443","text":"在 Kubernetes 上執行 Apache Kafka®。"}
+{"key":"2feb01854de370c8","text":"以 PyTorch 原生打造的生成式 AI 模型訓練平台。"}
+{"key":"30ad0ee0ba6523d4","text":"讓 AI agent 執行瀏覽器自動化最快的瀏覽器，可把你已登入的瀏覽器狀態分享給 Codex、Claude Code 等 AI agent，而且不打擾你。零成本、零設定。"}
+{"key":"3174c7ebe5d65dd7","text":"用於漏洞獵捕與外部紅隊作業的 Claude Code skill 套件：82 個 skill、15 個斜線指令、681 個已揭露報告模式，涵蓋 24 種核心漏洞類別，另附企業身分與基礎設施攻擊矩陣。"}
+{"key":"31c7fb6d717ca206","text":"一個精美且可自行架設的監控工具"}
+{"key":"320a35ec8b34937e","text":"Claude Code 的通用 SEO skill：26 個子 skill 加 19 個子 agent，涵蓋技術 SEO、E-E-A-T、schema、GEO/AEO、agent 就緒度（Lighthouse Agentic Browsing、WebMCP、llms.txt）、反向連結、在地 SEO、電子商務、國際 SEO、Google API 與 PDF/Excel 報表，另有 9 個可選擴充提供即時 SEO 資料。"}
+{"key":"3355601b4b735c44","text":"Rust 套件管理工具。"}
+{"key":"33828c934cd4cce2","text":"Odoo：協助企業成長的開源應用程式。"}
+{"key":"348670b5a18ebd29","text":"從一張照片產生 AI 數位人說話影片：Renoise MCP 生成、5 種剪輯風格與 48 個創作者等級的包裝元件。適用 Claude Code、Codex、OpenClaw、WorkBuddy 等工具的 Agent skill。"}
+{"key":"352a331655920639","text":"逆向工程 Android apk 檔案的工具。"}
+{"key":"353c98f4ec16e817","text":"模型火箭的空氣動力與軌跡模擬軟體。"}
+{"key":"356dfb29b89cae6c","text":"擺脫 AI 罐頭風格的設計 skill，適用 Claude Code、Cursor 與 Codex。"}
+{"key":"3586dfe7beeaab29","text":"在單一伺服器上執行的 AI 直播主：語音、臉孔、聊天、記憶與貼文，也是 yoki 的底層。作者 Jacke_pp，聯絡方式：在 X 上私訊 @Jacke_pp。"}
+{"key":"35c7db0718840fb1","text":"以 Java 實作的所有演算法。"}
+{"key":"36a08523042358de","text":"封閉式 AI bot 的開放、可自架替代方案。可用於正式環境、完全可自訂，能接上任何技術堆疊：任何 agent、任何模型、任何工具。"}
+{"key":"36c96943cfc699aa","text":"Mac 上的免費 Chromium 瀏覽器：有 Arc 的側邊欄與 Dia 的精緻。Discord 聊天：discord.gg/TdhuXrbcA6"}
+{"key":"3745e782d6512a49","text":"掌握 agent 動態的工作空間：塑形、決策、規劃、標註、審查程式碼、與團隊分享，一鍵把所有回饋送給 agent。"}
+{"key":"3848750a3e9b34cf","text":"住在你終端機裡的開源 AI 程式開發 agent。"}
+{"key":"38a53e60f5d68461","text":"以 WebGL2 驅動的視覺化框架。"}
+{"key":"3aacdd92ef1b8c12","text":"Apache ZooKeeper。"}
+{"key":"3bed5a2d4733d4f5","text":"Windows 上的 Android App 執行器：雙擊 APK 即可安裝，App 以獨立視窗與桌面圖示執行，內建 QEMU 執行環境。"}
+{"key":"3ce765b8b5e8c543","text":"給程式開發 agent 的本機影片編輯器：42 個 FFmpeg 工具，附機器可讀的契約與 MCP server，適用 Claude Code、Cursor 與 Codex。可剪輯、上字幕、重新構圖、調整響度、匯出各平台格式。不需雲端，也不需 API key。"}
+{"key":"40dde0941eab8178","text":"免費資源與資訊聚合雷達：定時蒐集 100 多個來源，以 AI 二次審查過濾假福利，依取得方式分級並隔離抽獎、試用與推廣，再透過 Telegram 即時推送。"}
+{"key":"42a12180198303a9","text":"AI 原生的筆記 App，Evernote 與 Obsidian 的替代方案。全平台即時同步、豐富的筆記（表格、心智圖、圖表、海報）、網頁擷取工具與 MCP。可在 Cloudflare 或 Docker 上 100% 免費使用。"}
+{"key":"439842a8c5e90b34","text":"AI 程式開發 CLI 的多 agent 編排：在隔離的 tmux 工作階段中協調 Claude Code、Kiro、Codex 等工具。"}
+{"key":"43e617462c515e12","text":"misterdownloadmanager：以純 Rust 從零開始 clean-room 實作的終極開源下載管理器，支援 Windows、Mac 與 Linux。"}
+{"key":"441c815381479a86","text":"π RuView 將一般 WiFi 訊號轉化為即時的空間感知、生命徵象監測與人員存在偵測 — 完全不需要任何影像畫素。"}
+{"key":"4471906d72fe81a1","text":"🎥 用 React 以程式碼製作影片"}
+{"key":"44eac8a683792155","text":"🧠 兩小時從零訓練出你的 64M 大模型。Train your own 64M LLM from scratch in 2 hours."}
+{"key":"45e1b829e7b990d8","text":"把 GitHub Copilot Agent 整合進應用程式與服務的多平台 SDK。"}
+{"key":"467fe57c192457ea","text":"App 只寫一次，就能在網頁、macOS、iOS 與 Linux 上原生執行，AI agent 也能在每個平台上建置、執行、查看並測試它。"}
+{"key":"4684d78d6d03e77a","text":"給 AI Agent 與 MCP server 的新一代 agentic 代理伺服器。"}
+{"key":"46a25822780ed0f5","text":"免費、開源且可擴充的語音轉文字應用程式，可完全離線運作。"}
+{"key":"47744f7c0ba848c7","text":"Mac.apk：在 Apple Silicon Mac 上原生執行 Android App。"}
+{"key":"48bde823e9ba16ea","text":"使用 WireGuard 與雙重驗證最簡單、最安全的方式。"}
+{"key":"48efce428165cd40","text":"以 Rust 撰寫、速度極快的 DataFrame 查詢引擎。"}
+{"key":"49bf63e81245b6f3","text":"非常實驗性的 Nintendo Switch 2 模擬器。"}
+{"key":"4a1ddd0849028939","text":"逐鏡頭逆向分析任何影片：判斷是實拍、AI 生成還是程式製作，並告訴你如何重現。拆解結果以開放的 VIDEO.md 格式輸出。"}
+{"key":"4a45e9ec0b27bc2f","text":"輕巧、蓬鬆、永遠免費：AWS 本機模擬器的替代方案。"}
+{"key":"4a4eb28032c525a4","text":"給團隊與其 agent 的 AI 原生引擎，支援多 harness、多 agent，可自架。"}
+{"key":"4bce776d47195553","text":"一個用於多階段安全性稽核的 coding-agent 技能，具備獨立驗證且機器可讀的稽核結果"}
+{"key":"4d191ecc1320307f","text":"🚀 PR Agent：最早的開源 PR 審查工具。這個專案不是 Qodo 的免費方案。"}
+{"key":"4d250aa3b01f2e8e","text":"為 AI 打造的 Salesforce 開源替代方案。"}
+{"key":"4d3284741cdec850","text":"免費的通用資料庫工具與 SQL 用戶端。"}
+{"key":"4df70089be2cffd3","text":"賦予 coding agents 美感的 Agent skills：藝術指導、參考圖片與瀏覽器檢查，告別千篇一律的 AI 網頁"}
+{"key":"4e9c52293574a134","text":"DeepTutor：終身個人化家教。https://deeptutor.info/"}
+{"key":"4f99e09eaac514c5","text":"Apache Fineract。"}
+{"key":"50220f4a26cac7f2","text":"雲端原生的 Agentic AI｜Discord：https://bit.ly/kagentdiscord"}
+{"key":"5096668083c7ddd1","text":"詞光 · Word Atlas：附插圖的 IELTS 單字，共 7,298 個字，提供英式與美式發音及 FSRS 複習。開源 App，資料集採 CC BY 4.0 授權。"}
+{"key":"51237538fc7a8b71","text":"把 vibe coding 做出來、一看就是 AI 風格的 UI，變成經過設計的介面的 Claude skill。"}
+{"key":"51f03e491da9b1ee","text":"在終端機裡執行完整的 macOS。"}
+{"key":"51f11636d5fabaa0","text":"Windows、Linux 與 WSL 的 GPU 工作管理員：顯示各程序的 VRAM、GPU 活動，以及 LLM 模型與 KV-cache 資訊，支援 NVIDIA、AMD、Intel GPU（Linux 上另支援華為 Ascend）。"}
+{"key":"52b096492bb28ba1","text":"逐格逆向分析任何動畫，再證明複製版的動態完全一致的 Claude Code skill。"}
+{"key":"52c68c26abc11fad","text":"LSPosed 框架。"}
+{"key":"531be86dec629ea8","text":"以 Rust 撰寫、速度極快的 Python linter 與程式碼格式化工具。"}
+{"key":"540d7923ce4c8803","text":"Apache Iceberg。"}
+{"key":"5449d3ae5b7a7503","text":"隨處編排一切。跨資料、基礎設施、業務流程與 AI agent 的開源工作流程控制平面：宣告式 YAML、事件驅動、支援任何語言、以 Git 版本控管，可擴展到數百萬次執行。"}
+{"key":"560508a3b267f786","text":"NATS.io 的高效能伺服器，NATS 是雲端與邊緣原生的訊息系統。"}
+{"key":"56a3a613fa45e321","text":"JDK 主線開發。https://openjdk.org/projects/jdk"}
+{"key":"5711d2a3ba893e91","text":"在 iOS 與 iPadOS 上模擬 macOS。"}
+{"key":"5916d6cb5c0b92b1","text":"開源的 Loom 替代方案，美觀且方便分享的螢幕錄影。"}
+{"key":"595c2ab45950543f","text":"無審查 AI 圖片與影片產生器：免費的 AI 圖片與影片產生工作室，提供 800 多個模型（Flux、Midjourney、Kling、Sora、Veo），沒有內容過濾。可自架，採用 MIT 授權。"}
+{"key":"59d657b9c35fd0b4","text":"給 agent 與開發者的開源雲端平台，包含驗證、資料庫、儲存、函式、訊息、代管、即時、WAF 等功能。"}
+{"key":"5a5faf0e1aa5c691","text":"《搞機工具箱》的網頁移植版。"}
+{"key":"5b1e90c0a8c6b30e","text":"中文版 AI 姿勢參考圖庫：1439 組、2878 張圖片、完整中文化，零相依的靜態圖庫。"}
+{"key":"5c0b1b558935bf90","text":"以 JavaScript 撰寫、極快且精確的 glob 比對工具，沒有相依套件，完整支援標準與延伸的 Bash glob 功能，包含大括號、extglob、POSIX 方括號與正規表示式。GraphQL、Jest、Astro、Snowpack、Storybook、bulma、Serverless、fdir、Netlify、AWS Amplify、Revogrid、rollup、routify、open-wc、imba、ava、docusaurus、fast-glob、globby、chokidar、anymatch、cloudflare/miniflare、pts 等超過 500 萬個專案都在使用！請追蹤 picomatch 的作者：https://github.com/jonschlinkert"}
+{"key":"5d0d6f9824bcbef0","text":"搭配 Stitch MCP server 使用的 Agent Skills 函式庫。每個 skill 都遵循 Agent Skills 開放標準，可用於 Antigravity、Gemini CLI、Claude Code、Cursor 等程式開發 agent。"}
+{"key":"5d9a4e7d4d0e142a","text":"⚙️🦀 以 Rust 打造模組化、可擴展的 LLM 應用程式。"}
+{"key":"5e5baa1d25d555a4","text":"用 Docker 定義並執行多容器應用程式。"}
+{"key":"5f9c63548a00fce0","text":"RustFS 是開源、相容 S3 的高效能物件儲存系統，支援從 MinIO、Ceph 等其他相容 S3 的平台遷移或並存。"}
+{"key":"5fd616dd27cc5656","text":"Apache Airflow：以程式撰寫、排程與監控工作流程的平台。"}
+{"key":"601256f47466db3a","text":"PC 重新編譯版遊戲的集中地：在同一個啟動器中尋找、安裝、更新與遊玩。"}
+{"key":"61acab1bc1450602","text":"監控你的 RAM，把任何「相當糟糕」的閒置容量直接回報給 OpenAI 的 CEO。"}
+{"key":"627f898b200db2a9","text":"自由、輕量的 Android 串流前端。"}
+{"key":"62e701c421046368","text":"Bend 2：以證明阻擋 AI 錯誤的快速程式語言。安裝：curl -fsSL https://bend-lang.com/install.sh | sh"}
+{"key":"636f7de747161c2c","text":"沒有 Reels、動態消息與廣告的 Instagram：開源、可更新的 Android 版 Instagram App，保留私訊與限時動態。"}
+{"key":"656ead11c03d5013","text":"Code on the Go 是能直接在 Android 手機上開發 Android App 的 IDE，不需要筆電，也不需要網路。這是 App Dev for All 的專案。"}
+{"key":"6635ceec2971313b","text":"開源的 Grok Bot 替代方案，可自選模型與沙箱。"}
+{"key":"66f707055e2863cd","text":"聊天示範。"}
+{"key":"67c2074e3c3a3019","text":"使用網頁前端打造更小、更快、更安全的桌面與行動應用程式。"}
+{"key":"6832124debf8ca8b","text":"多引擎 Android VPN：Xray、WARP、Psiphon、Tor、Geph、OpenVPN、MASQUE/AmneziaWG，以及依每個 App 各自的最佳路徑分流的 MLM Adaptive Engine；另有 Cloudflare 面板、Config Studio 與遊戲加速。以 Kotlin + Jetpack Compose 打造。"}
+{"key":"69543395bd442a7b","text":"免費的 Claude skill：讓 Claude 打造得獎等級、電影感的登陸頁。由 MotionSites 製作。"}
+{"key":"69dfe0f437b79603","text":"在瀏覽器中執行的開源預視化軟體：安排場景走位、擺放角色姿勢、設計運鏡與剪接，再把同樣的鏡頭交給 AI 影片模型。"}
+{"key":"69f03e8e370c876f","text":"給 bot 與 agent 用的 AI 搜尋引擎與 MCP server。單一 Rust 執行檔即可為程式碼、文件、日誌、JSONL/CSV 與 PDF 建立索引，支援 BM25 全文、向量與混合搜尋、不需 grep 的程式碼搜尋、agent 記憶與 RAG。提供相容 Elasticsearch 的 API；Corpus Hub 提供數百個參考記憶語料庫。"}
+{"key":"6b168f4400b9dd19","text":"完全可自訂且支援 agent 的開源設計系統。"}
+{"key":"6d14eb562586cfc9","text":"Dependency-Track 是智慧元件分析平台，協助組織找出並降低軟體供應鏈的風險。"}
+{"key":"6e08f7d0fd517f4d","text":"Spring Framework。"}
+{"key":"6e16ec65b1d12b89","text":"以思考的速度編寫程式碼 – Zed 是一款高效能、支援多人協作的程式碼編輯器，由 Atom 與 Tree-sitter 的創作者打造。"}
+{"key":"6e74a6b0a1940155","text":"為每個 Agent 提供跨工作階段的持續性 Context —— 擷取 Agent 在工作階段中所做的所有事情，透過 AI 進行壓縮，並將相關的 Context 注入回未來的工作階段中。支援 Claude Code、OpenClaw、Codex、Gemini、Hermes、Copilot、OpenCode 等更多工具"}
+{"key":"6ec547c88d8d8b9b","text":"ThinkRail 是越用越好的 agentic IDE。"}
+{"key":"6ecdcdc4c54b3487","text":"給專業人士與團隊的電子郵件。"}
+{"key":"6fa7f050f64b36fc","text":"極速的 JavaScript 執行環境、bundler、test runner 與 package manager – 一應俱全"}
+{"key":"7129b8d1d56bb5a9","text":"Poki 像你一樣使用你的 iPhone：在 iPhone 上執行的開源 agent App，會讀取螢幕，並用你自己的模型帳號在真實 App 中點按、輸入與滑動。"}
+{"key":"71811edc0399f12f","text":"jQuery JavaScript 函式庫。"}
+{"key":"71c14918f87d39f6","text":"Apache NiFi。"}
+{"key":"71cc6b5a186d09ee","text":"NetBird 以單一身分導向的零信任平台，安全連接任何網路中的人、機器與 AI agent，底層採用點對點 WireGuard®。"}
+{"key":"72bc2d616d5b8bdd","text":"讓人與 AI agent 像同一個團隊一起工作，開源且可自架。"}
+{"key":"73698b6cceb8dd62","text":"以 Rust 撰寫的 Flash Player 模擬器。"}
+{"key":"7523c91fc62f5318","text":"JavaScript 3D 圖形庫。"}
+{"key":"757eadf264f91adf","text":"輕鬆架設自己的 Git 服務。"}
+{"key":"7827a95c18cae38d","text":"給股票投資人與交易者的 Claude Code skill：市場分析、技術線圖、經濟行事曆、選股工具與交易策略開發。"}
+{"key":"7966ced25099ff32","text":"為所有人設計的現代 Docker 管理工具。"}
+{"key":"7a42e25d76e2fc9a","text":"💫 協助你快速上手 SDD 或任何其他流程的工具包！"}
+{"key":"7abb2d9104f53427","text":"江山時序 · 中國歷史互動地圖時間軸（西元前 403 年至今）：橫跨 18 個朝代、198 個疆域快照，涵蓋古今地名沿革與古典詩詞路線。"}
+{"key":"7ae43e483891bab6","text":"Agent Skills 的公開儲存庫"}
+{"key":"7b3f96441f8e5e8b","text":"APM：應用程式效能監控系統。"}
+{"key":"7b8b598e675f551c","text":"在 Claude Code 裡用 Codex 審查程式碼或委派任務。"}
+{"key":"7bae59b2b7f4fb1a","text":"Linger 是完全在你的 PC 上執行的開源個人 Agent。我們希望透過模型與 harness 的高效協同設計，把強大的本機 AI 帶到一般電腦上，打破大型科技公司對 AI 的掌控，讓每個人都能執行自己的 AI。"}
+{"key":"7d7e0dde3d15fa5b","text":"dsh-go：把 DeepSeek Harness 裝進口袋，在手機本機執行，也能遙控你的電腦。"}
+{"key":"7d980d83a9a82db2","text":"Git 配杯茶！輕鬆自架的一站式軟體開發服務，包含 Git 代管、程式碼審查、團隊協作、套件倉庫與 CI/CD。"}
+{"key":"7dd0cf06a162f7bb","text":"ZapFast：以 Rust 與 egui 打造的快速原生 WhatsApp 用戶端。"}
+{"key":"7ec7dd99bdde8c13","text":"Prometheus 監控系統與時間序列資料庫。"}
+{"key":"7fed8cf4a0393dfc","text":"在任何 Apple Watch 上啟用 Hermès 錶面。"}
+{"key":"80f9597ffbd849a5","text":"OLake Go：把資料庫、Kafka 與 S3 的資料開源複寫到 Apache Iceberg 與 Parquet。來源支援 Postgres、MySQL、MongoDB、Oracle、MSSQL、DB2、Kafka、S3。前身為 datazip-inc/olake，資料表維護功能在 datazip-inc/olake-fusion。"}
+{"key":"821c03875894dac4","text":"給已 root 的 LG webOS 電視：即時儀表板、隱私控制、移除預裝軟體、廣告與遙測封鎖、替代主畫面與自訂螢幕保護程式，直接在電視上執行。另附可選的 Home Assistant MQTT 橋接，用於智慧家庭控制。"}
+{"key":"8342707704ad53fe","text":"給 agent 用的無介面 3D 與視覺特效引擎，研究預覽版。"}
+{"key":"83ca942fbb9f6601","text":"AI agent skill 的安全掃描器，在安裝前偵測 Claude Code、Codex 與 MCP skill 中的漏洞、惡意模式、安全風險、prompt injection、資料外洩與供應鏈風險。"}
+{"key":"84eb0efab39006a5","text":"不要用 Rust 全部重寫，只重寫慢的那 5%：分析 Python、Node 或 Ruby App 的效能，用你的程式開發 agent 移植熱點函式，並證明行為不變。"}
+{"key":"850a158b41e5628d","text":"給 Claude Code、Codex CLI、Cursor、OpenCode、Antigravity CLI、GitHub Copilot 與 Pi 的外掛、agent、skill 與指令，用 Markdown 撰寫一次，再由產生器配合驗證與評測轉換成各工具的格式。"}
+{"key":"86ea7ba65b98b277","text":"AutoClip｜一個連結，一鍵出片。開源 AI 影片剪輯桌面工具，將 Podcast、訪談、課程等長影片自動剪成短影音，並產生字幕、封面與發布文案，支援抖音、小紅書、TikTok、Reels 與 YouTube Shorts。"}
+{"key":"877c643eaf051b7b","text":"Apache Solr 開源搜尋軟體。"}
+{"key":"87a6279c435c5f88","text":"RUN · 潤：中國護照持有人的海外移居手冊。收錄歐洲 36 國 110 條移民路線與 13 個主要移民地區：數位遊牧簽證、歐盟藍卡、技術移民、留學轉工作、創業自僱、投資居留，每條都附官方來源，持續更新。"}
+{"key":"8827df6b06a637a3","text":"免費的 Claude skill：用 three.js + Remotion 製作會爆紅的動畫故事短片（3D 世界中的 2D 角色）。"}
+{"key":"8866906bd2ec27b3","text":"Craft Anything：理解任何軟體的運作方式，再打造屬於你自己的版本。"}
+{"key":"89149fb9797f862c","text":"停用玩家聊天檢舉，讓使用者訊息無法被追蹤。"}
+{"key":"8917d38d8ebbbf13","text":"以 JavaScript 打造的網路硬碟檔案下載網址取得工具，修改自【網盘直链下载助手】，支援百度網盤、阿里雲盤、中國移動雲盤、天翼雲盤、迅雷雲盤、夸克網盤、UC 網盤、123 雲盤八大網路硬碟。"}
+{"key":"89e6c554f8de8854","text":"資料視覺化與分析元件，特別適合大型或串流資料集。"}
+{"key":"8addc7591a238ebd","text":"主要供知識工作者在 Claude Cowork 使用的開源外掛 repository。"}
+{"key":"8bbbaee50f04c491","text":"🤖 開源、本機優先的 Grok Bot、OpenAI dots 與 Claude Duet 替代方案。用任何模型打造你自己的 AI bot：透過一把 Modelflare key 使用 GPT、Claude、Gemini、Grok、DeepSeek、Kimi、GLM 等 70 多種模型。可在 App、微信或飛書找到它們；它們會記得你、在背景工作、執行指令並操作你的電腦。按使用量付費。"}
+{"key":"8d0c2c5f03aca564","text":"麥田：自媒體多平台發布中控與數據監控（B 站、抖音、小紅書、影片號、YouTube、X），附飛書卡片通知與數據大螢幕。"}
+{"key":"8de7acc70aeb213d","text":"RAGFlow 是一個 agent 原生資料庫：一個從檢索增強生成（RAG）引擎發展而來的上下文基礎設施。"}
+{"key":"8e3e26c1c8a883ab","text":"在任何硬體與量化設定下逐步調校本機 LLM 推論速度（解碼、推測式解碼、預填、KV、啟動、TTFT）的 Agent skill。"}
+{"key":"8f5a42a205fbc90e","text":"給長達一個月的單一工作階段（數十億 token）與小型上下文視窗（100K 就夠）使用的上下文壓縮外掛，數十億上下文就是你所需要的一切。"}
+{"key":"920e5c120307b972","text":"免費、離線檢查 Windows、Mac、Linux、iPhone 與 Android 上已知的商業間諜軟體，也檢查留下的安全缺口、可疑連結、電子郵件、檔案與 QR code、你的帳號、家用網路與附近的追蹤器。提供視窗介面，支援 27 種語言，資料不會離開你的電腦。"}
+{"key":"92f209e7344165c3","text":"一個真正有效的 agentic skills 框架與軟體開發方法論。"}
+{"key":"95486a2f9b31688d","text":"agent 工具版的 OpenRouter。加入社群：https://discord.gg/6mQYYfFMAn"}
+{"key":"9563d416c7c1814b","text":"一鍵替換影片中的角色：以 ComfyUI 與 MiniMax H3 打造的開源本機版 Higgsfield Genjutsu 替代方案，搭配 FLUX.3 Klein 重新打光。"}
+{"key":"95d723d2c141a652","text":"預先索引的程式碼知識圖譜，會在程式碼變更時自動同步，適用於 Claude Code、Codex、Gemini、Cursor、OpenCode、AntiGravity、Kiro、CoPilot 與 Hermes Agent —— 更少的 token、更少的工具呼叫、100% 本地執行"}
+{"key":"9617226aa653db4a","text":"OpenVINO™ 是用於最佳化與部署 AI 推論的開源工具組。"}
+{"key":"971df716ef3ffad7","text":"以單一可微分世界模型追蹤人形機器人的全身動作。"}
+{"key":"974036aa8626db5e","text":"給程式開發 agent 用的 Chrome DevTools。"}
+{"key":"978f96e79be0cd27","text":"專業的 Antigravity 帳號管理與切換工具，為 Antigravity 提供一鍵無縫帳號切換。以 Tauri v2 + React（Rust）打造。"}
+{"key":"98242acc131c8183","text":"可以在瀏覽器中悠游的夢幻海底世界：搖曳的海藻林、陽光光束、沉船與鬼蝠魟。全部以 WebGPU 用程式碼產生（沒有圖片、模型或音效檔），整個只有一個 97 KB 的 HTML 檔。"}
+{"key":"9887689015ec2abf","text":"美觀、注重隱私、本機優先的個人理財追蹤工具，涵蓋投資、淨資產、支出與模擬。"}
+{"key":"98b033daef5f4338","text":"Macro 是給團隊的整合工作空間：電子郵件、聊天、文件、任務、agent、通話與 CRM，以 @ 互相連結並共享 AI 記憶。"}
+{"key":"99ed60689127fa64","text":"開源的 coding agent。"}
+{"key":"9afaf9fe375e4ed6","text":"🕵️‍♂️ 依使用者名稱從 6 千個網站蒐集個人資料檔案。"}
+{"key":"9bc0c42dc804dc38","text":"🕷️ 最棒的 Web Scraping 框架，從單一請求到大規模爬蟲通包！趕快加入：https://discord.gg/EMgGbDceNQ 並追蹤取得每日小技巧：https://x.com/Scrapling_dev"}
+{"key":"9c716ec421d95479","text":"屬於大眾的分散式 AI/LLM。私下或公開分享算力，驅動你的 agent 與聊天。"}
+{"key":"9cb218005b4f30d7","text":"避開常見的 App Store 與 Google Play 審核退件。公開的作業手冊與送審前檢查，收錄 124 種退件模式與修正方式、隱私清單與資料安全檢查、112 項追蹤中的法規期限（EU AI Act、DSA、COPPA、年齡相關法規），並附 AI 程式開發 agent 用的 skill。"}
+{"key":"9d49ebb8a2d71d55","text":"給所有人的個人理財 App（由所有人打造）。"}
+{"key":"9fd86027d8a197c2","text":"極速的原生筆記 App 與富文字編輯器，支援 macOS、Windows 與 Linux。以 Rust + GPUI 打造，本機優先且設計精美。"}
+{"key":"a00a46145b0afdda","text":"給 Claude 的 MCP server，提供終端機控制、檔案系統搜尋與 diff 式檔案編輯能力。"}
+{"key":"a0841ad85d4bc00c","text":"GIF 工廠：依風格製作像素、人物與寵物、黏土吉祥物、光柵卡與動態海報 GIF 的 Skill。"}
+{"key":"a19f3433aab820ea","text":"LLM 驅動的多市場股票智慧分析系統：多源行情、即時新聞、決策看板與自動推播，支援零成本定時執行。LLM-powered multi-market stock analysis system with multi-source market data, real-time news, decision dashboard, automated notifications, and cost-free scheduled runs."}
+{"key":"a3d6e19240298ed8","text":"docs.github.com 的開源 repository。"}
+{"key":"a631b761bc5c1288","text":"極致的人聲合成器：唱歌、說話、Beatbox 等。"}
+{"key":"a651ca2d80adaf99","text":"給現代應用程式與服務的開源身分與存取管理。"}
+{"key":"a656d7761caea728","text":"一個自架 App 管理你的影集、電影與音樂。"}
+{"key":"a678f0e1f32ba64d","text":"Kubescape 是開源的 Kubernetes 安全平台，可用於 IDE、CI/CD 管線與叢集，提供風險分析、安全性、合規與錯誤設定掃描，為 Kubernetes 使用者與管理員節省寶貴的時間、精力與資源。"}
+{"key":"a681f77dd39e465b","text":"一個開源的 AI agent，將 Gemini 的強大功能直接帶入你的終端機。"}
+{"key":"a705b674ba31b8bf","text":"依 YAML 設備清單繪製 r/homelab 風格的網路架構圖（Python → SVG/PNG），由 Claude 協助撰寫。"}
+{"key":"a71c817874cdcb9a","text":"在 iPhone、iPad 與 Mac 上原生執行你自己的 Switch 遊戲：遊戲程式碼改寫為 ARM64，畫面直接透過 Metal 繪製，一個 App 管理整個遊戲庫。需自備遊戲與金鑰。"}
+{"key":"a87de9897616f81c","text":"🛡️ BLA（bla-agents／Blind LLM Agents）：開源的藍隊防禦 MCP server 與 CLI，保護 JS/TS、Electron ASAR、WASM、Python、原生執行檔、SQLite、GGUF/Safetensors 與 Android DEX，抵禦 AI 逆向工程 agent（REA）。"}
+{"key":"a91cb804076e96e1","text":"讓你的程式開發 agent 掌握最新的網頁最佳實務。"}
+{"key":"a9c479209bfcd315","text":"精選的超棒 Claude Skills、資源與工具清單，用於自訂 Claude AI 工作流程"}
+{"key":"a9cde66cf3d2f6b5","text":"開源的 OpusClip 替代方案。"}
+{"key":"a9e8da8061b4ddf9","text":"Claude Code 元件的開源登錄庫與 CLI：agent、指令、skill、hook、MCP、設定與 mod。"}
+{"key":"aa13fbd6fe1746ea","text":"自架的程式開發 agent 交付工作流程：以腳本與人工核准關卡編排 CodeBuddy、Codex 與 Claude Code，也包含給程式開發助理的本機工作流程。"}
+{"key":"ab30de3063b19e29","text":"為我們所有人打造的網頁開發"}
+{"key":"ad25b3c5458f013f","text":"不用 USB 隨身碟，就能在 Windows 旁安裝 Linux。"}
+{"key":"ad52a896412b085e","text":":hedgehog: PostHog 是打造自動駕駛式產品的領先平台。開發者工具涵蓋 AI 可觀測性、分析、工作階段重播、功能旗標、實驗、錯誤追蹤、日誌等，蒐集 agent 診斷問題、發掘機會與發布修正所需的完整脈絡。可從 Slack、網頁、桌面或 MCP 操控一切。"}
+{"key":"ae0a6377166d1ccc","text":"給 AI 程式開發 agent 的 skill。"}
+{"key":"ae2bb53ceb06e4fd","text":"輕量的沙箱工具，在作業系統層級對任意程序強制套用檔案系統與網路限制，不需要容器。"}
+{"key":"aed593b091190736","text":"1407 張 AI 女裝參考圖集與虛擬試穿網站，支援中英文檢索，可使用 OpenAI Images、Gemini、豆包，或自訂 Base URL、API Key 與模型。https://github.com/paipiange/nvzhuang"}
+{"key":"b0252816f5f70ee6","text":"Cage：為 Claude 特化的輕量虛擬機，徹底杜絕網路洩漏。支援多平台、多帳號管理、遠端部署與行動裝置操控。"}
+{"key":"b127bc945e6fd3a2","text":"在 Minecraft 中以高細節重現真實世界的任何地點。"}
+{"key":"b1c8185705baa709","text":"把《瑪利歐賽車 World》（Nintendo Switch 2）靜態重新編譯成原生 PC 程式。"}
+{"key":"b35b80141e9979b0","text":"Agent skill：用一句話描述你的技術堆疊，就能得到附官方 logo 的架構圖。"}
+{"key":"b363c2dfc4e8e139","text":"讓 AI 操作你的 iPhone 或 Android 手機，並由你在旁把關：可以是 macOS、Windows 或 Linux 上的任何 MCP agent，也可以是直接在手機上執行的 Pinky。"}
+{"key":"b38b36b9147086b8","text":"CLI 代理工具，可在常見的開發指令中減少 60-90% 的 LLM token 消耗。單一 Rust 執行檔，無任何相依性"}
+{"key":"b4a246f4e84263b1","text":"BillionMail 提供開源的郵件伺服器、電子報與電子郵件行銷，完全自架、對開發者友善，而且沒有月費。加入 Discord：https://discord.gg/asfXzBUhZr"}
+{"key":"b4c66a09f2c118ca","text":"讓你的 AI agent 像團隊裡最懶的資深工程師一樣思考。最好的程式碼，就是你從來沒寫的那段。"}
+{"key":"b54c8b2641a6de27","text":"女媧之樹的第一顆果實：自主 AI 滲透測試軍團（634 隊冠軍、無人值守 8 小時、以 10 億 token 擊敗 45 億 token）。不只是工具，從設計上就能演化。在 Nüwa Foundation（Create／Language／History）上種出你自己的果實。"}
+{"key":"b6e0b8ff0cc209bd","text":"整合眾多即時通訊平台、LLM、外掛與 AI 功能的 AI Agent 助理與開發框架，可作為 openclaw 的替代方案。✨"}
+{"key":"b86a7d54d8affb39","text":"ScopeSentry：網路空間測繪、子網域列舉、連接埠掃描、敏感資訊探索、漏洞掃描與分散式節點。"}
+{"key":"b89fbde855e8c7c8","text":"官方 NGINX 開源 repository。"}
+{"key":"ba0dee4a455e66c7","text":"Halo 是強大易用的開源架站工具，從個人部落格、知識庫到企業官網、線上商城，都能輕鬆實現，一站滿足多樣化的架站需求。"}
+{"key":"bad5acfc07da9b6c","text":"笑一個！幫這個 repo 按星，你的大頭貼就會從收據印表機印出來。"}
+{"key":"bc6d8a96c921deb0","text":"PaperOrchestra 是自動撰寫 AI 研究論文的多 agent 框架。"}
+{"key":"bfc4c7ff8dd7d2e3","text":"經營 Instagram 帳號的 13 個 Claude skill：以 26 種評分過的開場公式產出 Reels，另有爆紅研究 skill、文案檢查工具與擬人化工具。免費，MIT 授權。"}
+{"key":"bfcaf0140de00e21","text":"用你現有的電腦做影片。FreeVideo 最低只需 8 GB VRAM 與 16 GB RAM 就能執行 MiniMax H3，並依你的硬體調整加速方式。"}
+{"key":"bff6bab7ce46369f","text":"為 AI 寫程式代理程式（AI coding agents）打造的正式環境級工程技能。"}
+{"key":"c0856d72972525fd","text":"免費、開源的書籍搜尋、閱讀器與書庫。"}
+{"key":"c0beefd0eda93c6f","text":"安全、快速、高效，經阿里巴巴規模實戰驗證的混合架構程式碼審查工具：確定性流程加上 LLM Agent，提供精準的逐行評論，內建多語言規則集（NPE、執行緒安全、XSS、SQL injection），相容 OpenAI 與 Anthropic。"}
+{"key":"c2296045f0879a14","text":"長影片與直播的 AI 剪輯工具。可自架，使用你自己的 AI key。"}
+{"key":"c27cc938b823d287","text":"開源、可自架的 Slack 替代方案，讓團隊與 AI agent 在頻道與私訊中一起工作。Agent 可使用 Claude、ChatGPT/Codex、Gemini 或 Grok，具備 MCP 工具、專屬的電腦與瀏覽器、例行工作、記憶與核准機制。提供網頁、桌面與手機 App，以 Docker Compose + Postgres 部署，採 AGPL-3.0 授權。"}
+{"key":"c283b013a73a6dfe","text":"透過 Shizuku 免 root 清除中國品牌 Android 系統預裝的 SystemHelper、RegService 等隱私資料蒐集模組。"}
+{"key":"c2aa748303e104f3","text":"影片號、小程式、抖音、快手、小紅書、直播串流、m3u8、酷狗、QQ 音樂等常見網路資源下載！"}
+{"key":"c2ba982fe6c85928","text":"免費且開源、分散式、RESTful 的搜尋引擎"}
+{"key":"c2d4725a91b967ae","text":"貼上連結，約 2 分鐘就產生附字幕的 9:16 短片。免費、本機執行的開源剪輯引擎（以音訊為主，支援 YouTube 字幕與本機 LLM）。"}
+{"key":"c2da0f391970dde9","text":"SeaTunnel 是多模態、高效能、分散式的大量資料整合工具。"}
+{"key":"c4123aaafff4a677","text":"外掛式媒體播放器。"}
+{"key":"c7cef7e97c54480f","text":"把整個 App 一塊一塊改寫成 Rust，每一步都對照原版錄下的行為驗證。支援以 TypeScript、Python、C、Go、Ruby 與 Java 撰寫的 CLI、HTTP 伺服器與函式庫。"}
+{"key":"c8be9ad7f81f45a8","text":"社群貢獻的指示、agent、skill 與設定，幫你充分發揮 GitHub Copilot。"}
+{"key":"c8e02ead124e309b","text":"Apache Polaris：可互通的 Apache Iceberg 開源目錄。"}
+{"key":"c92f94e19048a123","text":"輕小說文庫（Wenku8.com）的第三方公益 Android App，始於 2014 年的初版 Material Design 風格、非營利，是 Play Store 上安裝檔最小的輕小說閱讀器。由於網站 API 遭大量濫用，目前已改用作者自架的 Cloudflare Worker API 中繼節點，否則網站關閉 API 後就無法使用。"}
+{"key":"caf29e670360d5e2","text":"從任何電腦或手機操控 Claude Code、Codex 等工具的最佳方式。"}
+{"key":"cbaeb8fa88160a71","text":"為 LLM 打造的 Python 3D 建模。"}
+{"key":"cc59e0d6326e3670","text":"🤯 LobeHub - 團隊中的超級代理。將超級代理加入你團隊現有的聊天中。它們能自主處理工作，且每週不斷進化。"}
+{"key":"ce7e4eea257ebe33","text":"開源 GPS 追蹤平台，可自架或使用代管服務，支援 200 多種裝置協定。"}
+{"key":"cf3daf62715828a7","text":"開源、可組合的支付平台｜符合 PCI 規範｜提供 SaaS 與自架選項｜可串接多家支付、出款、詐欺偵測、保管庫與代碼化服務｜以智慧路由與營收回收提升授權成功率｜以成本可觀測性降低支付處理成本｜以對帳功能減少支付作業負擔。"}
+{"key":"cf4b94aafd006f9c","text":"實驗性的 Switch 2 模擬器，支援 Windows、Linux 與 macOS。"}
+{"key":"cf547d8c2a4ffb8e","text":"FastAPI 框架，高效能、易上手、開發快速，且具備生產環境就緒能力"}
+{"key":"cfdb133c8bc76978","text":"邁向更自主的 Agent 系統。"}
+{"key":"d064d09b038e0062","text":"知了 Cicada：為任何會議與直播提供即時字幕、同步口譯與 AI 會議紀錄，支援 Mac、Windows、Linux 與 Android，免費開源。"}
+{"key":"d0fe768de4852cf2","text":"freehire：給求職者的開源搜尋引擎。"}
+{"key":"d154454314df59d3","text":"移除文字中 AI 生成痕跡的 Agent skill"}
+{"key":"d18b73363fa7650e","text":"Mastra 是打造 AI 應用程式與 agent 的現代 TypeScript 框架。"}
+{"key":"d1926a3706c5f5b1","text":"免訓練的語言模型修改：移除審查、壓抑罐頭內容、減少諂媚等。"}
+{"key":"d2cd66dc5c0a3b4e","text":"Telegram X 的主要 repository：官方推出的 Android 版 Telegram 替代用戶端。"}
+{"key":"d3bea48abd243765","text":"Agent skill 集。"}
+{"key":"d472acc9f183d625","text":"Apex Compute 推出的 Apex Neural Rendering（ANR）。"}
+{"key":"d514651ff71def03","text":"244 種像素藝術特效，每一種都是一小段程式碼，另附可自製特效的 Claude Code skill。"}
+{"key":"d5f5230f566dcd93","text":"社群維護的華為 Ascend 硬體 vLLM 外掛。"}
+{"key":"d6504b7ebf4363a4","text":"Claude Code 的學術研究 skill：研究 → 撰寫 → 審閱 → 修訂 → 定稿。"}
+{"key":"d6a5f4060f3aa306","text":"Termux：Android 上的終端機模擬器，可透過各種套件擴充。"}
+{"key":"d79cd209e997a832","text":"原生 Windows 影片動作捕捉，使用 ExMR、FlowHMR 與 GVHMR，提供接觸修正、人形骨架重定向與 FBX/VMD 匯出。"}
+{"key":"d7bcce213589e486","text":"Leonida 是 Grand Theft Auto 6 Xbox 版的原生 PC 重新編譯版。"}
+{"key":"d8466e4013a12dbf","text":"供求生與重建使用的離線知識 AI、地圖與影片。"}
+{"key":"d8558189e922f8eb","text":"把任何機器變成可以拆解的 3D 模擬器的 Claude Code skill。"}
+{"key":"d8b3393269a939ee","text":"利用 AI 大模型與自動化工作流程，根據主題或關鍵字一鍵生成高畫質短影音。Generate HD short videos from a topic or keyword with an automated AI workflow."}
+{"key":"d8c9f3d45ddabdf2","text":"⭐️⭐️⭐️ 開源、可自架的 Linear 與 Plane 替代方案。讓團隊與 AI agent 並肩規劃與發布產品的專案管理與 issue 追蹤工具。"}
+{"key":"d9be90a22e8541c4","text":"📨 極致的 agentic 社群媒體排程工具 🤖"}
+{"key":"d9f06095ee8c59f1","text":"Poteto 的 pstack 在 Antigravity、Claude Code、Codex、Copilot、DeepSeek Harness、Gemini、Grok Build、Kimi Code、MiniMax Code、Muse、OMP、OpenCode、Pi、Prime Agent 等工具的版本：把 Cursor 的基本元件轉換到其他 harness 的嚴謹 agent 工作流程。"}
+{"key":"da000fb3e2d5acb3","text":"把 Google 強制的 QR code 驗證改回標準 6 位數簡訊驗證的 Chrome 擴充功能（MV3），透過 iPad Mini 設定檔與 [3,null,4] RPC 後備機制達成。"}
+{"key":"da2731e0c2bebb7d","text":"只有 100 行的 AI agent，能解決 GitHub issue 或在命令列協助你。極度簡單，沒有龐大設定、沒有巨型 monorepo，卻在 SWE-bench verified 拿到超過 74% 的分數！"}
+{"key":"da3a5c804fdd1b3b","text":"LeviLauncher 的 Android 版。"}
+{"key":"da8af12752440894","text":"網頁的自動化稽核、效能指標與最佳實務。"}
+{"key":"db47b5ddcaeec876","text":"⭐️ 給 Claude Code、Codex 與 Gemini CLI 的跨平台 CLI 全能助理工具。"}
+{"key":"db8cfcda3bb52870","text":"讓 agent 打造新一代使用者介面的行為函式庫。"}
+{"key":"dc2a4ecee234a1e1","text":"一套專為自行架設（self-hosting）設計的開源遠端桌面應用程式，可作為 TeamViewer 的替代方案。"}
+{"key":"dc335203dab2d646","text":"ConardLi 的開源 Skills 合集，包含網頁設計、知識檢索、圖片產生等。"}
+{"key":"dcbea44731ca9dbd","text":"姿勢、服裝、人像參考圖庫，附中英文提示詞，可在瀏覽器中 AI 試穿。"}
+{"key":"dcf3343be8953bfd","text":"用來將檔案與 Office 文件轉換為 Markdown 的 Python 工具。"}
+{"key":"dd57376d58d41252","text":"Vercel 官方的 agent skill 集。"}
+{"key":"de5c69630f29f8b5","text":"手機隱私稽核：用 adb 掃描 Android App 的權限、回報端點與資料流向，並提供可還原的處置方式。"}
+{"key":"dea45948fb0dfbfe","text":"給 agent 程式開發 CLI 的長期記憶方案，也方便在不同 agent 廠商之間交接。"}
+{"key":"df7dbfe3781c368d","text":"RuiC-PoseAtlas｜姿勢與服裝雙圖鑑：288 組人體姿勢 × 5 個視角 × 1,439 張人台線稿，加上 1,407 套無人物服裝 × 8 個分類 × 86 個三語標籤。支援中英日切換、搜尋篩選、鍵盤瀏覽與原圖下載，純靜態、零相依。"}
+{"key":"dfa4450df641f307","text":"所有 agent 的模型，集中在一處：從選單列讓 Codex 跑在 DeepSeek 上、Claude Code 跑在 Kimi 上。"}
+{"key":"dfdfb8ddcc7ebb7e","text":"VictoriaMetrics：快速、高性價比的監控方案與時間序列資料庫。"}
+{"key":"e0da9f5ac838a6ef","text":"Ghidra 是一個軟體逆向工程（SRE）框架"}
+{"key":"e255dadb09191736","text":"Moby 專案：協作打造容器生態系，用來組裝以容器為基礎的系統。"}
+{"key":"e4aaf5e588f3edd7","text":"透過使用者名稱在各大社群網路搜尋社群媒體帳號"}
+{"key":"e4eb8aaa1f3709df","text":"Agent harness 效能最佳化系統：為 Claude Code、Codex、Opencode、Cursor 等工具提供 skill、直覺、記憶、安全性與研究優先的開發方式。"}
+{"key":"e52a02d4c2ca8865","text":"給 Claude Code 與 AI agent 的行銷 skill：CRO、文案、SEO、分析與成長工程。"}
+{"key":"e52a44458fb511a5","text":"StudyOnTV（Tiledaoti TV）：開源的 Android TV App，孩子要答題才能解鎖看電視的時間。完全在電視上執行，不需伺服器或帳號；家長掃 QR code 就能在區域網路中管理題目。先學習，再看電視。"}
+{"key":"e6b56e27d65b0c99","text":"小巧、快速的容器執行環境，支援 macOS、Windows 與 Linux，並附免費的 Ngrok 替代方案。"}
+{"key":"e709e2dd8e762c00","text":"讓你的 agent 操控你的手機。"}
+{"key":"e8538c14b21e4d9a","text":"分散式系統中最關鍵資料使用的分散式可靠 key-value 儲存。"}
+{"key":"e98448904facc369","text":"一個人格，多個程式開發 agent。透過本機網頁控制台，在 codex、claude、opencode、grok、omp、hermes、pi、zcode 之間替換或注入 system prompt。"}
+{"key":"e9fd9cefeae26b12","text":"快速上手 Kimi、GLM、MiniMax、DeepSeek、gpt-oss、Qwen、Gemma 與其他模型。"}
+{"key":"ed59976bc090a991","text":"AG-UI：Agent 與使用者互動協定，把 agent 帶進前端應用程式。"}
+{"key":"ee626e3e638bfc9b","text":"AI agent 技能，可跨 Reddit、X、YouTube、HN、Polymarket 和網路研究任何主題，並統整出有憑有據的摘要"}
+{"key":"eea8346683fbbdbb","text":"讓你的 agents 更聰明的知識基礎設施。透過單一 API 進行搜尋、爬蟲並存取 550 多個資料提供者。"}
+{"key":"eeb6126a59e7fe7e","text":"Microsoft 推出的開源 AI 紅隊工具組，透過自動化掃描、自適應多輪攻擊與網頁介面測試生成式 AI 系統。"}
+{"key":"efd1a95904012e86","text":"自動化大量重構原始碼。"}
+{"key":"f1c7b960df7e09ab","text":"MR Office：最接近 Microsoft Office 的 AI 辦公套件開源編輯器，在瀏覽器中處理文件、試算表、簡報、PDF 與程式碼。每個編輯器都有 Copilot，和你一起編輯真正的 Word、Excel 與 PowerPoint 檔案；MCP server 讓 Claude、ChatGPT、Cursor 與 Codex 也能建立並編輯這些檔案；一行程式碼就能嵌入你的 App。"}
+{"key":"f3a6297dd2b04a6c","text":"Beta：真正免費、開源、本機優先的跨平台影片編輯器，可透過 JSON-RPC API 與 MCP 以程式控制。"}
+{"key":"f41108045516f609","text":"開源的生成式 UI 框架：agent 串流傳送版面資料，應用程式以 React、Angular、Lit、Flutter、SwiftUI 與 Jetpack Compose 的原生元件呈現。"}
+{"key":"f56cdfd8d4471a49","text":"Kubernetes 的宣告式持續部署。"}
+{"key":"f5777c197a00c760","text":"每月 101 億 token、87 個免費 LLM 供應商、1,313 個免費模型端點，全部整合在單一 /v1 端點後方，也可加入任何相容 OpenAI 的自訂端點。具備智慧路由、自動容錯切換與金鑰加密，僅供個人實驗使用。"}
+{"key":"f578fe4cb5373977","text":"你唯一需要的下載器，下載器的集大成者。"}
+{"key":"f5a7d8495426af45","text":"以 Rust 重寫的 Postgres，現在比 Postgres 與 ClickHouse 更快。"}
+{"key":"f635ebee35df0721","text":"除了 Notion 和 Miro，你還有更好的選擇。AFFiNE (發音為 [ə‘fain]) 是一個次世代的知識庫，將規劃、整理與創作完美結合。主打隱私優先、開源、高度可自訂且開箱即用。"}
+{"key":"f76e3be56cf1eb8f","text":"用程式碼做的影片：短片、YouTube 長片、廣告、說明影片與 MV。AI 程式開發 agent 撰寫腳本、用程式碼建構每一格畫面、設計音效，最後交給你一個 MP4。"}
+{"key":"f880a5cf6e5c0e41","text":"附虛擬機器供 bot 使用的開源 Grok Bot 替代方案。"}
+{"key":"f88dcb6993795629","text":"為 Claude Code、Codex、GitHub Copilot、Cursor、Factory Droid、Qoder 與 Pi 設計的編輯風圖表。包含 52 種圖表類型。獨立的 HTML + SVG。無陰影。無 Mermaid 雜訊。"}
+{"key":"fa0a77c0b8b8bc5d","text":"🔎 開源的分散式 RESTful 搜尋引擎。"}
+{"key":"fa5159714dd206df","text":"宣告式、高效且彈性的 JavaScript 使用者介面函式庫。"}
+{"key":"fdaa1fdd01a58907","text":"專注於 APK 的雙窗格 Android 檔案管理器。"}
+{"key":"fe59385fb0c5b5cf","text":"WorkBuddy、CodeBuddy 桌面版增強助理：簽到貓貓旅行成長計畫查詢、多帳號獨立備份、點選即切換；勿擾模式讓 AI 無人值守執行長任務；跨帳號對話遷移、異常中斷自動接續；暫存與快捷提示詞；毛玻璃主題等更多實用功能。"}
+{"key":"ff0b659d9ab20378","text":"「雲端儲存版的 rsync」：支援 Google Drive、S3、Dropbox、Backblaze B2、OneDrive、Swift、Hubic、Wasabi、Google Cloud Storage、Azure Blob、Azure Files、Yandex Files。"}
+{"key":"ff2f7d7811251e5f","text":"適用 Windows、Linux、Hackintosh 與所有可從 EFI 開機系統的 UEFI 預載驅動 NVIDIA GPU 解鎖工具（Rust）：SEC2 清除 → FWSEC/WPR2 → 簽章 Booter → V67 四次寫入 payload，並讀回驗證。已在大多數 RTX 20、30、40 系列上驗證。"}
