@@ -255,6 +255,14 @@ def test_repo_names_are_escaped() -> None:
     assert "基準資料不足" in text
 
 
+@pytest.mark.parametrize(
+    ("baseline", "expected"), [(0.0, "近期平均 +0.0/日"), (-3.4, "近期平均 -3.4/日")]
+)
+def test_alert_baseline_sign(baseline: float, expected: str) -> None:
+    text = format_alert(D1, AlertLine(RepoLine("R", "o/a", None, None, 1), 300, baseline))
+    assert expected in text
+
+
 def test_missing_day_reminder_does_not_block_real_summary(
     world: tuple[Any, Path], cfg: Config, tmp_path: Path
 ) -> None:

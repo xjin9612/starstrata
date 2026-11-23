@@ -170,7 +170,7 @@ def alert_message(
 
 def format_alert(day: date, alert: AlertLine, translations: Mapping[str, str] | None = None) -> str:
     repo = alert.repo
-    baseline = "基準資料不足" if alert.baseline is None else f"近期平均 +{alert.baseline:,.1f}/日"
+    baseline = "基準資料不足" if alert.baseline is None else f"近期平均 {alert.baseline:+,.1f}/日"
     lines = [
         f"🔥 <b>爆紅警示</b> {day.isoformat()}",
         _link(repo.full_name),
