@@ -3,7 +3,6 @@
 const DATA_BASE = 'data/';      // 正式資料位置，格式見 Design System 的「資料格式」
 const PAGE_SIZE = 24;          // 新上榜每次多顯示的筆數
 const SKELETON_DELAY = 150;     // 載入超過這個毫秒數才顯示骨架，避免閃爍
-const GITHUB_REPO = 'https://github.com/xjin9612/starstrata';
 
 class NotFound extends Error {}
 const cache = new Map();
