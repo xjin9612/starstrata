@@ -322,6 +322,27 @@ def test_consecutive_trending_failures_stop_fetching(
     assert run["sources"]["trending"]["errors"][-1] == "連續多頁失敗，停止抓取 Trending"  # type: ignore[index]
 
 
+def test_empty_trending_pages_count_as_consecutive_failures(
+    fake_github: FakeGitHub, cfg: Config, tmp_path: Path
+) -> None:
+    _setup_basic(fake_github)
+    del fake_github.trending_pages["/trending?since=daily"]
+    langs = ("rust", "go", "java", "python", "c")
+    many = replace(cfg, trending=TrendingConfig(languages=langs, periods=("daily",)))
+    fake_github.trending_status["/trending/java?since=daily"] = 404
+    run = _run(fake_github, many, tmp_path)
+    pages = [r.url.path for r in fake_github.requests if r.url.path.startswith("/trending")]
+    # 總榜空頁後 rust 成功，計數歸零；go 空頁、java 404、python 空頁連續 3 次後停止
+    assert pages == [
+        "/trending",
+        "/trending/rust",
+        "/trending/go",
+        "/trending/java",
+        "/trending/python",
+    ]
+    assert run["sources"]["trending"]["errors"][-1] == "連續多頁失敗，停止抓取 Trending"  # type: ignore[index]
+
+
 def test_consecutive_batch_failures_stop_querying(
     fake_github: FakeGitHub, cfg: Config, tmp_path: Path
 ) -> None:

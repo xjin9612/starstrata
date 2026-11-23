@@ -91,15 +91,17 @@ def _collect_trending(
             page = fetch_trending(client, language=language, period=period)
         except Exception as e:  # 任何例外都只讓這一頁失敗，其他頁面與資料來源照常寫入。
             status.errors.append(f"{label}: {_describe(e)}")
+            page = []
+        else:
+            if not page:
+                status.errors.append(f"{label}: 解析結果為 0 筆")
+        if not page:
             failures += 1
             if failures >= MAX_CONSECUTIVE_PAGE_FAILURES:
                 status.errors.append("連續多頁失敗，停止抓取 Trending")
                 break
             continue
         failures = 0
-        if not page:
-            status.errors.append(f"{label}: 解析結果為 0 筆")
-            continue
         entries.extend(page)
         fetched.add((language, period))
     status.count = len(entries)

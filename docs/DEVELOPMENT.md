@@ -277,7 +277,7 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 - token 只送到 `api.github.com`，抓 Trending 頁面不帶 token。
 - 收到額度用盡的回應時，停止該資料來源，已取得的資料照常寫入。
 - 5xx 與連線錯誤重試 3 次，間隔指數增加。
-- Trending 連續 3 頁失敗時停止抓取。GraphQL 每一批獨立處理：一批失敗時記錄錯誤，繼續查下一批；連續 3 批失敗時停止查詢。只影響單一 repo 的錯誤不影響同批其他 repo。
+- Trending 連續 3 頁失敗時停止抓取，解析為 0 筆的頁面也算失敗。GraphQL 每一批獨立處理：一批失敗時記錄錯誤，繼續查下一批；連續 3 批失敗時停止查詢。只影響單一 repo 的錯誤不影響同批其他 repo。
 - Trending 與 Search 抓完就先寫檔，查完 repo 後再以正式名稱改寫 `trending.jsonl`；查 repo 時被中斷，當天的 Trending 與 Search 仍會保留。
 - 任何例外都只讓所屬的 Trending 頁面或資料來源失敗，其他來源照常寫入。
 - Search API 只提供前 1000 筆，翻頁不超過第 1000 筆。
