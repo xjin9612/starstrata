@@ -63,13 +63,21 @@ async function getJSON(path) {
   return response.json();
 }
 
+// 有譯文時顯示譯文，滑鼠停留顯示原文。
+function description(tag, item) {
+  if (!item.description) return null;
+  if (!item.description_zh) return el(tag, { class: "desc" }, item.description);
+  return el(tag, { class: "desc", title: `原文：${item.description}` },
+    item.description_zh, " ", el("span", { class: "ai-mark" }, "AI 翻譯"));
+}
+
 function repoCell(item) {
   return el(
     "td",
     {},
     repoLink(item.full_name, item.node_id),
     item.language ? el("span", { class: "lang" }, ` · ${item.language}`) : null,
-    item.description ? el("div", { class: "desc" }, item.description) : null,
+    description("div", item),
   );
 }
 
@@ -160,7 +168,7 @@ function viewAlerts() {
     el("tr", {},
       el("td", {}, a.date),
       el("td", {}, el("span", { class: "badge" }, "爆紅"), " ", repoLink(a.full_name, a.node_id),
-        a.description ? el("div", { class: "desc" }, a.description) : null),
+        description("div", a)),
       el("td", { class: "num up" }, `+${fmt(a.daily_stars)}`),
       el("td", { class: "num" }, a.baseline === null ? "資料不足" : `+${NUM.format(Math.round(a.baseline * 10) / 10)}`),
     ),
@@ -375,7 +383,7 @@ async function viewRepo(nodeId) {
     el("p", {}, el("a", { href: "#/" }, "← 返回")),
     el("div", { class: "repo-head" },
       el("h1", {}, repo.full_name, " ", el("small", {}, githubLink(repo.full_name))),
-      repo.description ? el("p", {}, repo.description) : null,
+      description("p", repo),
       repo.topics.length ? el("div", { class: "topics" }, repo.topics.map((t) => el("span", {}, t))) : null,
     ),
     el("div", { class: "tiles" },

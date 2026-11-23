@@ -128,6 +128,7 @@ th { color: var(--text-2); font-weight: 500; font-size: 12px; white-space: nowra
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 td .desc { color: var(--text-2); font-size: 13px; margin-top: 2px; }
 td .lang { color: var(--muted); font-size: 12px; }
+.ai-mark { color: var(--muted); font-size: 11px; white-space: nowrap; }
 .up { color: var(--good); }
 .empty { color: var(--muted); padding: 24px 0; }
 

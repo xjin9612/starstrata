@@ -62,6 +62,13 @@ def test_empty_language_list_means_overall_only() -> None:
         ("model", '""', "reports.model: 必須是非空字串"),
         ("provider", '"openai"', "reports.provider: 無效的值 'openai'"),
         ("model", '"../x"', "reports.model: 只能包含小寫英數字、點與連字號"),
+        ("fallback_models", '["../x"]', "reports.fallback_models: 只能包含小寫英數字"),
+        ("fallback_models", '["gemini-3.5-flash-lite"]', "reports.fallback_models: 不可包含"),
+        ("fallback_models", '"x"', "reports.fallback_models: 必須是非空字串組成的陣列"),
+        ("batch_size", "0", "translation.batch_size: 必須是 1 到 100"),
+        ("request_interval_seconds", "-1", "translation.request_interval_seconds: 必須是 0.0 以上"),
+        ("max_per_run", "5001", "translation.max_per_run: 必須是 0 到 5000"),
+        ("trending_top", "26", "notify.trending_top: 必須是 1 到 25"),
     ],
 )
 def test_invalid_values_are_rejected(key: str, value: str, message: str) -> None:
@@ -111,3 +118,11 @@ def test_empty_site_url_is_allowed() -> None:
 def test_missing_file_is_config_error(tmp_path: Path) -> None:
     with pytest.raises(ConfigError, match="無法讀取設定檔"):
         load_config(tmp_path / "nope.toml")
+
+
+def test_fallback_models_only_for_gemini() -> None:
+    text = _replace(_repo_config_text(), "provider", '"anthropic"')
+    with pytest.raises(ConfigError, match=re.escape("reports.fallback_models: 只能用於 gemini")):
+        parse_config(text)
+    cfg = parse_config(_replace(text, "fallback_models", "[]"))
+    assert cfg.reports.models == (cfg.reports.model,)

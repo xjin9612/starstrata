@@ -14,6 +14,7 @@ from starstrata.config import Config, load_config
 from starstrata.ingest import sync
 from starstrata.site import build_site, repo_series
 from starstrata.snapshots import node_file_stem, write_jsonl
+from starstrata.translate import text_key
 from tests.snapshot_builder import meta, repo, search, trending, write_day
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -186,3 +187,33 @@ def test_cli_site_copies_web_and_icon(tmp_path: Path) -> None:
         "icon.svg",
         "data",
     }
+
+
+def test_translations_are_added_when_different(cfg: Config, tmp_path: Path) -> None:
+    data = tmp_path / "data"
+    write_day(
+        data,
+        date(2026, 11, 1),
+        repos=[
+            repo("R_a", 10, full_name="o/a", meta=meta(description="English")),
+            repo("R_b", 5, full_name="o/b", meta=meta(description="已是中文")),
+            repo("R_c", 1, full_name="o/c", meta=meta(description="Untranslated")),
+        ],
+        search_rows=[search("R_a", "o/a"), search("R_b", "o/b", 2), search("R_c", "o/c", 3)],
+    )
+    sync(tmp_path / "db.sqlite", cfg, data)
+    web = tmp_path / "web"
+    web.mkdir()
+    translations = {text_key("English"): "英文", text_key("已是中文"): "已是中文"}
+    conn = db.connect(tmp_path / "db.sqlite")
+    try:
+        build_site(conn, cfg, tmp_path / "_site", web, NOW, translations)
+    finally:
+        conn.close()
+    latest = _read(tmp_path / "_site" / "data" / "latest.json")
+    assert [(r["full_name"], r["description_zh"]) for r in latest["new_repos"]] == [
+        ("o/a", "英文"),
+        ("o/b", None),
+        ("o/c", None),
+    ]
+    assert _read(_repo_json(tmp_path / "_site", "R_a"))["description_zh"] == "英文"

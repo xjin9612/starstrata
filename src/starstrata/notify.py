@@ -5,7 +5,7 @@ from __future__ import annotations
 import html
 import json
 import sqlite3
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -26,6 +26,7 @@ from starstrata.queries import (
 )
 from starstrata.snapshots import day_dir, write_json
 from starstrata.telegram import Button
+from starstrata.translate import lookup
 
 NOTIFIED_FILE = "notified.json"
 DESCRIPTION_LIMIT = 120
@@ -58,6 +59,8 @@ class SummaryData:
     gainers: list[RepoLine]
     new_ids: frozenset[str]
     alert_ids: frozenset[str]
+    # 說明的鍵 → 繁體中文譯文，見 translate.text_key。
+    translations: Mapping[str, str] = field(default_factory=dict)
 
 
 def _link(full_name: str) -> str:
@@ -109,8 +112,9 @@ def _trending_lines(data: SummaryData) -> list[str]:
             lines.append(f"{MEDALS[i]} {_link(t.full_name)}{_marks(t.node_id, data)}")
             detail = [f"{gain} 今日"] if gain else []
             lines.append(INDENT + " · ".join(detail + facts))
-            if t.description:
-                lines.append(INDENT + _description(t.description, TOP_DESCRIPTION_LIMIT))
+            description = lookup(data.translations, t.description) or t.description
+            if description:
+                lines.append(INDENT + _description(description, TOP_DESCRIPTION_LIMIT))
         else:
             head = f"{i + 1}. {_link(t.full_name)}{_marks(t.node_id, data)}"
             lines.append(f"{head}  {gain}" if gain else head)
@@ -155,14 +159,16 @@ def repo_page_url(site_url: str, node_id: str) -> str:
     return f"{site_url}#/repo/{quote(node_id, safe='')}"
 
 
-def alert_message(cfg: NotifyConfig, day: date, alert: AlertLine) -> Message:
+def alert_message(
+    cfg: NotifyConfig, day: date, alert: AlertLine, translations: Mapping[str, str] | None = None
+) -> Message:
     buttons = [Button("GitHub", f"https://github.com/{quote(alert.repo.full_name)}")]
     if cfg.site_url:
         buttons.append(Button("詳細頁", repo_page_url(cfg.site_url, alert.repo.node_id)))
-    return Message(format_alert(day, alert), silent=False, buttons=tuple(buttons))
+    return Message(format_alert(day, alert, translations), silent=False, buttons=tuple(buttons))
 
 
-def format_alert(day: date, alert: AlertLine) -> str:
+def format_alert(day: date, alert: AlertLine, translations: Mapping[str, str] | None = None) -> str:
     repo = alert.repo
     baseline = "基準資料不足" if alert.baseline is None else f"近期平均 +{alert.baseline:,.1f}/日"
     lines = [
@@ -177,8 +183,9 @@ def format_alert(day: date, alert: AlertLine) -> str:
         detail.append(html.escape(repo.language))
     if detail:
         lines.append(" · ".join(detail))
-    if repo.description:
-        lines.append(_description(repo.description))
+    description = lookup(translations or {}, repo.description) or repo.description
+    if description:
+        lines.append(_description(description))
     return "\n".join(lines)
 
 
@@ -196,6 +203,8 @@ def notify(
     day: date,
     data_root: Path,
     send: Callable[[Message], None],
+    *,
+    translations: Mapping[str, str] | None = None,
 ) -> NotifyResult:
     """發送 day 的摘要與每則警示。
 
@@ -221,6 +230,7 @@ def notify(
                 gainers=top_gainers(conn, day, cfg.top_gainers),
                 new_ids=frozenset(r.node_id for r in new_repos(conn, day)),
                 alert_ids=frozenset(a.repo.node_id for a in alerts),
+                translations=translations or {},
             )
             if ingested
             else None
@@ -233,7 +243,7 @@ def notify(
     for alert in alerts:
         if alert.repo.node_id in sent_alerts:
             continue
-        send(alert_message(cfg, day, alert))
+        send(alert_message(cfg, day, alert, translations))
         sent_alerts.append(alert.repo.node_id)
         result.alerts_sent.append(alert.repo.node_id)
         save()

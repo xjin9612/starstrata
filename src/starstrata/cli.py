@@ -12,7 +12,7 @@ from collections.abc import Sequence
 from datetime import UTC, date, datetime
 from pathlib import Path
 
-from starstrata import db, notify, reports, tracking
+from starstrata import db, notify, reports, tracking, translate
 from starstrata.backfill import run_backfill
 from starstrata.collect import collect, run_date
 from starstrata.config import Config, ConfigError, ReportsConfig, load_config
@@ -116,6 +116,7 @@ def cmd_notify(args: argparse.Namespace, cfg: Config) -> int:
                 day,
                 args.data,
                 lambda m: sender.send(m.text, silent=m.silent, buttons=m.buttons),
+                translations=translate.load(args.data),
             )
     except TelegramError as e:
         log.error("Telegram 發送失敗：%s", e)
@@ -156,7 +157,9 @@ def cmd_site(args: argparse.Namespace, cfg: Config) -> int:
     _report_sync(sync(args.db, cfg, args.data))
     conn = db.connect(args.db)
     try:
-        stats = build_site(conn, cfg, args.out, args.web, datetime.now(UTC))
+        stats = build_site(
+            conn, cfg, args.out, args.web, datetime.now(UTC), translate.load(args.data)
+        )
     finally:
         conn.close()
     if args.icon.is_file():
@@ -173,17 +176,17 @@ def cmd_site(args: argparse.Namespace, cfg: Config) -> int:
 def _interpreter(cfg: ReportsConfig) -> reports.Interpreter | None:
     """依設定的供應商建立解讀函式；沒有對應的 API key 時回傳 None。"""
     if cfg.provider == "gemini":
-        return _gemini_interpreter(cfg.model)
+        return _gemini_interpreter(cfg.models)
     return _claude_interpreter(cfg.model)
 
 
-def _gemini_interpreter(model: str) -> reports.Interpreter | None:
+def _gemini_interpreter(models: Sequence[str]) -> reports.Interpreter | None:
     api_key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not api_key:
         return None
 
     def interpret(prompt: str, expected: Sequence[str]) -> dict[str, reports.Interpretation]:
-        return reports.interpret_with_gemini(api_key, model, prompt, expected)
+        return reports.interpret_with_gemini(api_key, models, prompt, expected)
 
     return interpret
 
@@ -204,6 +207,64 @@ def _claude_interpreter(model: str) -> reports.Interpreter | None:
             raise reports.InterpretError("無法連線到 Claude API") from e
 
     return interpret
+
+
+def _translator(cfg: ReportsConfig) -> translate.Translator | None:
+    """依 reports 的供應商建立翻譯函式；沒有對應的 API key 時回傳 None。"""
+    if cfg.provider == "gemini":
+        api_key = os.environ.get("GEMINI_API_KEY", "").strip()
+        if not api_key:
+            return None
+        models = cfg.models
+        return lambda batch: translate.translate_with_gemini(api_key, models, batch)
+    if not os.environ.get("ANTHROPIC_API_KEY", "").strip():
+        return None
+    import anthropic
+
+    client = anthropic.Anthropic()
+
+    def run(batch: Sequence[tuple[str, str]]) -> dict[str, str]:
+        try:
+            return translate.translate_with_claude(client, cfg.model, batch)
+        except anthropic.APIStatusError as e:
+            raise translate.TranslateError(f"API 回應 {e.status_code}") from e
+        except anthropic.APIConnectionError as e:
+            raise translate.TranslateError("無法連線到 Claude API") from e
+
+    return run
+
+
+def cmd_translate(args: argparse.Namespace, cfg: Config) -> int:
+    """翻譯失敗只記警告並回傳 0：沒有譯文時各處顯示原文，下次執行再補。"""
+    if cfg.translation.max_per_run == 0:
+        log.info("translation.max_per_run 為 0，略過翻譯")
+        return 0
+    translator = _translator(cfg.reports)
+    if translator is None:
+        log.warning("未設定 %s 的 API key，略過翻譯", cfg.reports.provider)
+        return 0
+    _report_sync(sync(args.db, cfg, args.data))
+    conn = db.connect(args.db)
+    try:
+        result = translate.translate_pending(
+            conn,
+            args.data,
+            translator,
+            batch_size=cfg.translation.batch_size,
+            max_per_run=cfg.translation.max_per_run,
+            interval_seconds=cfg.translation.request_interval_seconds,
+        )
+    finally:
+        conn.close()
+    log.info(
+        "翻譯 %d 則、失敗 %d 則，剩下 %d 則還沒有譯文",
+        result.translated,
+        result.failed,
+        result.remaining,
+    )
+    if result.error:
+        log.warning("連續失敗，提前停止：%s", result.error)
+    return 0
 
 
 def cmd_report(args: argparse.Namespace, cfg: Config) -> int:
@@ -243,7 +304,11 @@ def cmd_report(args: argparse.Namespace, cfg: Config) -> int:
                     conn,
                     period,
                     llm_top_n=cfg.reports.llm_top_n,
-                    model=cfg.reports.model,
+                    model=reports.model_label(
+                        cfg.reports.models
+                        if cfg.reports.provider == "gemini"
+                        else [cfg.reports.model]
+                    ),
                     base_lookback_days=cfg.tracking.dormant_snapshot_interval_days,
                     interpreter=interpreter,
                     fetch_readme=client.get_readme if token else None,
@@ -288,6 +353,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_site.add_argument("--out", type=Path, default=Path("_site"), help="輸出目錄，會先清空")
     p_site.add_argument("--web", type=Path, default=Path("web"), help="前端靜態檔目錄")
     p_site.add_argument("--icon", type=Path, default=Path("assets/icon.svg"))
+    sub.add_parser(
+        "translate", help="把 repo 說明翻成繁體中文（需要 GEMINI_API_KEY 或 ANTHROPIC_API_KEY）"
+    )
     p_notify = sub.add_parser(
         "notify", help="發送每日摘要與爆紅警示（需要 TELEGRAM_BOT_TOKEN、TELEGRAM_CHAT_ID）"
     )
@@ -303,6 +371,7 @@ _COMMANDS = {
     "backfill": cmd_backfill,
     "site": cmd_site,
     "report": cmd_report,
+    "translate": cmd_translate,
 }
 
 

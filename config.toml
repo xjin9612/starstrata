@@ -52,5 +52,16 @@ site_url = "https://xjin9612.github.io/starstrata/"
 provider = "gemini"
 # 供應商的模型名稱，例如 gemini-3.5-flash-lite 或 claude-opus-5-5。
 model = "gemini-3.5-flash-lite"
+# model 重試後仍回應 429、5xx 或找不到時依序改用的模型，只用於 gemini；anthropic 設為 []。
+fallback_models = ["gemini-3.5-flash"]
 # 報告中由模型解讀的前幾名專案，上限 20；0 表示不解讀。
 llm_top_n = 10
+
+[translation]
+# repo 說明翻成繁體中文，沿用 [reports] 的 provider 與 model。
+# 每次請求送出的說明則數，上限 100。Gemini 免費方案一次送多則時常回應 503，所以設為 1。
+batch_size = 1
+# 每次執行最多翻譯幾則說明，上限 5000；0 表示不翻譯。daily workflow 的翻譯步驟逾時為 10 分鐘。
+max_per_run = 60
+# 兩次請求之間等待的秒數，避免超過每分鐘的請求上限。
+request_interval_seconds = 4

@@ -24,7 +24,7 @@ starstrata 每日收集 GitHub 趨勢資料，保存成長期的時間序列。
    | `GH_PAT` | 是 | fine-grained personal access token，不需授予任何權限 |
    | `TELEGRAM_BOT_TOKEN` | 否 | Telegram bot token；未設定時不發送通知 |
    | `TELEGRAM_CHAT_ID` | 否 | 接收通知的 chat ID |
-   | `GEMINI_API_KEY` | 否 | 週報、月報的中文解讀（預設供應商）；未設定時報告不含解讀 |
+   | `GEMINI_API_KEY` | 否 | repo 說明的中文翻譯、週報與月報的中文解讀（預設供應商）；未設定時顯示原文，報告不含解讀 |
    | `ANTHROPIC_API_KEY` | 否 | `config.toml` 的 `reports.provider` 改為 `anthropic` 時使用 |
 
    `GEMINI_API_KEY` 在 [Google AI Studio](https://aistudio.google.com) 免費建立。

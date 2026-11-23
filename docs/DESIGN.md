@@ -24,6 +24,7 @@
 | `notify` | 每日摘要與爆紅警示 |
 | `reports` | 週報、月報與 AI 中文解讀 |
 | `gemini` | 呼叫 Gemini API 取得 JSON 回應 |
+| `translate` | 把 repo 說明翻成繁體中文 |
 | `site` | 從 SQLite 產生 dashboard |
 | `cli` | 命令列入口 |
 
@@ -35,7 +36,8 @@ dashboard 前端放在 `web/`，是純 HTML/JS/CSS，不經過建置。
 flowchart TD
   DL[下載 Release 的 SQLite] --> COL[collect：先 ingest，再寫當天 JSONL]
   COL --> ING[ingest：匯入當天快照]
-  ING --> BF[backfill：回補歷史 star 曲線]
+  ING --> TR[translate：翻譯 repo 說明]
+  TR --> BF[backfill：回補歷史 star 曲線]
   BF --> ING2[ingest：匯入回補檔]
   ING2 --> RPT{有該產生的報告?}
   RPT -- 是 --> GEN[產生報告]
@@ -65,6 +67,7 @@ flowchart TD
 | `starstrata backfill` | 在每日預算內回補歷史 star 曲線，再匯入 SQLite |
 | `starstrata report due\|weekly\|monthly` | 產生週報或月報 |
 | `starstrata site` | 產生 dashboard JSON 到 `_site/` |
+| `starstrata translate` | 翻譯還沒有譯文的 repo 說明 |
 
 共用參數：`--config`（預設 `config.toml`）、`--data`（預設 `data`）、`--db`（預設 `starstrata.sqlite`）。
 
@@ -76,6 +79,8 @@ flowchart TD
 | `0` | 成功 |
 | `1` | `collect` 有資料來源失敗或匯入失敗、`backfill` 遇到 API 額度用盡、`report` 的解讀失敗，或 `notify` 發送失敗；已取得的資料照常寫入 |
 | `2` | 設定錯誤或缺少環境變數，沒有執行任何工作 |
+
+`translate` 除了設定錯誤以外一律回傳 `0`，翻譯失敗只記警告。
 
 ## 快照格式
 
@@ -132,6 +137,27 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 - 翻頁期間跨入新的一週時，頁面內容往後位移一週，同一週會出現在兩頁；保留先抓到的那筆。
 - API 只計入目前仍給 star 的使用者。各週加總等於當下的 star 數。
 - `ingest` 依檔案雜湊同步回補資料：新增或改變的檔案重新匯入，刪除的檔案移除。回補資料不影響追蹤狀態與警示。
+
+### 說明譯文
+
+- 路徑：`data/translations.jsonl`。每行是 `key` 與 `text`，依 `key` 排序。
+- `key` 是說明文字正規化空白後 SHA-256 的前 16 個十六進位字元。說明改變時 `key` 跟著改變，需要重新翻譯；舊譯文保留。
+- `text` 是繁體中文譯文。原文已是繁體中文時，譯文與原文相同。
+- `data/translation_failures.json` 記錄各 `key` 翻譯失敗的累計次數，鍵依字母排序；沒有失敗紀錄時刪除這個檔。
+- 譯文由模型產生，每次結果不同，所以存檔並 commit，不在重建 DB 時重新產生。SQLite 不存譯文，`notify` 與 `site` 直接讀這個檔。
+
+`translate` 的流程：
+
+- 待翻譯清單是 DB 中有說明、但說明還沒有譯文的 repo。最近有快照、star 數多的優先，同一段說明只翻一次。
+- 每次最多翻 `translation.max_per_run` 則，每批 `translation.batch_size` 則，兩批之間等 `translation.request_interval_seconds` 秒。模型的供應商與名稱沿用 `[reports]`。
+- 預設每批 1 則。實測 Gemini 免費方案一次送 5 則以上時回應 503，送 1 則成功。
+- 每批結束就寫檔。一批失敗時記下失敗次數並繼續下一批；連續 3 批失敗時停止，通常代表服務暫時無法使用。
+- 失敗累計 3 次以上的說明排到待翻譯清單最後，不擋住其他說明。翻譯成功後移除失敗紀錄。
+- 每處理 10 則記錄一次進度。
+- 每次請求等待回應 30 秒；報告解讀的提示含 README，等待 120 秒。
+- 模型漏回或格式不符的項目不採用，計為失敗，下次再翻。譯文超過 600 字元視為異常，不採用。
+- 說明是 repo 作者寫的內容，提示中標明為資料，不照其中的要求做。
+- 沒有對應的 API key 或 `max_per_run` 為 `0` 時略過。
 
 ## SQLite
 
@@ -225,6 +251,7 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 | `data/repos/<hex>.json` | 單一 repo 的 meta、star 累計點、每日新增 star、Trending 上榜紀錄；`<hex>` 與回補檔相同 |
 
 - 產生 repo 檔時依 `node_id` 排序逐一讀取，記憶體用量不隨資料量增長。
+- 帶有 `description` 的項目同時帶 `description_zh`。沒有譯文，或譯文與原文相同時為 `null`。前端顯示譯文並標示「AI 翻譯」，滑鼠停留時顯示原文。
 - star 累計點：第一筆快照之前用回補資料累加，之後用快照。每個點標記來源，`b` 為回補、`s` 為快照。
 - 每日新增 star：回補期間用回補資料；快照期間只在前一天也有快照時計算。
 - 前端是 `web/` 的純 HTML/JS/CSS，不經過建置。資料一律用 `textContent` 放進 DOM。
@@ -267,7 +294,8 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 
 - Gemini 回應的 `thought` part 是思考摘要，不採用。`finishReason` 不是 `STOP`、或 prompt 被擋下時視為失敗。
 - Gemini 免費方案送出的內容會被 Google 用來改進產品，也可能經人工審閱（[條款](https://aistudio.google.com/docs/terms)）。送出的只有公開 repo 的資料。
-- `reports.model` 只能包含小寫英數字、點與連字號，因為 Gemini 的模型名稱會放進網址路徑。
+- `reports.model` 與 `reports.fallback_models` 只能包含小寫英數字、點與連字號，因為 Gemini 的模型名稱會放進網址路徑。
+- `reports.fallback_models` 只用於 Gemini：`reports.model` 重試後仍回應 429 或 5xx、回應 404 或連線失敗時，依序改用清單中的模型。其他錯誤（例如 400、403、被擋下、輸出截斷）不換模型。報告的模型說明列出備用模型。
 
 未設定所選供應商的 API key 時，解讀段落寫 `> 未產生解讀：` 開頭的說明，報告視為完整，結束碼 `0`。
 
@@ -291,6 +319,7 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 
 - 標頭：日期與 `active` 狀態的 repo 數。
 - 今日新增最多：總榜今日 Trending 依今日新增 star 排序，取前 `notify.trending_top` 名。前 3 名以獎牌標示並附說明，說明截斷到 50 字元。
+- 說明有譯文時用譯文，警示也是。
 - 日增最多：追蹤中的 repo 與前一天快照相比，取前 `notify.top_gainers` 名。沒有資料時不顯示這個區塊。
 - repo 名稱後標記 🆕（`first_seen` 為當天）與 🔥（當天有爆紅警示）。
 - 結尾一行統計新上榜與爆紅數量；每則警示另發一則訊息。
@@ -325,7 +354,8 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 | 步驟 | 失敗時 |
 |---|---|
 | `collect`、`backfill`、`report`、`notify` | 後續步驟照常執行，job 最後標為失敗 |
-| `ingest` | 略過 `backfill`、`report`、`notify`、上傳 DB 與 dashboard；照常 push 快照 |
+| `ingest` | 略過 `translate`、`backfill`、`report`、`notify`、上傳 DB 與 dashboard；照常 push 快照 |
+| `translate` | 後續步驟照常執行，不影響 job 結果；沒有譯文的說明顯示原文 |
 | push | 重試 3 次；仍失敗時不上傳 DB |
 
 - push 步驟以 `always()` 執行，任何步驟失敗或 job 被取消後都會嘗試保住當天已收集的快照。

@@ -29,6 +29,7 @@ from starstrata.reports import (
     generate,
     has_missing,
     interpret_with_claude,
+    model_label,
     period_before,
 )
 from tests.snapshot_builder import meta, repo, search, write_day
@@ -537,3 +538,8 @@ def test_gainers_ignore_baseline_older_than_lookback(cfg: Config, tmp_path: Path
     finally:
         conn.close()
     assert result == [("o/old", 20)]
+
+
+def test_model_label() -> None:
+    assert model_label(["a"]) == "`a`"
+    assert model_label(["a", "b", "c"]) == "`a`（無法使用時改用 `b`、`c`）"

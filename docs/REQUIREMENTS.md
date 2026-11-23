@@ -128,6 +128,12 @@ stateDiagram-v2
 - 產生的 JSON 不 commit，由 Actions 直接部署。
 - 頁面：今日榜單、爆紅列表、語言篩選、repo star 曲線。
 
+### 說明翻譯
+
+- repo 說明翻成繁體中文，dashboard、每日摘要與警示顯示譯文，並保留原文可查看。
+- 翻譯沿用定期報告的模型供應商與模型名稱。
+- 翻譯失敗時顯示原文，下次執行再補，不讓每日執行失敗。
+
 ### Telegram
 
 - 每日摘要：今日 Trending 新增 star 前 10 名、追蹤中 repo 日增 star 前 10 名、新上榜與爆紅數量。靜音發送。
@@ -170,7 +176,8 @@ stateDiagram-v2
 - 爆紅判定與降頻門檻
 - 每日回補請求預算
 - 執行日期的時區
-- 中文解讀的模型供應商與模型名稱
+- 中文解讀與說明翻譯的模型供應商與模型名稱
+- 每次執行最多翻譯的說明則數
 
 祕密存在 GitHub Actions secrets：
 
@@ -179,8 +186,8 @@ stateDiagram-v2
 | `GH_PAT` | 呼叫 GitHub API 收集資料，額度每小時 5,000 次 |
 | `TELEGRAM_BOT_TOKEN` | Telegram Bot |
 | `TELEGRAM_CHAT_ID` | 推播對象 |
-| `GEMINI_API_KEY` | 報告的中文解讀（預設供應商） |
-| `ANTHROPIC_API_KEY` | 報告的中文解讀（改用 Claude 時） |
+| `GEMINI_API_KEY` | 說明翻譯與報告的中文解讀（預設供應商） |
+| `ANTHROPIC_API_KEY` | 說明翻譯與報告的中文解讀（改用 Claude 時） |
 
 內建的 `GITHUB_TOKEN` 只用於 commit、上傳 Release 與部署 Pages。
 它的 API 額度是每個 repo 每小時 1,000 次，比 PAT 少，不用於收集資料。
@@ -208,7 +215,7 @@ stateDiagram-v2
 | 排程 | GitHub Actions |
 | Dashboard 部署 | GitHub Pages |
 | 推播 | Telegram Bot API |
-| 中文解讀 | Gemini API（預設）或 Claude API |
+| 中文解讀與說明翻譯 | Gemini API（預設）或 Claude API |
 
 ## 範圍外
 

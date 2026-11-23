@@ -6,6 +6,7 @@ import itertools
 import json
 import shutil
 import sqlite3
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -15,6 +16,7 @@ from starstrata.config import Config
 from starstrata.db import OVERALL
 from starstrata.queries import RepoLine, new_repos, top_gainers
 from starstrata.snapshots import node_file_stem
+from starstrata.translate import lookup, normalize
 
 # 首頁列出的日增排行數量與爆紅警示天數。
 GAINERS_LIMIT = 50
@@ -37,18 +39,29 @@ def _latest(conn: sqlite3.Connection) -> date | None:
     return date.fromisoformat(row["d"]) if row["d"] else None
 
 
-def _repo_line(r: RepoLine) -> dict[str, Any]:
+def _zh(translations: Mapping[str, str], description: str | None) -> str | None:
+    """說明的繁體中文譯文；沒有譯文或譯文與原文相同時回傳 None，前端直接顯示原文。"""
+    text = lookup(translations, description)
+    if text is None or description is None or text == normalize(description):
+        return None
+    return text
+
+
+def _repo_line(r: RepoLine, translations: Mapping[str, str]) -> dict[str, Any]:
     return {
         "node_id": r.node_id,
         "full_name": r.full_name,
         "description": r.description,
+        "description_zh": _zh(translations, r.description),
         "language": r.language,
         "stars": r.stars,
         "delta": r.delta,
     }
 
 
-def _trending(conn: sqlite3.Connection, cfg: Config, day: date) -> list[dict[str, Any]]:
+def _trending(
+    conn: sqlite3.Connection, cfg: Config, day: date, translations: Mapping[str, str]
+) -> list[dict[str, Any]]:
     rows = conn.execute(
         "SELECT t.period, t.language, t.rank, t.full_name, t.node_id, t.stars_in_period, "
         "r.description, r.language AS repo_language, s.stars FROM trending_entries t "
@@ -67,6 +80,7 @@ def _trending(conn: sqlite3.Connection, cfg: Config, day: date) -> list[dict[str
                 "stars_in_period": r["stars_in_period"],
                 "stars": r["stars"],
                 "description": r["description"],
+                "description_zh": _zh(translations, r["description"]),
                 "language": r["repo_language"],
             }
         )
@@ -84,14 +98,16 @@ def _trending(conn: sqlite3.Connection, cfg: Config, day: date) -> list[dict[str
     ]
 
 
-def _alerts(conn: sqlite3.Connection, day: date) -> list[dict[str, Any]]:
+def _alerts(
+    conn: sqlite3.Connection, day: date, translations: Mapping[str, str]
+) -> list[dict[str, Any]]:
     rows = conn.execute(
         "SELECT a.date, a.node_id, a.daily_stars, a.baseline, r.full_name, r.description "
         "FROM alerts a JOIN repos r ON r.node_id = a.node_id "
         "WHERE a.date > ? ORDER BY a.date DESC, a.daily_stars DESC",
         ((day - timedelta(days=ALERT_DAYS)).isoformat(),),
     )
-    return [dict(r) for r in rows]
+    return [dict(r) | {"description_zh": _zh(translations, r["description"])} for r in rows]
 
 
 def _index(conn: sqlite3.Connection) -> list[list[Any]]:
@@ -149,9 +165,15 @@ def repo_series(
 
 
 def build_site(
-    conn: sqlite3.Connection, cfg: Config, out_dir: Path, web_dir: Path, generated_at: datetime
+    conn: sqlite3.Connection,
+    cfg: Config,
+    out_dir: Path,
+    web_dir: Path,
+    generated_at: datetime,
+    translations: Mapping[str, str] | None = None,
 ) -> SiteStats:
-    """清空 out_dir 後重新產生整個網站。"""
+    """清空 out_dir 後重新產生整個網站。translations 是說明的繁體中文譯文，見 translate.load。"""
+    translations = translations or {}
     if out_dir.exists():
         shutil.rmtree(out_dir)
     shutil.copytree(web_dir, out_dir)
@@ -169,10 +191,12 @@ def build_site(
         "alerts": [],
     }
     if latest:
-        summary["trending"] = _trending(conn, cfg, latest)
-        summary["new_repos"] = [_repo_line(r) for r in new_repos(conn, latest)]
-        summary["gainers"] = [_repo_line(r) for r in top_gainers(conn, latest, GAINERS_LIMIT)]
-        summary["alerts"] = _alerts(conn, latest)
+        summary["trending"] = _trending(conn, cfg, latest, translations)
+        summary["new_repos"] = [_repo_line(r, translations) for r in new_repos(conn, latest)]
+        summary["gainers"] = [
+            _repo_line(r, translations) for r in top_gainers(conn, latest, GAINERS_LIMIT)
+        ]
+        summary["alerts"] = _alerts(conn, latest, translations)
     _write(data / "latest.json", summary)
     _write(data / "index.json", _index(conn))
 
@@ -198,6 +222,7 @@ def build_site(
                 "node_id": node_id,
                 "full_name": r["full_name"],
                 "description": r["description"],
+                "description_zh": _zh(translations, r["description"]),
                 "topics": json.loads(r["topics"]) if r["topics"] else [],
                 "language": r["language"],
                 "archived": bool(r["archived"]),

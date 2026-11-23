@@ -6,7 +6,7 @@ from typing import Any
 import httpx
 import pytest
 
-from starstrata.gemini import GeminiError, generate_json
+from starstrata.gemini import GeminiError, generate_json, generate_json_with_fallback
 from starstrata.reports import Interpretation, InterpretError, interpret_with_gemini
 
 KEY = "test-gemini-key"
@@ -157,14 +157,71 @@ def test_interpret_with_gemini_parses_and_filters() -> None:
         ]
     }
     transport = _transport(_ok(json.dumps(payload)))
-    result = interpret_with_gemini(KEY, "m", "prompt", ["o/a", "o/b"], transport=transport)
+    result = interpret_with_gemini(KEY, ["m"], "prompt", ["o/a", "o/b"], transport=transport)
     assert result == {"o/a": Interpretation(what="w", why="y")}
 
 
 def test_interpret_with_gemini_wraps_errors() -> None:
     with pytest.raises(InterpretError, match="回應中止：SAFETY"):
         interpret_with_gemini(
-            KEY, "m", "p", ["o/a"], transport=_transport(_ok("", finish="SAFETY"))
+            KEY, ["m"], "p", ["o/a"], transport=_transport(_ok("", finish="SAFETY"))
         )
     with pytest.raises(InterpretError, match="Gemini 回應格式不符"):
-        interpret_with_gemini(KEY, "m", "p", ["o/a"], transport=_transport(_ok('{"items": 3}')))
+        interpret_with_gemini(KEY, ["m"], "p", ["o/a"], transport=_transport(_ok('{"items": 3}')))
+
+
+def _by_model(responses: dict[str, list[httpx.Response]], seen: list[str]) -> httpx.MockTransport:
+    def handler(request: httpx.Request) -> httpx.Response:
+        model = request.url.path.split("/models/")[1].split(":")[0]
+        seen.append(model)
+        return responses[model].pop(0)
+
+    return httpx.MockTransport(handler)
+
+
+def test_fallback_after_retries_exhausted(caplog: pytest.LogCaptureFixture) -> None:
+    seen: list[str] = []
+    transport = _by_model({"a": [httpx.Response(503)] * 3, "b": [_ok("{}")]}, seen)
+    text = generate_json_with_fallback(
+        KEY, ["a", "b"], "s", "p", SCHEMA, transport=transport, sleep=lambda s: None
+    )
+    assert text == "{}" and seen == ["a", "a", "a", "b"]
+    assert "a 無法使用" in caplog.text and "改用 b" in caplog.text
+
+
+def test_missing_model_falls_back_without_retry() -> None:
+    seen: list[str] = []
+    transport = _by_model({"a": [httpx.Response(404)], "b": [_ok("{}")]}, seen)
+    generate_json_with_fallback(
+        KEY, ["a", "b"], "s", "p", SCHEMA, transport=transport, sleep=lambda s: None
+    )
+    assert seen == ["a", "b"]
+
+
+@pytest.mark.parametrize(
+    "response",
+    [httpx.Response(400), httpx.Response(403), _ok("", finish="SAFETY")],
+)
+def test_non_retryable_errors_do_not_fall_back(response: httpx.Response) -> None:
+    seen: list[str] = []
+    transport = _by_model({"a": [response], "b": [_ok("{}")]}, seen)
+    with pytest.raises(GeminiError):
+        generate_json_with_fallback(
+            KEY, ["a", "b"], "s", "p", SCHEMA, transport=transport, sleep=lambda s: None
+        )
+    assert seen == ["a"]
+
+
+def test_all_models_failing_raises_last_error() -> None:
+    seen: list[str] = []
+    transport = _by_model({"a": [httpx.Response(429)] * 3, "b": [httpx.Response(404)]}, seen)
+    with pytest.raises(GeminiError, match="404"):
+        generate_json_with_fallback(
+            KEY, ["a", "b"], "s", "p", SCHEMA, transport=transport, sleep=lambda s: None
+        )
+
+
+@pytest.mark.parametrize("models", ["ab", []])
+def test_models_must_be_a_non_empty_list(models: Any) -> None:
+    with pytest.raises(GeminiError, match="models 必須是非空的模型名稱清單"):
+        generate_json_with_fallback(KEY, models, "s", "p", SCHEMA, transport=_transport())

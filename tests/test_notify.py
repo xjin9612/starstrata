@@ -23,6 +23,7 @@ from starstrata.notify import (
 )
 from starstrata.queries import AlertLine, RepoLine
 from starstrata.telegram import Button
+from starstrata.translate import text_key
 from tests.snapshot_builder import meta, repo, search, trending, write_day
 
 D1 = date(2026, 11, 1)
@@ -157,6 +158,16 @@ def test_trending_is_ordered_by_gain(cfg: Config, tmp_path: Path) -> None:
     ]
     assert section[9] == "      Python · ★1.5M"
     assert "o/r2" not in sent[0].text
+
+
+def test_translations_replace_descriptions(world: tuple[Any, Path]) -> None:
+    conn, data = world
+    sent: Sent = []
+    translations = {text_key("desc"): "說明", text_key("A <tool> & more"): "工具 <與> 更多"}
+    notify(conn, NOTIFY, day(4), data, sent.append, translations=translations)
+    summary, alert = (m.text for m in sent)
+    assert "      說明" in summary.split("\n")
+    assert "工具 &lt;與&gt; 更多" in alert
 
 
 def test_failure_mid_way_does_not_resend(world: tuple[Any, Path]) -> None:

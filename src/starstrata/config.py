@@ -75,7 +75,24 @@ REPORT_PROVIDERS = ("gemini", "anthropic")
 class ReportsConfig:
     provider: str
     model: str
+    # 只用於 gemini：model 重試後仍無法使用時依序改用。anthropic 由伺服器端 fallback 處理。
+    fallback_models: tuple[str, ...]
     llm_top_n: int
+
+    @property
+    def models(self) -> tuple[str, ...]:
+        return (self.model, *self.fallback_models)
+
+
+@dataclass(frozen=True)
+class TranslationConfig:
+    """說明翻譯沿用 reports 的 provider 與 model。"""
+
+    batch_size: int
+    # 0 表示不翻譯。
+    max_per_run: int
+    # 兩次請求之間等待的秒數。
+    request_interval_seconds: float
 
 
 @dataclass(frozen=True)
@@ -88,6 +105,7 @@ class Config:
     backfill: BackfillConfig
     notify: NotifyConfig
     reports: ReportsConfig
+    translation: TranslationConfig
 
 
 class _Section:
@@ -257,10 +275,32 @@ def _reports(root: dict[str, Any]) -> ReportsConfig:
     model = s.get_str("model")
     if not MODEL_PATTERN.fullmatch(model):
         raise ConfigError(f"reports.model: 只能包含小寫英數字、點與連字號，目前是 {model!r}")
+    fallback_models = s.get_str_list("fallback_models")
+    for name in fallback_models:
+        if not MODEL_PATTERN.fullmatch(name):
+            raise ConfigError(
+                f"reports.fallback_models: 只能包含小寫英數字、點與連字號，目前是 {name!r}"
+            )
+    if model in fallback_models:
+        raise ConfigError("reports.fallback_models: 不可包含 reports.model")
+    if fallback_models and provider != "gemini":
+        raise ConfigError("reports.fallback_models: 只能用於 gemini，anthropic 請設為 []")
     cfg = ReportsConfig(
         provider=provider,
         model=model,
+        fallback_models=fallback_models,
         llm_top_n=s.get_int("llm_top_n", minimum=0, maximum=20),
+    )
+    s.finish()
+    return cfg
+
+
+def _translation(root: dict[str, Any]) -> TranslationConfig:
+    s = _Section(root, "translation")
+    cfg = TranslationConfig(
+        batch_size=s.get_int("batch_size", minimum=1, maximum=100),
+        max_per_run=s.get_int("max_per_run", minimum=0, maximum=5_000),
+        request_interval_seconds=s.get_float("request_interval_seconds", minimum=0.0),
     )
     s.finish()
     return cfg
@@ -275,6 +315,7 @@ _SECTIONS = (
     "backfill",
     "notify",
     "reports",
+    "translation",
 )
 
 
@@ -296,6 +337,7 @@ def parse_config(text: str) -> Config:
         backfill=_backfill(root),
         notify=_notify(root),
         reports=_reports(root),
+        translation=_translation(root),
     )
 
 

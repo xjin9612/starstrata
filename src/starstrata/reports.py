@@ -197,6 +197,14 @@ def _link(full_name: str) -> str:
     return f"[{full_name}](https://github.com/{full_name})"
 
 
+def model_label(models: Sequence[str]) -> str:
+    """報告中的模型說明，例如 `a`，或 `a`（無法使用時改用 `b`）。"""
+    label = f"`{models[0]}`"
+    if len(models) > 1:
+        label += f"（無法使用時改用 {'、'.join(f'`{m}`' for m in models[1:])}）"
+    return label
+
+
 def render(
     conn: sqlite3.Connection,
     period: Period,
@@ -205,7 +213,10 @@ def render(
     note: str | None,
     model: str,
 ) -> str:
-    """note 不為 None 時，在解讀段落開頭加上這一行（以 MISSING_MARKER 或 SKIPPED_MARKER 開頭）。"""
+    """model 是 model_label 的結果。
+
+    note 不為 None 時，在解讀段落開頭加上這一行（以 MISSING_MARKER 或 SKIPPED_MARKER 開頭）。
+    """
     start, end = period.start.isoformat(), period.end.isoformat()
     # 數字只用期間內的資料；repo 名稱、語言與解讀取自產生當下。
     observed = conn.execute(
@@ -252,7 +263,7 @@ def render(
     if interpretations:
         if note is not None:
             lines.append("")
-        lines.append(f"> 由 AI 模型（`{model}`）依 repo 描述與 README 產生，可能有誤。")
+        lines.append(f"> 由 AI 模型（{model}）依 repo 描述與 README 產生，可能有誤。")
         for i, g in enumerate([g for g in top if g.full_name in interpretations], start=1):
             item = interpretations[g.full_name]
             lines += [
@@ -377,7 +388,7 @@ def interpret_with_claude(
 
 def interpret_with_gemini(
     api_key: str,
-    model: str,
+    models: Sequence[str],
     prompt: str,
     expected: Sequence[str],
     *,
@@ -389,8 +400,8 @@ def interpret_with_gemini(
     被擋下、輸出被截斷、HTTP 錯誤或格式不符時丟出 InterpretError。
     """
     try:
-        text = gemini.generate_json(
-            api_key, model, _SYSTEM, prompt, _SCHEMA, transport=transport, sleep=sleep
+        text = gemini.generate_json_with_fallback(
+            api_key, models, _SYSTEM, prompt, _SCHEMA, transport=transport, sleep=sleep
         )
     except gemini.GeminiError as e:
         raise InterpretError(str(e)) from e

@@ -65,6 +65,17 @@ jobs:
         continue-on-error: true
         run: python -m starstrata ingest
 
+      # 翻譯失敗時各處顯示原文，下次執行再補，所以不列入下方的各步驟結果。
+      - name: 翻譯說明
+        id: translate
+        if: steps.ingest.outcome == 'success'
+        continue-on-error: true
+        timeout-minutes: 10
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python -m starstrata translate
+
       - name: 回補歷史
         id: backfill
         if: steps.ingest.outcome == 'success'
