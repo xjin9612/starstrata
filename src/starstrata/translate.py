@@ -50,10 +50,12 @@ SCHEMA: dict[str, Any] = {
                 "type": "object",
                 "properties": {"id": {"type": "string"}, "text": {"type": "string"}},
                 "required": ["id", "text"],
+                "additionalProperties": False,
             },
         }
     },
     "required": ["items"],
+    "additionalProperties": False,
 }
 
 

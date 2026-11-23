@@ -32,6 +32,7 @@ from starstrata.reports import (
     model_label,
     period_before,
 )
+from tests.json_schema import object_schemas
 from tests.snapshot_builder import meta, repo, search, write_day
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -254,6 +255,8 @@ def test_interpret_with_claude_request_and_parsing() -> None:
     assert kwargs["betas"] == ["server-side-fallback-2026-07-01"]
     assert kwargs["output_config"]["format"]["type"] == "json_schema"
     assert kwargs["output_config"]["effort"] == "medium"
+    schema = kwargs["output_config"]["format"]["schema"]
+    assert all(o.get("additionalProperties") is False for o in object_schemas(schema))
 
 
 @pytest.mark.parametrize(

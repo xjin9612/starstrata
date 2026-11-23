@@ -32,6 +32,7 @@ from starstrata.translate import (
     translate_with_claude,
     translate_with_gemini,
 )
+from tests.json_schema import object_schemas
 from tests.snapshot_builder import meta, repo, search, trending, write_day
 
 ROOT = Path(__file__).resolve().parent
@@ -269,16 +270,24 @@ def test_gemini_http_error_becomes_translate_error() -> None:
         translate_with_gemini("key", ["m"], [("k", "x")], transport=transport)
 
 
-def _claude(stop_reason: str, text: str | None) -> Any:
+def _claude(stop_reason: str, text: str | None, sent: list[dict[str, Any]] | None = None) -> Any:
     content = [SimpleNamespace(type="text", text=text)] if text is not None else []
     response = SimpleNamespace(stop_reason=stop_reason, content=content)
-    create = lambda **kwargs: response  # noqa: E731
+
+    def create(**kwargs: Any) -> Any:
+        if sent is not None:
+            sent.append(kwargs)
+        return response
+
     return SimpleNamespace(beta=SimpleNamespace(messages=SimpleNamespace(create=create)))
 
 
 def test_claude_translator() -> None:
-    ok = _claude("end_turn", json.dumps({"items": [{"id": "k", "text": "好"}]}))
+    sent: list[dict[str, Any]] = []
+    ok = _claude("end_turn", json.dumps({"items": [{"id": "k", "text": "好"}]}), sent)
     assert translate_with_claude(ok, "m", [("k", "x")]) == {"k": "好"}
+    schema = sent[0]["output_config"]["format"]["schema"]
+    assert all(o.get("additionalProperties") is False for o in object_schemas(schema))
     with pytest.raises(TranslateError, match="max_tokens"):
         translate_with_claude(_claude("max_tokens", "{}"), "m", [("k", "x")])
     with pytest.raises(TranslateError, match="沒有文字內容"):
