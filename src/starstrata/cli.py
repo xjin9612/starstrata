@@ -110,7 +110,13 @@ def cmd_notify(args: argparse.Namespace, cfg: Config) -> int:
     conn = db.connect(args.db)
     try:
         with TelegramSender(token, chat_id) as sender:
-            result = notify.notify(conn, cfg.notify, day, args.data, sender.send)
+            result = notify.notify(
+                conn,
+                cfg.notify,
+                day,
+                args.data,
+                lambda m: sender.send(m.text, silent=m.silent, buttons=m.buttons),
+            )
     except TelegramError as e:
         log.error("Telegram 發送失敗：%s", e)
         return EXIT_PARTIAL

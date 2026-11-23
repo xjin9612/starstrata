@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass
+from typing import Any
 
 import httpx
 
@@ -17,6 +19,14 @@ MAX_RETRY_AFTER_SECONDS = 60
 
 # 每則訊息最多嘗試次數。連線錯誤與 5xx 的重試間隔依序為 1、2 秒。
 MAX_ATTEMPTS = 3
+
+
+@dataclass(frozen=True)
+class Button:
+    """訊息下方的網址按鈕。"""
+
+    text: str
+    url: str
 
 
 class TelegramError(Exception):
@@ -70,18 +80,27 @@ class TelegramSender:
     def __exit__(self, *exc: object) -> None:
         self.close()
 
-    def send(self, html_text: str) -> None:
-        """以 HTML parse mode 發送，超過長度上限時分段。"""
-        for chunk in split_message(html_text):
-            self._send_one(chunk)
+    def send(self, html_text: str, *, silent: bool = False, buttons: Sequence[Button] = ()) -> None:
+        """以 HTML parse mode 發送，超過長度上限時分段，按鈕只附在最後一段。
 
-    def _send_one(self, text: str) -> None:
-        payload = {
+        silent 為 True 時收訊者不會收到通知音。
+        """
+        chunks = split_message(html_text)
+        for i, chunk in enumerate(chunks):
+            self._send_one(chunk, silent, buttons if i == len(chunks) - 1 else ())
+
+    def _send_one(self, text: str, silent: bool, buttons: Sequence[Button]) -> None:
+        payload: dict[str, Any] = {
             "chat_id": self._chat_id,
             "text": text,
             "parse_mode": "HTML",
             "link_preview_options": {"is_disabled": True},
+            "disable_notification": silent,
         }
+        if buttons:
+            payload["reply_markup"] = {
+                "inline_keyboard": [[{"text": b.text, "url": b.url} for b in buttons]]
+            }
         for attempt in range(MAX_ATTEMPTS):
             last = attempt + 1 == MAX_ATTEMPTS
             try:

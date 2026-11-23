@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import json
 import logging
+from typing import Any
 
 import httpx
 import pytest
 
 from starstrata.cli import main
-from starstrata.telegram import TelegramError, TelegramSender, split_message
+from starstrata.telegram import Button, TelegramError, TelegramSender, split_message
 
 TOKEN = "123456:secret-bot-token"
 
@@ -51,6 +52,33 @@ def test_send_posts_html_message() -> None:
         "text": "<b>hi</b>",
         "parse_mode": "HTML",
         "link_preview_options": {"is_disabled": True},
+        "disable_notification": False,
+    }
+
+
+def test_silent_send_disables_notification() -> None:
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, json={"ok": True})
+
+    _sender(httpx.MockTransport(handler)).send("x", silent=True)
+    assert json.loads(seen[0].content)["disable_notification"] is True
+
+
+def test_buttons_are_attached_to_last_chunk_only() -> None:
+    seen: list[dict[str, Any]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(json.loads(request.content))
+        return httpx.Response(200, json={"ok": True})
+
+    text = "\n".join(["a" * 3000, "b" * 3000])
+    _sender(httpx.MockTransport(handler)).send(text, buttons=[Button("開", "https://e.com/")])
+    assert len(seen) == 2 and "reply_markup" not in seen[0]
+    assert seen[1]["reply_markup"] == {
+        "inline_keyboard": [[{"text": "開", "url": "https://e.com/"}]]
     }
 
 

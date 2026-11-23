@@ -6,6 +6,8 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import date, timedelta
 
+from starstrata.db import OVERALL
+
 
 @dataclass(frozen=True)
 class RepoLine:
@@ -55,6 +57,53 @@ def top_gainers(conn: sqlite3.Connection, day: date, limit: int) -> list[RepoLin
         ((day - timedelta(days=1)).isoformat(), day.isoformat(), limit),
     )
     return [_repo(r, delta=int(r["delta"])) for r in rows]
+
+
+@dataclass(frozen=True)
+class TrendingLine:
+    rank: int
+    full_name: str
+    # 當天查不到 repo 時為 None，此時 description、language、stars 也是 None。
+    node_id: str | None
+    gain: int | None
+    stars: int | None
+    language: str | None
+    description: str | None
+
+
+def trending_top(conn: sqlite3.Connection, day: date, limit: int) -> list[TrendingLine]:
+    """當天總榜今日 Trending，依今日新增 star 由多到少；沒有新增數的排最後。"""
+    rows = conn.execute(
+        "SELECT t.rank, t.full_name, t.node_id, t.stars_in_period, s.stars, r.language, "
+        "r.description FROM trending_entries t "
+        "LEFT JOIN repos r ON r.node_id = t.node_id "
+        "LEFT JOIN repo_daily s ON s.node_id = t.node_id AND s.date = t.date "
+        "WHERE t.date = ? AND t.period = 'daily' AND t.language = ? "
+        "ORDER BY t.stars_in_period IS NULL, t.stars_in_period DESC, t.rank LIMIT ?",
+        (day.isoformat(), OVERALL, limit),
+    )
+    return [
+        TrendingLine(
+            rank=r["rank"],
+            full_name=r["full_name"],
+            node_id=r["node_id"],
+            gain=r["stars_in_period"],
+            stars=r["stars"],
+            language=r["language"],
+            description=r["description"],
+        )
+        for r in rows
+    ]
+
+
+def active_count(conn: sqlite3.Connection) -> int:
+    return int(conn.execute("SELECT count(*) FROM repos WHERE state = 'active'").fetchone()[0])
+
+
+def is_first_day(conn: sqlite3.Connection, day: date) -> bool:
+    """day 之前沒有任何已匯入的日期。"""
+    row = conn.execute("SELECT 1 FROM ingested_dates WHERE date < ? LIMIT 1", (day.isoformat(),))
+    return row.fetchone() is None
 
 
 def day_alerts(conn: sqlite3.Connection, day: date) -> list[AlertLine]:

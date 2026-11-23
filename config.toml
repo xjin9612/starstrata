@@ -40,10 +40,10 @@ cooldown_days = 7
 daily_request_budget = 1000
 
 [notify]
-# 每日摘要列出日增 star 前幾名，上限 50。
+# 每日摘要列出總榜今日 Trending 新增 star 前幾名，上限 25。
+trending_top = 10
+# 每日摘要列出追蹤中 repo 日增 star 前幾名，上限 50。
 top_gainers = 10
-# 每日摘要最多列出幾個新上榜的 repo，上限 50。
-new_repos_limit = 10
 # 摘要附上的 dashboard 網址；空字串表示不附。
 site_url = "https://xjin9612.github.io/starstrata/"
 

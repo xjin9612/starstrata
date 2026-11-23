@@ -62,8 +62,8 @@ class BackfillConfig:
 
 @dataclass(frozen=True)
 class NotifyConfig:
+    trending_top: int
     top_gainers: int
-    new_repos_limit: int
     # 空字串表示摘要不附 dashboard 連結。
     site_url: str
 
@@ -239,8 +239,8 @@ def _notify(root: dict[str, Any]) -> NotifyConfig:
     if site_url and not site_url.startswith("https://"):
         raise ConfigError("notify.site_url: 必須是空字串或 https:// 開頭的網址")
     cfg = NotifyConfig(
+        trending_top=s.get_int("trending_top", minimum=1, maximum=25),
         top_gainers=s.get_int("top_gainers", minimum=1, maximum=50),
-        new_repos_limit=s.get_int("new_repos_limit", minimum=1, maximum=50),
         site_url=site_url,
     )
     s.finish()

@@ -37,13 +37,15 @@ def gone(node_id: str) -> dict[str, Any]:
     return {"node_id": node_id, "status": "gone"}
 
 
-def trending(full_name: str, rank: int = 1, *, language: str | None = None) -> dict[str, Any]:
+def trending(
+    full_name: str, rank: int = 1, *, language: str | None = None, stars: int | None = 10
+) -> dict[str, Any]:
     return {
         "period": "daily",
         "language": language,
         "rank": rank,
         "full_name": full_name,
-        "stars_in_period": 10,
+        "stars_in_period": stars,
     }
 
 

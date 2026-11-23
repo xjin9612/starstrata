@@ -289,10 +289,17 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 
 每日摘要的內容：
 
-- 新上榜：`first_seen` 為當天的 repo，依 star 數排序，最多 `notify.new_repos_limit` 個。
-- 日增 star 前 `notify.top_gainers` 名：與前一天快照相比。
-- 爆紅警示數量；每則警示另發一則訊息。
+- 標頭：日期與 `active` 狀態的 repo 數。
+- 今日新增最多：總榜今日 Trending 依今日新增 star 排序，取前 `notify.trending_top` 名。前 3 名以獎牌標示並附說明，說明截斷到 50 字元。
+- 日增最多：追蹤中的 repo 與前一天快照相比，取前 `notify.top_gainers` 名。沒有資料時不顯示這個區塊。
+- repo 名稱後標記 🆕（`first_seen` 為當天）與 🔥（當天有爆紅警示）。
+- 結尾一行統計新上榜與爆紅數量；每則警示另發一則訊息。
+- 第一次匯入的日期之前沒有比較基準：摘要註明首日建立基準，不標 🆕，不列新上榜數量。
 - 當天沒有匯入任何快照時，摘要改為提醒檢查 workflow。
+- 摘要以 `disable_notification` 靜音發送；警示照常發出通知音。
+- 摘要附「開啟 dashboard」按鈕；警示附「GitHub」與「詳細頁」按鈕。按鈕是 inline keyboard 的網址按鈕，訊息分段時只附在最後一段。
+- 詳細頁網址為 `<site_url>#/repo/<URL 編碼的 node_id>`，與 `web/app.js` 的路由一致；改路由時兩邊一起改。
+- `notify.site_url` 為空字串時不附 dashboard 相關按鈕。
 
 已發送的項目記在當天快照目錄的 `notified.json`。同一天重跑時，已發送的摘要與警示不再發送。
 當天尚未匯入快照時發出的提醒不記錄，補上快照後重跑會發送正式摘要。
