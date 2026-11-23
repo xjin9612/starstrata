@@ -155,6 +155,40 @@ def test_generate_full_report(world: tuple[Path, Path]) -> None:
     assert len(calls) == 1 and "README of o/a" in calls[0] and "o/b" not in calls[0]
 
 
+def _summary_and_new_section(db_path: Path, period: Period) -> tuple[str, str]:
+    conn = db.connect(db_path)
+    try:
+        text, _ = generate(
+            conn,
+            period,
+            llm_top_n=0,
+            model="m",
+            base_lookback_days=7,
+            interpreter=None,
+            fetch_readme=None,
+        )
+    finally:
+        conn.close()
+    summary = text.split("## 摘要")[1].split("##")[0]
+    return summary, text.split("## 新上榜")[1].split("##")[0]
+
+
+def test_baseline_day_repos_are_not_new(world: tuple[Path, Path]) -> None:
+    _, db_path = world
+    summary, section = _summary_and_new_section(
+        db_path, Period(WEEKLY, date(2026, 11, 9), date(2026, 11, 15))
+    )
+    assert "- 本期新上榜：0 個（不含 2026-11-15 首日建立基準時收錄的 repo）" in summary
+    assert "本期沒有新上榜的 repo。" in section
+
+
+def test_period_without_baseline_day_has_no_note(world: tuple[Path, Path]) -> None:
+    _, db_path = world
+    summary, section = _summary_and_new_section(db_path, WEEK)
+    assert "- 本期新上榜：1 個\n" in summary
+    assert "o/b" in section and "o/a" not in section
+
+
 def test_generate_without_api_key_is_skipped_not_missing(world: tuple[Path, Path]) -> None:
     _, db_path = world
     conn = db.connect(db_path)

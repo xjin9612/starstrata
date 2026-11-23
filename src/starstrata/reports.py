@@ -223,15 +223,22 @@ def render(
         "SELECT count(DISTINCT node_id) FROM repo_daily WHERE date BETWEEN ? AND ?",
         (start, end),
     ).fetchone()[0]
+    # 第一個匯入日是建立基準的日子，當天出現的 repo 不算新上榜。
+    baseline_day = conn.execute("SELECT min(date) FROM ingested_dates").fetchone()[0]
     new = list(
         conn.execute(
             "SELECT r.full_name, r.first_seen, r.language, "
             "(SELECT s.stars FROM repo_daily s WHERE s.node_id = r.node_id AND s.date <= ? "
             " ORDER BY s.date DESC LIMIT 1) AS stars "
-            "FROM repos r WHERE r.first_seen BETWEEN ? AND ? "
+            "FROM repos r WHERE r.first_seen BETWEEN ? AND ? AND r.first_seen IS NOT ? "
             "ORDER BY coalesce(stars, 0) DESC, r.full_name",
-            (end, start, end),
+            (end, start, end, baseline_day),
         )
+    )
+    baseline_note = (
+        f"（不含 {baseline_day} 首日建立基準時收錄的 repo）"
+        if baseline_day is not None and start <= baseline_day <= end
+        else ""
     )
     alerts = list(
         conn.execute(
@@ -244,7 +251,7 @@ def render(
 
     lines = [f"# {period.title}", "", "## 摘要", ""]
     lines.append(f"- 本期有快照的 repo：{observed:,} 個")
-    lines.append(f"- 本期新上榜：{len(new):,} 個")
+    lines.append(f"- 本期新上榜：{len(new):,} 個{baseline_note}")
     lines.append(f"- 爆紅警示：{len(alerts):,} 則")
 
     lines += ["", "## Star 增加最多", ""]
