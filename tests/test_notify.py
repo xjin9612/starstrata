@@ -92,7 +92,7 @@ def test_summary_and_alert_are_sent_once(world: tuple[Any, Path]) -> None:
     assert sent[0].buttons == (Button("開啟 dashboard", "https://example.com/s/"),)
     assert sent[1].buttons == (
         Button("GitHub", "https://github.com/o/a"),
-        Button("詳細頁", "https://example.com/s/#/repo/R_a"),
+        Button("詳細頁", "https://example.com/s/#/repo/o/a"),
     )
     summary, alert = (m.text for m in sent)
     assert summary == "\n".join(
@@ -226,7 +226,7 @@ def test_alert_buttons_encode_names() -> None:
     message = alert_message(NOTIFY, D1, AlertLine(line, 100, None))
     assert message.buttons == (
         Button("GitHub", "https://github.com/o/a%20b"),
-        Button("詳細頁", "https://example.com/s/#/repo/R_a%2Fb%2Bc"),
+        Button("詳細頁", "https://example.com/s/#/repo/o/a%20b"),
     )
     no_site = alert_message(replace(NOTIFY, site_url=""), D1, AlertLine(line, 100, None))
     assert [b.text for b in no_site.buttons] == ["GitHub"]

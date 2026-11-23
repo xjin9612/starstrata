@@ -246,17 +246,33 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 
 | 檔案 | 內容 |
 |---|---|
-| `data/latest.json` | 最新資料日期的 Trending 各頁、新上榜、日增前 50 名、最近 30 天的警示 |
-| `data/index.json` | 所有 repo 的 `[node_id, full_name, language, state, stars]`，供搜尋使用 |
-| `data/repos/<hex>.json` | 單一 repo 的 meta、star 累計點、每日新增 star、Trending 上榜紀錄；`<hex>` 與回補檔相同 |
+| `data/meta.json` | 資料日期、`active` 的 repo 數、是否首日、今日新上榜數與爆紅數（首日為 `null`） |
+| `data/trending.json` | 最新資料日期的 Trending，依期間與語言分頁：`{period: {all \| <語言>: [Item]}}` |
+| `data/new.json` | 今日新上榜，依今日 Trending 新增 star 排序；只出現在 Search 的 repo 沒有今日新增，排在後面。首日為空 |
+| `data/daily.json` | 與前一天快照相比的日增前 50 名 |
+| `data/alerts.json` | 最近 30 天的警示：日期、repo、當日新增、基準（四捨五入成整數，資料不足時為 `null`） |
+| `data/search-index.json` | 所有 repo 的 `[full_name, language, stars]`，依 star 數排序，供搜尋使用 |
+| `data/repos/<owner>/<name>.json` | 單一 repo 的 meta、譯文、目前 star 數、star 累計點、每日新增 star、Trending 上榜紀錄 |
 
-- 產生 repo 檔時依 `node_id` 排序逐一讀取，記憶體用量不隨資料量增長。
-- 帶有 `description` 的項目同時帶 `description_zh`。沒有譯文，或譯文與原文相同時為 `null`。前端顯示譯文並標示「AI 翻譯」，滑鼠停留時顯示原文。
+`Item` 的欄位：`rank`、`full_name`、`language`、`period_stars`（期間新增，沒有資料時為 `null`）、`stargazers`、`description`、`description_zh`、`zh_native`、`created_at`、`is_new`、`is_hot`。
+
+- `description_zh` 是譯文，沒有譯文時為 `null`。`zh_native` 為 `true` 表示原文就是繁體中文，前端不標示「AI 翻譯」。
+- `is_new` 表示 `first_seen` 為最新資料日期，首日一律為 `false`；`is_hot` 表示最新資料日期有警示。
+- Trending 頁面查不到的 repo 仍列出，`language` 與 `stargazers` 為 `null`。
+- repo 詳細檔以 `full_name` 為路徑，對應 dashboard 網址 `#/repo/<owner>/<name>`。名稱只接受英數、`_`、`.`、`-`，其他名稱不產生詳細檔。
+- repo 名稱可以用 `.` 開頭。`actions/upload-pages-artifact` 預設排除 `.` 開頭的檔案（見它的 [action.yml](https://github.com/actions/upload-pages-artifact/blob/main/action.yml)），所以 `daily.yml` 設定 `include-hidden-files: true`。
+- 同一路徑（不分大小寫）有多個 repo 時，例如改名後別人建立同名 repo，只產生不是 `gone`、最近有快照的那一個。
+- 產生 repo 檔時依 `node_id` 排序逐一讀取歷史資料，記憶體用量不隨歷史長度增長。
 - star 累計點：第一筆快照之前用回補資料累加，之後用快照。每個點標記來源，`b` 為回補、`s` 為快照。
-- 每日新增 star：回補期間用回補資料；快照期間只在前一天也有快照時計算。
-- 前端是 `web/` 的純 HTML/JS/CSS，不經過建置。資料一律用 `textContent` 放進 DOM。
-- 圖表：star 數用折線，每日新增用長條，各自一個 y 軸。單一數列不加圖例。滑鼠與方向鍵可逐點查看數值，另有資料表。
-- 配色依 dataviz 參考色盤，淺色與深色模式各自驗證過。
+- 每日新增 star：回補期間用回補資料；快照期間只在前一天也有快照時計算。前端把缺日的累計點線性補齊。
+- 爆紅警示頁的欄名寫「近 7 日平均」，與 `alerts.baseline_days` 的預設值一致；改這個設定時要一起改前端文字。
+
+前端：
+
+- `web/` 是純 HTML/JS/CSS，不經過建置，視覺規格來自 Claude Design 產生的設計系統「地層儀表」。
+- 插入 HTML 的資料一律先經過 `esc()` 跳脫。
+- 主題預設跟隨系統，可用頁首按鈕固定為淺色或深色，選擇存在 `localStorage`。
+- 返回上一頁時還原捲動位置、篩選、已展開筆數、圖表期間與焦點，這些狀態存在 `sessionStorage`。
 
 部署由 `daily.yml` 的 `deploy` job 執行。`daily` job 因收集失敗而標為失敗時，dashboard 仍照常部署。
 
@@ -327,7 +343,7 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 - 當天沒有匯入任何快照時，摘要改為提醒檢查 workflow。
 - 摘要以 `disable_notification` 靜音發送；警示照常發出通知音。
 - 摘要附「開啟 dashboard」按鈕；警示附「GitHub」與「詳細頁」按鈕。按鈕是 inline keyboard 的網址按鈕，訊息分段時只附在最後一段。
-- 詳細頁網址為 `<site_url>#/repo/<URL 編碼的 node_id>`，與 `web/app.js` 的路由一致；改路由時兩邊一起改。
+- 詳細頁網址為 `<site_url>#/repo/<owner>/<name>`，各段 URL 編碼，與 `web/app.js` 的 `repoHref` 一致；改路由時兩邊一起改。
 - `notify.site_url` 為空字串時不附 dashboard 相關按鈕。
 
 已發送的項目記在當天快照目錄的 `notified.json`。同一天重跑時，已發送的摘要與警示不再發送。

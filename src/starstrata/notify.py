@@ -154,9 +154,9 @@ def summary_message(cfg: NotifyConfig, day: date, data: SummaryData | None) -> M
     return Message(format_summary(day, data), silent=True, buttons=buttons)
 
 
-def repo_page_url(site_url: str, node_id: str) -> str:
-    """dashboard 的 repo 詳細頁網址，格式與 web/app.js 的路由一致。"""
-    return f"{site_url}#/repo/{quote(node_id, safe='')}"
+def repo_page_url(site_url: str, full_name: str) -> str:
+    """dashboard 的 repo 詳細頁網址，格式與 web/app.js 的 repoHref 一致。"""
+    return f"{site_url}#/repo/" + "/".join(quote(part, safe="") for part in full_name.split("/"))
 
 
 def alert_message(
@@ -164,7 +164,7 @@ def alert_message(
 ) -> Message:
     buttons = [Button("GitHub", f"https://github.com/{quote(alert.repo.full_name)}")]
     if cfg.site_url:
-        buttons.append(Button("詳細頁", repo_page_url(cfg.site_url, alert.repo.node_id)))
+        buttons.append(Button("詳細頁", repo_page_url(cfg.site_url, alert.repo.full_name)))
     return Message(format_alert(day, alert, translations), silent=False, buttons=tuple(buttons))
 
 

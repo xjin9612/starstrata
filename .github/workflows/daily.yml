@@ -152,6 +152,8 @@ jobs:
         if: ${{ !cancelled() && steps.build_site.outcome == 'success' }}
         with:
           path: _site
+          # repo 名稱可以用 . 開頭（例如 owner/.github），預設會排除這類詳細檔。
+          include-hidden-files: true
 
       - name: 記錄 dashboard 已上傳
         id: site

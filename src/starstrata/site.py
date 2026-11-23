@@ -1,9 +1,13 @@
-"""從 SQLite 產生 dashboard：複製 web/ 的靜態檔，並寫入 data/ 下的 JSON。"""
+"""從 SQLite 產生 dashboard：複製 web/ 的靜態檔，並寫入 data/ 下的 JSON。
+
+JSON 格式見 docs/DESIGN.md「Dashboard」。
+"""
 
 from __future__ import annotations
 
 import itertools
 import json
+import re
 import shutil
 import sqlite3
 from collections.abc import Mapping
@@ -14,19 +18,35 @@ from typing import Any
 
 from starstrata.config import Config
 from starstrata.db import OVERALL
-from starstrata.queries import RepoLine, new_repos, top_gainers
-from starstrata.snapshots import node_file_stem
+from starstrata.queries import active_count, is_first_day, top_gainers
 from starstrata.translate import lookup, normalize
 
-# 首頁列出的日增排行數量與爆紅警示天數。
+# 日增排行的數量與爆紅警示列出的天數。
 GAINERS_LIMIT = 50
 ALERT_DAYS = 30
+OVERALL_KEY = "all"
+
+# GitHub 的 owner 與 repo 名稱只含這些字元；用 full_name 組檔案路徑前先確認。
+_SEGMENT = re.compile(r"[A-Za-z0-9_.-]+")
 
 
 @dataclass(frozen=True)
 class SiteStats:
     latest: date | None
     repos: int
+
+
+@dataclass(frozen=True)
+class _Repo:
+    node_id: str
+    full_name: str
+    description: str | None
+    language: str | None
+    created_at: str | None
+    first_seen: str
+    state: str
+    last_snapshot: str | None
+    stars: int | None
 
 
 def _write(path: Path, obj: Any) -> None:
@@ -39,84 +59,163 @@ def _latest(conn: sqlite3.Connection) -> date | None:
     return date.fromisoformat(row["d"]) if row["d"] else None
 
 
-def _zh(translations: Mapping[str, str], description: str | None) -> str | None:
-    """說明的繁體中文譯文；沒有譯文或譯文與原文相同時回傳 None，前端直接顯示原文。"""
-    text = lookup(translations, description)
-    if text is None or description is None or text == normalize(description):
+def repo_path(full_name: str) -> Path | None:
+    """repo 詳細檔相對於 data/repos 的路徑；名稱不是 owner/name 格式時回傳 None。"""
+    parts = full_name.split("/")
+    if len(parts) != 2 or not all(_SEGMENT.fullmatch(p) and p not in (".", "..") for p in parts):
         return None
-    return text
+    return Path(parts[0]) / f"{parts[1]}.json"
 
 
-def _repo_line(r: RepoLine, translations: Mapping[str, str]) -> dict[str, Any]:
+def _description_fields(translations: Mapping[str, str], description: str | None) -> dict[str, Any]:
+    """description_zh 是繁體中文譯文，沒有譯文時為 None；zh_native 表示原文就是繁體中文。"""
+    zh = lookup(translations, description)
+    native = zh is not None and description is not None and zh == normalize(description)
+    return {"description": description, "description_zh": zh, "zh_native": native}
+
+
+class _Context:
+    def __init__(
+        self, conn: sqlite3.Connection, latest: date | None, translations: Mapping[str, str]
+    ) -> None:
+        self.translations = translations
+        self.repos = {
+            r["node_id"]: _Repo(
+                node_id=r["node_id"],
+                full_name=r["full_name"],
+                description=r["description"],
+                language=r["language"],
+                created_at=r["created_at"][:10] if r["created_at"] else None,
+                first_seen=r["first_seen"],
+                state=r["state"],
+                last_snapshot=r["last_snapshot"],
+                stars=r["stars"],
+            )
+            for r in conn.execute(
+                "SELECT r.*, s.stars FROM repos r "
+                "LEFT JOIN repo_daily s ON s.node_id = r.node_id AND s.date = r.last_snapshot"
+            )
+        }
+        self.first_day = latest is None or is_first_day(conn, latest)
+        day = latest.isoformat() if latest else ""
+        self.new_ids = (
+            set() if self.first_day else {n for n, r in self.repos.items() if r.first_seen == day}
+        )
+        self.hot_ids = {
+            r["node_id"] for r in conn.execute("SELECT node_id FROM alerts WHERE date = ?", (day,))
+        }
+
+    def item(
+        self, rank: int, full_name: str, node_id: str | None, period_stars: int | None
+    ) -> dict[str, Any]:
+        repo = self.repos.get(node_id) if node_id else None
+        return {
+            "rank": rank,
+            "full_name": repo.full_name if repo else full_name,
+            "language": repo.language if repo else None,
+            "period_stars": period_stars,
+            "stargazers": repo.stars if repo else None,
+            **_description_fields(self.translations, repo.description if repo else None),
+            "created_at": repo.created_at if repo else None,
+            "is_new": node_id in self.new_ids,
+            "is_hot": node_id in self.hot_ids,
+        }
+
+
+def _meta(conn: sqlite3.Connection, ctx: _Context, latest: date | None) -> dict[str, Any]:
     return {
-        "node_id": r.node_id,
-        "full_name": r.full_name,
-        "description": r.description,
-        "description_zh": _zh(translations, r.description),
-        "language": r.language,
-        "stars": r.stars,
-        "delta": r.delta,
+        "data_date": latest.isoformat() if latest else None,
+        "tracked_count": active_count(conn),
+        "is_first_day": ctx.first_day,
+        "new_count": None if ctx.first_day else len(ctx.new_ids),
+        "hot_count": None if ctx.first_day else len(ctx.hot_ids),
     }
 
 
 def _trending(
-    conn: sqlite3.Connection, cfg: Config, day: date, translations: Mapping[str, str]
-) -> list[dict[str, Any]]:
+    conn: sqlite3.Connection, cfg: Config, ctx: _Context, day: date
+) -> dict[str, dict[str, list[dict[str, Any]]]]:
+    keys = [OVERALL_KEY, *cfg.trending.languages]
+    out: dict[str, dict[str, list[dict[str, Any]]]] = {
+        period: {key: [] for key in keys} for period in cfg.trending.periods
+    }
     rows = conn.execute(
-        "SELECT t.period, t.language, t.rank, t.full_name, t.node_id, t.stars_in_period, "
-        "r.description, r.language AS repo_language, s.stars FROM trending_entries t "
-        "LEFT JOIN repos r ON r.node_id = t.node_id "
-        "LEFT JOIN repo_daily s ON s.node_id = t.node_id AND s.date = t.date "
-        "WHERE t.date = ? ORDER BY t.language, t.period, t.rank",
+        "SELECT period, language, rank, full_name, node_id, stars_in_period "
+        "FROM trending_entries WHERE date = ? ORDER BY period, language, rank",
         (day.isoformat(),),
     )
-    pages: dict[tuple[str, str], list[dict[str, Any]]] = {}
     for r in rows:
-        pages.setdefault((r["language"], r["period"]), []).append(
-            {
-                "rank": r["rank"],
-                "full_name": r["full_name"],
-                "node_id": r["node_id"],
-                "stars_in_period": r["stars_in_period"],
-                "stars": r["stars"],
-                "description": r["description"],
-                "description_zh": _zh(translations, r["description"]),
-                "language": r["repo_language"],
-            }
+        key = OVERALL_KEY if r["language"] == OVERALL else r["language"]
+        page = out.get(r["period"], {}).get(key)
+        if page is not None:
+            page.append(ctx.item(r["rank"], r["full_name"], r["node_id"], r["stars_in_period"]))
+    return out
+
+
+def _new(conn: sqlite3.Connection, ctx: _Context, day: date) -> list[dict[str, Any]]:
+    """新上榜依今日 Trending 新增 star 排序；只出現在 Search 的 repo 沒有今日新增，排在後面。"""
+    if ctx.first_day:
+        return []
+    gains = {
+        r["node_id"]: r["gain"]
+        for r in conn.execute(
+            "SELECT node_id, max(stars_in_period) AS gain FROM trending_entries "
+            "WHERE date = ? AND period = 'daily' AND node_id IS NOT NULL GROUP BY node_id",
+            (day.isoformat(),),
         )
-    order = [OVERALL, *cfg.trending.languages]
-    keys = sorted(
-        pages,
-        key=lambda k: (
-            order.index(k[0]) if k[0] in order else len(order),
-            cfg.trending.periods.index(k[1]) if k[1] in cfg.trending.periods else 99,
+    }
+    ids = sorted(
+        ctx.new_ids,
+        key=lambda n: (
+            gains.get(n) is None,
+            -(gains.get(n) or 0),
+            -(ctx.repos[n].stars or 0),
+            ctx.repos[n].full_name,
         ),
     )
     return [
-        {"language": lang or None, "period": period, "entries": pages[(lang, period)]}
-        for lang, period in keys
+        ctx.item(i, ctx.repos[n].full_name, n, gains.get(n)) for i, n in enumerate(ids, start=1)
     ]
 
 
-def _alerts(
-    conn: sqlite3.Connection, day: date, translations: Mapping[str, str]
-) -> list[dict[str, Any]]:
+def _alerts(conn: sqlite3.Connection, ctx: _Context, day: date) -> list[dict[str, Any]]:
     rows = conn.execute(
-        "SELECT a.date, a.node_id, a.daily_stars, a.baseline, r.full_name, r.description "
-        "FROM alerts a JOIN repos r ON r.node_id = a.node_id "
-        "WHERE a.date > ? ORDER BY a.date DESC, a.daily_stars DESC",
+        "SELECT date, node_id, daily_stars, baseline FROM alerts WHERE date > ? "
+        "ORDER BY date DESC, daily_stars DESC",
         ((day - timedelta(days=ALERT_DAYS)).isoformat(),),
     )
-    return [dict(r) | {"description_zh": _zh(translations, r["description"])} for r in rows]
+    return [
+        {
+            "date": r["date"],
+            "full_name": ctx.repos[r["node_id"]].full_name,
+            "added": r["daily_stars"],
+            "baseline_7d": None if r["baseline"] is None else round(r["baseline"]),
+        }
+        for r in rows
+        if r["node_id"] in ctx.repos
+    ]
 
 
-def _index(conn: sqlite3.Connection) -> list[list[Any]]:
-    rows = conn.execute(
-        "SELECT r.node_id, r.full_name, r.language, r.state, s.stars FROM repos r "
-        "LEFT JOIN repo_daily s ON s.node_id = r.node_id AND s.date = r.last_snapshot "
-        "ORDER BY coalesce(s.stars, 0) DESC, r.full_name"
+def _search_index(ctx: _Context) -> list[list[Any]]:
+    repos = sorted(ctx.repos.values(), key=lambda r: (-(r.stars or 0), r.full_name))
+    return [[r.full_name, r.language, r.stars or 0] for r in repos]
+
+
+def _page_owners(ctx: _Context) -> dict[str, str]:
+    """詳細檔路徑（不分大小寫）→ 使用該路徑的 node_id。
+
+    改名或刪除後重建的 repo 可能與舊紀錄同名；優先不是 gone、最近有快照的。
+    """
+    owners: dict[str, str] = {}
+    ranked = sorted(
+        ctx.repos.values(),
+        key=lambda r: (r.state == "gone", r.last_snapshot is None, r.last_snapshot or ""),
     )
-    return [[r["node_id"], r["full_name"], r["language"], r["state"], r["stars"]] for r in rows]
+    for r in reversed(ranked):
+        path = repo_path(r.full_name)
+        if path is not None:
+            owners[str(path).lower()] = r.node_id
+    return owners
 
 
 class _Groups:
@@ -173,38 +272,41 @@ def build_site(
     translations: Mapping[str, str] | None = None,
 ) -> SiteStats:
     """清空 out_dir 後重新產生整個網站。translations 是說明的繁體中文譯文，見 translate.load。"""
-    translations = translations or {}
     if out_dir.exists():
         shutil.rmtree(out_dir)
     shutil.copytree(web_dir, out_dir)
     data = out_dir / "data"
     latest = _latest(conn)
+    ctx = _Context(conn, latest, translations or {})
 
-    summary: dict[str, Any] = {
-        "generated_at": generated_at.isoformat(timespec="seconds"),
-        "date": latest.isoformat() if latest else None,
-        "languages": list(cfg.trending.languages),
-        "periods": list(cfg.trending.periods),
-        "trending": [],
-        "new_repos": [],
-        "gainers": [],
-        "alerts": [],
-    }
+    _write(
+        data / "meta.json",
+        _meta(conn, ctx, latest) | {"generated_at": generated_at.isoformat(timespec="seconds")},
+    )
+    trending: dict[str, Any] = {p: {} for p in cfg.trending.periods}
+    new: list[dict[str, Any]] = []
+    daily: list[dict[str, Any]] = []
+    alerts: list[dict[str, Any]] = []
     if latest:
-        summary["trending"] = _trending(conn, cfg, latest, translations)
-        summary["new_repos"] = [_repo_line(r, translations) for r in new_repos(conn, latest)]
-        summary["gainers"] = [
-            _repo_line(r, translations) for r in top_gainers(conn, latest, GAINERS_LIMIT)
+        trending = _trending(conn, cfg, ctx, latest)
+        new = _new(conn, ctx, latest)
+        daily = [
+            ctx.item(i, r.full_name, r.node_id, r.delta)
+            for i, r in enumerate(top_gainers(conn, latest, GAINERS_LIMIT), start=1)
         ]
-        summary["alerts"] = _alerts(conn, latest, translations)
-    _write(data / "latest.json", summary)
-    _write(data / "index.json", _index(conn))
+        alerts = _alerts(conn, ctx, latest)
+    _write(data / "trending.json", trending)
+    _write(data / "new.json", {"items": new})
+    _write(data / "daily.json", {"items": daily})
+    _write(data / "alerts.json", {"items": alerts})
+    _write(data / "search-index.json", _search_index(ctx))
 
+    owners = _page_owners(ctx)
     snapshots = _Groups(conn, "SELECT node_id, date, stars FROM repo_daily ORDER BY node_id, date")
     backfill = _Groups(
         conn, "SELECT node_id, date, stars_added FROM star_backfill ORDER BY node_id, date"
     )
-    trending = _Groups(
+    trending_rows = _Groups(
         conn,
         "SELECT node_id, date, period, language, rank FROM trending_entries "
         "WHERE node_id IS NOT NULL ORDER BY node_id, date DESC, language, period",
@@ -212,28 +314,31 @@ def build_site(
     count = 0
     for r in conn.execute("SELECT * FROM repos ORDER BY node_id"):
         node_id = r["node_id"]
-        points, daily = repo_series(
+        points, daily_series = repo_series(
             [(s["date"], s["stars"]) for s in snapshots.take(node_id)],
             [(b["date"], b["stars_added"]) for b in backfill.take(node_id)],
         )
+        history = trending_rows.take(node_id)
+        path = repo_path(r["full_name"])
+        if path is None or owners.get(str(path).lower()) != node_id:
+            continue
+        repo = ctx.repos[node_id]
         _write(
-            data / "repos" / f"{node_file_stem(node_id)}.json",
+            data / "repos" / path,
             {
-                "node_id": node_id,
                 "full_name": r["full_name"],
-                "description": r["description"],
-                "description_zh": _zh(translations, r["description"]),
+                **_description_fields(ctx.translations, r["description"]),
                 "topics": json.loads(r["topics"]) if r["topics"] else [],
                 "language": r["language"],
                 "archived": bool(r["archived"]),
-                "created_at": r["created_at"],
+                "created_at": repo.created_at,
                 "first_seen": r["first_seen"],
                 "state": r["state"],
+                "stargazers": repo.stars,
                 "points": points,
-                "daily": daily,
+                "daily": daily_series,
                 "trending": [
-                    [t["date"], t["period"], t["language"] or None, t["rank"]]
-                    for t in trending.take(node_id)
+                    [t["date"], t["period"], t["language"] or None, t["rank"]] for t in history
                 ],
             },
         )
