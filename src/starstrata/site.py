@@ -342,14 +342,12 @@ def _page_owners(ctx: _Context) -> dict[str, str]:
     改名或刪除後重建的 repo 可能與舊紀錄同名；優先不是 gone、最近有快照的。
     """
     owners: dict[str, str] = {}
-    ranked = sorted(
-        ctx.repos.values(),
-        key=lambda r: (r.state == "gone", r.last_snapshot is None, r.last_snapshot or ""),
-    )
-    for r in reversed(ranked):
+    ranked = sorted(ctx.repos.values(), key=lambda r: r.last_snapshot or "", reverse=True)
+    ranked.sort(key=lambda r: (r.state == "gone", r.last_snapshot is None))
+    for r in ranked:
         path = repo_path(r.full_name)
         if path is not None:
-            owners[str(path).lower()] = r.node_id
+            owners.setdefault(str(path).lower(), r.node_id)
     return owners
 
 

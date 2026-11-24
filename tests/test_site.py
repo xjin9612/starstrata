@@ -273,6 +273,24 @@ def test_case_collision_prefers_live_repo(cfg: Config, tmp_path: Path) -> None:
     assert _read(files[0])["description"] == "new"
 
 
+def test_same_path_prefers_most_recent_snapshot(cfg: Config, tmp_path: Path) -> None:
+    data = tmp_path / "data"
+    write_day(
+        data,
+        date(2026, 11, 1),
+        repos=[repo("R_old", 1, full_name="o/x", meta=meta(description="old"))],
+    )
+    write_day(
+        data,
+        date(2026, 11, 3),
+        repos=[repo("R_new", 5, full_name="O/X", meta=meta(description="new"))],
+    )
+    out, stats = _build(cfg, tmp_path, data)
+    files = list((out / "data" / "repos").rglob("*.json"))
+    assert len(files) == 1 and stats.repos == 1
+    assert _read(files[0])["description"] == "new"
+
+
 def test_cli_site_copies_web_and_icon(tmp_path: Path) -> None:
     out = tmp_path / "_site"
     code = main(
