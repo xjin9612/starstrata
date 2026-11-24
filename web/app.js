@@ -118,12 +118,18 @@ function renderTabs(route, meta) {
     `<a class="tab" href="#/${k}"${route.name === k ? ' aria-current="page"' : ''}>${label}${extra}</a>`).join('');
 }
 
+// meta.translation_lang：說明譯文的語言，沒有設定翻譯時為 null。
+let trLang = null;
+const isTranslated = it => !!(trLang && !it.tr_native && it.description_tr);
+const langAttr = () => ` lang="${esc(trLang)}"`;
+const aiTitle = () => `由 AI 翻譯成 ${esc(trLang)}`;
+
 function cardHtml(it, opts = {}) {
   const flags = (it.is_hot ? '<span class="flag hot">▲ 爆紅</span>' : '') + (it.is_new && opts.showNew !== false ? '<span class="flag new">新上榜</span>' : '');
-  const text = it.zh_native ? it.description : (it.description_zh || it.description);
-  const desc = text ? `<p class="desc">${esc(text)}</p>` : '<p class="desc none">（無說明）</p>';
-  const ai = text && !it.zh_native && it.description_zh
-    ? `<div class="c-foot"><button type="button" class="ai" aria-expanded="false">AI 翻譯</button>
+  const tr = isTranslated(it), text = tr ? it.description_tr : it.description;
+  const desc = text ? `<p class="desc"${tr ? langAttr() : ''}>${esc(text)}</p>` : '<p class="desc none">（無說明）</p>';
+  const ai = tr
+    ? `<div class="c-foot"><button type="button" class="ai" aria-expanded="false" title="${aiTitle()}">AI 翻譯</button>
          <div class="pop" role="tooltip"><span class="pop-l">原文</span>${it.description ? esc(it.description) : '<span style="color:var(--muted)">（未提供原文）</span>'}</div></div>`
     : '';
   return `<li><article class="card">
@@ -262,7 +268,7 @@ async function viewRepo(route) {
     return v === null ? none : `<dd class="acc">+${fmt(v)}${hasB(k) ? '<small>含回補</small>' : ''}</dd>`;
   };
   const ghUrl = 'https://github.com/' + full.split('/').map(encodeURIComponent).join('/');
-  const zh = det.zh_native ? det.description : det.description_zh;
+  const tr = isTranslated(det), text = tr ? det.description_tr : det.description;
   const range = entry().range || 'all';
 
   const tiles = `<dl class="tiles" aria-label="star 統計">
@@ -306,8 +312,8 @@ async function viewRepo(route) {
         <a class="btn" href="${ghUrl}" target="_blank" rel="noopener noreferrer">${ICON.github}在 GitHub 開啟${ICON.external}<span class="sr">（另開分頁）</span></a>
       </div>
       <div class="d-desc">
-        ${zh ? `<p>${esc(zh)}${det.zh_native ? '' : ' <span class="ai" style="cursor:default">AI 翻譯</span>'}</p>` : '<p style="color:var(--muted)">（無說明）</p>'}
-        ${det.description && !det.zh_native ? `<p class="orig" lang="en"><b lang="zh-Hant">原文</b>${esc(det.description)}</p>` : ''}
+        ${text ? `<p><span${tr ? langAttr() : ''}>${esc(text)}</span>${tr ? ` <span class="ai" style="cursor:default" title="${aiTitle()}">AI 翻譯</span>` : ''}</p>` : '<p style="color:var(--muted)">（無說明）</p>'}
+        ${tr ? `<p class="orig"><b>原文</b><span>${esc(det.description)}</span></p>` : ''}
       </div>
       <dl class="d-meta">
         <div><dt>語言</dt><dd>${langHtml(det.language)}</dd></div>
@@ -501,6 +507,7 @@ async function render(mode = 'update') {
 
   try {
     const meta = await getData('meta');
+    trLang = meta.translation_lang;
     const viewFn = { trending: viewTrending, new: viewNew, daily: viewDaily, alerts: viewAlerts, repo: viewRepo }[route.name];
     const html = await viewFn(route, meta);
     if (token !== renderToken) return;

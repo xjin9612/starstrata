@@ -118,7 +118,7 @@ def cmd_notify(args: argparse.Namespace, cfg: Config) -> int:
                 day,
                 args.data,
                 lambda m: sender.send(m.text, silent=m.silent, buttons=m.buttons),
-                translations=translate.load(args.data),
+                translations=_translations(args.data, cfg),
             )
     except TelegramError as e:
         log.error("Telegram 發送失敗：%s", e)
@@ -165,7 +165,7 @@ def cmd_site(args: argparse.Namespace, cfg: Config) -> int:
             args.out,
             args.web,
             datetime.now(UTC),
-            translate.load(args.data),
+            _translations(args.data, cfg),
             data_root=args.data,
             github_repo=detect_repo(os.environ, Path.cwd()),
             notes=load_notes(args.notes),
@@ -221,14 +221,20 @@ def _claude_interpreter(model: str) -> reports.Interpreter | None:
     return interpret
 
 
-def _translator(cfg: ReportsConfig) -> translate.Translator | None:
-    """依 reports 的供應商建立翻譯函式；沒有對應的 API key 時回傳 None。"""
+def _translations(data_root: Path, cfg: Config) -> dict[str, str]:
+    """translation.target 的譯文；沒有設定翻譯時為空。"""
+    target = cfg.translation.target
+    return translate.load(data_root, target) if target else {}
+
+
+def _translator(cfg: ReportsConfig, target: str) -> translate.Translator | None:
+    """依 reports 的供應商建立翻成 target 的翻譯函式；沒有對應的 API key 時回傳 None。"""
     if cfg.provider == "gemini":
         api_key = os.environ.get("GEMINI_API_KEY", "").strip()
         if not api_key:
             return None
         models = cfg.models
-        return lambda batch: translate.translate_with_gemini(api_key, models, batch)
+        return lambda batch: translate.translate_with_gemini(api_key, models, batch, target=target)
     if not os.environ.get("ANTHROPIC_API_KEY", "").strip():
         return None
     import anthropic
@@ -237,7 +243,7 @@ def _translator(cfg: ReportsConfig) -> translate.Translator | None:
 
     def run(batch: Sequence[tuple[str, str]]) -> dict[str, str]:
         try:
-            return translate.translate_with_claude(client, cfg.model, batch)
+            return translate.translate_with_claude(client, cfg.model, batch, target=target)
         except anthropic.APIStatusError as e:
             raise translate.TranslateError(f"API 回應 {e.status_code}") from e
         except anthropic.APIConnectionError as e:
@@ -248,10 +254,14 @@ def _translator(cfg: ReportsConfig) -> translate.Translator | None:
 
 def cmd_translate(args: argparse.Namespace, cfg: Config) -> int:
     """翻譯失敗只記警告並回傳 0：沒有譯文時各處顯示原文，下次執行再補。"""
+    target = cfg.translation.target
+    if not target:
+        log.info("translation.target 為空字串，略過翻譯")
+        return 0
     if cfg.translation.max_per_run == 0:
         log.info("translation.max_per_run 為 0，略過翻譯")
         return 0
-    translator = _translator(cfg.reports)
+    translator = _translator(cfg.reports, target)
     if translator is None:
         log.warning("未設定 %s 的 API key，略過翻譯", cfg.reports.provider)
         return 0
@@ -262,6 +272,7 @@ def cmd_translate(args: argparse.Namespace, cfg: Config) -> int:
             conn,
             args.data,
             translator,
+            lang=target,
             batch_size=cfg.translation.batch_size,
             max_per_run=cfg.translation.max_per_run,
             interval_seconds=cfg.translation.request_interval_seconds,

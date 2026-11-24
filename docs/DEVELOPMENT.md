@@ -78,7 +78,7 @@ python3 -m venv .venv
 | `notify` | 每日摘要與爆紅警示 |
 | `reports` | 週報、月報與 AI 中文解讀 |
 | `gemini` | 呼叫 Gemini API 取得 JSON 回應 |
-| `translate` | 把 repo 說明翻成繁體中文 |
+| `translate` | 把 repo 說明翻成 `translation.target` 的語言 |
 | `site` | 從 SQLite 產生 dashboard |
 | `report_html` | 把報告 Markdown 轉成 dashboard 用的 HTML |
 | `notes` | 讀取並驗證作者短評 `notes.toml` |
@@ -202,11 +202,13 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 
 ### 說明譯文
 
-- 路徑：`data/translations.jsonl`。每行是 `key` 與 `text`，依 `key` 排序。
+- 路徑：`data/translations.jsonl`。每行是 `key`、`lang`、`text`，依 `key` 再依 `lang` 排序。
+- `lang` 是譯文的 BCP 47 語言代碼。沒有 `lang` 的列是 `zh-TW` 的譯文；寫入時每列都寫出 `lang`。各處只讀 `lang` 等於 `translation.target` 的列。
 - `key` 是說明文字正規化空白後 SHA-256 的前 16 個十六進位字元。說明改變時 `key` 跟著改變，需要重新翻譯；舊譯文保留。
-- `text` 是繁體中文譯文。原文已是繁體中文時，譯文與原文相同。
+- `text` 是譯文。原文已是目標語言時，譯文與原文相同。
 - `data/translation_failures.json` 記錄各 `key` 翻譯失敗的累計次數，鍵依字母排序；沒有失敗紀錄時刪除這個檔。
 - 譯文由模型產生，每次結果不同，所以存檔並 commit，不在重建 DB 時重新產生。SQLite 不存譯文，`notify` 與 `site` 直接讀這個檔。
+- 換了 `translation.target` 時，新語言從頭翻譯，其他語言的列保留；翻完前沒有譯文的說明顯示原文。
 
 `translate` 的流程：
 
@@ -219,7 +221,9 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 - 每次請求等待回應 30 秒；報告解讀的提示含 README，等待 120 秒。
 - 模型漏回或格式不符的項目不採用，計為失敗，下次再翻。譯文超過 600 字元視為異常，不採用。
 - 說明是 repo 作者寫的內容，提示中標明為資料，不照其中的要求做。
-- 沒有對應的 API key 或 `max_per_run` 為 `0` 時略過。
+- 提示詞帶入 `translation.target`。`zh-TW` 另外要求把簡體中文改寫成繁體中文與台灣用語。
+- `translation.target` 為空字串、沒有對應的 API key，或 `max_per_run` 為 `0` 時略過。
+- 失敗次數不分語言記錄。換語言後，舊語言的失敗紀錄只讓那些說明排到後面。
 
 ## SQLite
 
@@ -337,6 +341,7 @@ JSON 檔：
 | `new_count`、`hot_count` | 今日新上榜數與爆紅數；首日為 `null` |
 | `timezone` | `schedule.timezone`，前端用它換算時間 |
 | `locale` | `site.locale`，介面文字的語言 |
+| `translation_lang` | `translation.target`；沒有設定翻譯時為 `null` |
 | `alert_rule` | `{ baseline_days, multiplier, min_daily_stars, cooldown_days }`，取自 `[alerts]` |
 | `trending_prev_date` | 最新資料日期之前，最近一個有 Trending 資料的日期；沒有時為 `null` |
 | `collected_at` | 最新資料日期 `run.json` 的 `finished_at`，代表資料收集完成的時間；找不到 `run.json` 時為 `null` |
@@ -344,11 +349,12 @@ JSON 檔：
 | `reports_new` | 期間結束日距最新資料日期 7 天內的報告份數 |
 | `generated_at` | 建置網站的時間。收集失敗時匯入與建置仍會成功，所以不用它判斷資料新鮮度 |
 
-`Item` 的欄位：`rank`、`full_name`、`language`、`period_stars`（期間新增，沒有資料時為 `null`）、`stargazers`、`description`、`description_zh`、`zh_native`、`created_at`、`is_new`、`is_hot`、`spark`、`has_note`。
+`Item` 的欄位：`rank`、`full_name`、`language`、`period_stars`（期間新增，沒有資料時為 `null`）、`stargazers`、`description`、`description_tr`、`tr_native`、`created_at`、`is_new`、`is_hot`、`spark`、`has_note`。
 
 - `spark` 是最近 7 個資料日（含最新一天）的日增 star，由舊到新。某天沒有快照、或前一天沒有快照可比時為 `null`；不在 `repos` 表的 repo 整個欄位為 `null`。
 - `trending.json` 的 `Item` 另有 `prev_rank`：`trending_prev_date` 當天同期間、同語言的名次，那天沒上榜為 `null`。`trending_prev_date` 為 `null` 時不輸出這個欄位。
-- `description_zh` 是譯文，沒有譯文時為 `null`。`zh_native` 為 `true` 表示原文就是繁體中文，前端不標示「AI 翻譯」。
+- `description_tr` 是 `translation.target` 的譯文，沒有設定翻譯或還沒翻到時為 `null`。`tr_native` 為 `true` 表示原文就是目標語言，前端不標示「AI 翻譯」。
+- 前端只在 `translation_lang` 不是 `null`、`tr_native` 為 `false` 且有譯文時顯示譯文，譯文加上 `lang` 屬性，「AI 翻譯」標籤的 `title` 寫出目標語言；其他情況顯示原文。原文不標語言。
 - `is_new` 表示 `first_seen` 為最新資料日期，首日一律為 `false`；`is_hot` 表示最新資料日期有警示。
 - Trending 頁面查不到的 repo 仍列出，`language` 與 `stargazers` 為 `null`。
 - repo 詳細檔以 `full_name` 為路徑，對應 dashboard 網址 `#/repo/<owner>/<name>`。名稱只接受英數、`_`、`.`、`-`，其他名稱不產生詳細檔。

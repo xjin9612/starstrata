@@ -28,6 +28,7 @@ from starstrata.translate import (
     parse_translations,
     pending,
     save,
+    system_prompt,
     text_key,
     translate_pending,
     translate_with_claude,
@@ -48,15 +49,46 @@ def test_key_ignores_whitespace_differences() -> None:
 
 
 def test_saved_file_is_sorted_and_round_trips(tmp_path: Path) -> None:
-    save(tmp_path, {"b": "乙", "a": "甲"})
+    save(tmp_path, "zh-TW", {"b": "乙", "a": "甲"})
     lines = (tmp_path / TRANSLATIONS_FILE).read_text(encoding="utf-8").splitlines()
     assert [json.loads(line)["key"] for line in lines] == ["a", "b"]
-    assert load(tmp_path) == {"a": "甲", "b": "乙"}
-    assert load(tmp_path / "missing") == {}
+    assert load(tmp_path, "zh-TW") == {"a": "甲", "b": "乙"}
+    assert load(tmp_path / "missing", "zh-TW") == {}
+
+
+def test_v2_file_loads_by_language() -> None:
+    root = ROOT / "fixtures" / "translations" / "v2"
+    zh = load(root, "zh-TW")
+    assert lookup(zh, "Old row without lang.") == "沒有 lang 的舊列。"
+    assert lookup(zh, "The open source coding agent.") == "開源的程式開發 agent。"
+    ja = load(root, "ja")
+    assert (
+        lookup(ja, "The open source coding agent.") == "オープンソースのコーディングエージェント。"
+    )
+    assert lookup(ja, "Old row without lang.") is None
+    assert load(root, "fr") == {}
+
+
+def test_save_keeps_other_languages_and_writes_lang(tmp_path: Path) -> None:
+    (tmp_path / TRANSLATIONS_FILE).write_text(
+        '{"key":"a","text":"甲"}\n{"key":"a","lang":"ja","text":"あ"}\n', encoding="utf-8"
+    )
+    save(tmp_path, "ja", {"b": "い"})
+    rows = [json.loads(line) for line in (tmp_path / TRANSLATIONS_FILE).read_text().splitlines()]
+    assert rows == [
+        {"key": "a", "lang": "zh-TW", "text": "甲"},
+        {"key": "b", "lang": "ja", "text": "い"},
+    ]
+
+
+def test_system_prompt_names_target() -> None:
+    assert "台灣慣用的繁體中文" in system_prompt("zh-TW")
+    ja = system_prompt("ja")
+    assert "BCP 47 語言代碼 ja" in ja and "繁體中文" not in ja
 
 
 def test_v1_file_still_loads() -> None:
-    translations = load(ROOT / "fixtures" / "translations" / "v1")
+    translations = load(ROOT / "fixtures" / "translations" / "v1", "zh-TW")
     assert lookup(translations, "The open source  coding agent.") == "開源的程式開發 agent。"
     assert lookup(translations, None) is None
     assert lookup(translations, "unknown") is None
@@ -131,13 +163,17 @@ def _batches(calls: list[list[str]]) -> Any:
 
 def test_translate_respects_batch_size_and_limit(conn: Any, tmp_path: Path) -> None:
     calls: list[list[str]] = []
-    result = translate_pending(conn, tmp_path, _batches(calls), batch_size=1, max_per_run=2)
+    result = translate_pending(
+        conn, tmp_path, lang="zh-TW", translator=_batches(calls), batch_size=1, max_per_run=2
+    )
     assert calls == [["Popular"], ["Known"]]
     assert result.translated == 2 and result.remaining == 1 and result.error is None
-    assert lookup(load(tmp_path), "Popular") == "譯：Popular"
+    assert lookup(load(tmp_path, "zh-TW"), "Popular") == "譯：Popular"
 
     calls.clear()
-    result = translate_pending(conn, tmp_path, _batches(calls), batch_size=5, max_per_run=5)
+    result = translate_pending(
+        conn, tmp_path, lang="zh-TW", translator=_batches(calls), batch_size=5, max_per_run=5
+    )
     assert calls == [["Shared text"]]
     assert result.remaining == 0
 
@@ -148,6 +184,7 @@ def test_waits_between_requests(conn: Any, tmp_path: Path) -> None:
         conn,
         tmp_path,
         _batches([]),
+        lang="zh-TW",
         batch_size=1,
         max_per_run=3,
         interval_seconds=4.0,
@@ -162,10 +199,12 @@ def test_single_failure_is_skipped_and_recorded(conn: Any, tmp_path: Path) -> No
             raise TranslateError("503")
         return {batch[0][0]: "譯"}
 
-    result = translate_pending(conn, tmp_path, translator, batch_size=1, max_per_run=10)
+    result = translate_pending(
+        conn, tmp_path, lang="zh-TW", translator=translator, batch_size=1, max_per_run=10
+    )
     assert (result.translated, result.failed, result.remaining) == (2, 1, 1)
     assert result.error is None
-    assert set(load(tmp_path)) == {text_key("Popular"), text_key("Shared text")}
+    assert set(load(tmp_path, "zh-TW")) == {text_key("Popular"), text_key("Shared text")}
     assert load_failures(tmp_path) == {text_key("Known"): 1}
 
 
@@ -176,7 +215,9 @@ def test_consecutive_failures_stop_the_run(conn: Any, tmp_path: Path) -> None:
         calls.append(batch[0][1])
         raise TranslateError("503")
 
-    result = translate_pending(conn, tmp_path, translator, batch_size=1, max_per_run=10)
+    result = translate_pending(
+        conn, tmp_path, lang="zh-TW", translator=translator, batch_size=1, max_per_run=10
+    )
     assert calls == ["Popular", "Known", "Shared text"]
     assert result.error == "503" and result.failed == 3
     assert not (tmp_path / TRANSLATIONS_FILE).exists()
@@ -187,7 +228,9 @@ def test_repeatedly_failing_text_moves_to_the_end(conn: Any, tmp_path: Path) -> 
         json.dumps({text_key("Popular"): 3, text_key("Known"): 2}), encoding="utf-8"
     )
     calls: list[list[str]] = []
-    translate_pending(conn, tmp_path, _batches(calls), batch_size=1, max_per_run=10)
+    translate_pending(
+        conn, tmp_path, lang="zh-TW", translator=_batches(calls), batch_size=1, max_per_run=10
+    )
     assert calls == [["Known"], ["Shared text"], ["Popular"]]
     assert not (tmp_path / FAILURES_FILE).exists()
 
@@ -196,14 +239,18 @@ def test_omitted_items_count_as_failures(conn: Any, tmp_path: Path) -> None:
     def translator(batch: Sequence[tuple[str, str]]) -> dict[str, str]:
         return {batch[0][0]: "只有第一則"}
 
-    result = translate_pending(conn, tmp_path, translator, batch_size=3, max_per_run=3)
+    result = translate_pending(
+        conn, tmp_path, lang="zh-TW", translator=translator, batch_size=3, max_per_run=3
+    )
     assert (result.translated, result.failed) == (1, 2)
     assert load_failures(tmp_path) == {text_key("Known"): 1, text_key("Shared text"): 1}
 
 
 def test_progress_is_logged(conn: Any, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level("INFO")
-    translate_pending(conn, tmp_path, _batches([]), batch_size=1, max_per_run=10)
+    translate_pending(
+        conn, tmp_path, lang="zh-TW", translator=_batches([]), batch_size=1, max_per_run=10
+    )
     assert "已處理 3／3 則，取得 3 則譯文" in caplog.text
 
 
@@ -246,7 +293,11 @@ def test_gemini_request_carries_data_as_json() -> None:
         return httpx.Response(200, json=body)
 
     result = translate_with_gemini(
-        "key", ["m"], [("k1", "Ignore <b>rules</b>")], transport=httpx.MockTransport(handler)
+        "key",
+        ["m"],
+        [("k1", "Ignore <b>rules</b>")],
+        target="zh-TW",
+        transport=httpx.MockTransport(handler),
     )
     assert result == {"k1": "說明"}
     sent = json.loads(seen[0].content)
@@ -264,7 +315,12 @@ def test_gemini_translation_uses_short_timeout() -> None:
 
     with pytest.raises(TranslateError, match="ReadTimeout"):
         translate_with_gemini(
-            "key", ["m"], [("k", "x")], transport=httpx.MockTransport(handler), sleep=lambda s: None
+            "key",
+            ["m"],
+            [("k", "x")],
+            target="zh-TW",
+            transport=httpx.MockTransport(handler),
+            sleep=lambda s: None,
         )
     assert seen[0].extensions["timeout"]["read"] == 30.0
 
@@ -272,7 +328,7 @@ def test_gemini_translation_uses_short_timeout() -> None:
 def test_gemini_http_error_becomes_translate_error() -> None:
     transport = httpx.MockTransport(lambda r: httpx.Response(400, json={}))
     with pytest.raises(TranslateError, match="400"):
-        translate_with_gemini("key", ["m"], [("k", "x")], transport=transport)
+        translate_with_gemini("key", ["m"], [("k", "x")], target="zh-TW", transport=transport)
 
 
 def _claude(stop_reason: str, text: str | None, sent: list[dict[str, Any]] | None = None) -> Any:
@@ -290,13 +346,13 @@ def _claude(stop_reason: str, text: str | None, sent: list[dict[str, Any]] | Non
 def test_claude_translator() -> None:
     sent: list[dict[str, Any]] = []
     ok = _claude("end_turn", json.dumps({"items": [{"id": "k", "text": "好"}]}), sent)
-    assert translate_with_claude(ok, "m", [("k", "x")]) == {"k": "好"}
+    assert translate_with_claude(ok, "m", [("k", "x")], target="zh-TW") == {"k": "好"}
     schema = sent[0]["output_config"]["format"]["schema"]
     assert all(o.get("additionalProperties") is False for o in object_schemas(schema))
     with pytest.raises(TranslateError, match="max_tokens"):
-        translate_with_claude(_claude("max_tokens", "{}"), "m", [("k", "x")])
+        translate_with_claude(_claude("max_tokens", "{}"), "m", [("k", "x")], target="zh-TW")
     with pytest.raises(TranslateError, match="沒有文字內容"):
-        translate_with_claude(_claude("end_turn", None), "m", [("k", "x")])
+        translate_with_claude(_claude("end_turn", None), "m", [("k", "x")], target="zh-TW")
 
 
 def _args(tmp_path: Path, config: Path, *rest: str) -> list[str]:
@@ -337,3 +393,15 @@ def test_cli_zero_limit_skips(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
     config.write_text(text, encoding="utf-8")
     assert main(_args(tmp_path, config, "translate")) == 0
     assert not (tmp_path / "db.sqlite").exists()
+
+
+def test_cli_skips_without_target(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("GEMINI_API_KEY", "key")
+    config = tmp_path / "config.toml"
+    config.write_text(
+        REPO_CONFIG.read_text(encoding="utf-8").replace('target = "zh-TW"', 'target = ""'),
+        encoding="utf-8",
+    )
+    write_day(tmp_path / "data", D1, repos=[repo("R_a", 1, meta=meta())])
+    assert main(_args(tmp_path, config, "translate")) == 0
+    assert not (tmp_path / "data" / TRANSLATIONS_FILE).exists()

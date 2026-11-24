@@ -59,7 +59,7 @@ class SummaryData:
     gainers: list[RepoLine]
     new_ids: frozenset[str]
     alert_ids: frozenset[str]
-    # 說明的鍵 → 繁體中文譯文，見 translate.text_key。
+    # 說明的鍵 → translation.target 的譯文，見 translate.text_key。
     translations: Mapping[str, str] = field(default_factory=dict)
 
 

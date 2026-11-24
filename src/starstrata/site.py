@@ -81,10 +81,12 @@ def repo_path(full_name: str) -> Path | None:
 
 
 def _description_fields(translations: Mapping[str, str], description: str | None) -> dict[str, Any]:
-    """description_zh 是繁體中文譯文，沒有譯文時為 None；zh_native 表示原文就是繁體中文。"""
-    zh = lookup(translations, description)
-    native = zh is not None and description is not None and zh == normalize(description)
-    return {"description": description, "description_zh": zh, "zh_native": native}
+    """description_tr 是譯文，沒有譯文時為 None；tr_native 表示原文就是目標語言。"""
+    translated = lookup(translations, description)
+    native = (
+        translated is not None and description is not None and translated == normalize(description)
+    )
+    return {"description": description, "description_tr": translated, "tr_native": native}
 
 
 class _Context:
@@ -213,6 +215,7 @@ def _meta(
         "hot_count": None if ctx.first_day else len(ctx.hot_ids),
         "timezone": cfg.schedule.timezone.key,
         "locale": cfg.site.locale,
+        "translation_lang": cfg.translation.target or None,
         "alert_rule": {
             "baseline_days": alerts.baseline_days,
             "multiplier": alerts.multiplier,
@@ -328,7 +331,7 @@ def _search_full(ctx: _Context) -> list[list[Any]]:
     rows: list[list[Any]] = []
     for r in _search_order(ctx):
         fields = _description_fields(ctx.translations, r.description)
-        translated = None if fields["zh_native"] else fields["description_zh"]
+        translated = None if fields["tr_native"] else fields["description_tr"]
         rows.append([r.full_name, r.description, translated, list(r.topics)])
     return rows
 
@@ -440,8 +443,8 @@ def build_site(
 ) -> SiteStats:
     """清空 out_dir 後重新產生整個網站。
 
-    translations 是說明的繁體中文譯文，見 translate.load。data_root 是快照根目錄，
-    用來讀最新資料日期的 run.json；為 None 時 collected_at 與 run 都是 null。
+    translations 是 translation.target 的說明譯文，見 translate.load；沒有設定翻譯時為空。
+    data_root 是快照根目錄，用來讀最新資料日期的 run.json；為 None 時 collected_at 與 run 為 null。
     github_repo 是網站所屬的 GitHub repo（owner/name），填入頁尾連結；None 時不顯示連結。
     notes 是作者短評，key 是小寫的 full_name，見 notes.load_notes。
     reports_root 是週報與月報的根目錄；為 None 時報告清單是空的。

@@ -72,6 +72,9 @@ def test_empty_language_list_means_overall_only() -> None:
         ("trending_top", "26", "notify.trending_top: 必須是 1 到 25"),
         ("locale", '"ja"', "site.locale: 無效的值 'ja'，可用值為 zh-TW, en"),
         ("locale", '""', "site.locale: 必須是非空字串"),
+        ("target", '"zh_TW"', "translation.target: 無效的語言代碼 'zh_TW'"),
+        ("target", '"中文"', "translation.target: 無效的語言代碼"),
+        ("target", "1", "translation.target: 必須是字串"),
     ],
 )
 def test_invalid_values_are_rejected(key: str, value: str, message: str) -> None:
@@ -133,3 +136,9 @@ def test_fallback_models_only_for_gemini() -> None:
 
 def test_english_locale_is_accepted() -> None:
     assert parse_config(_replace(_repo_config_text(), "locale", '"en"')).site.locale == "en"
+
+
+@pytest.mark.parametrize("value", ['""', '"ja"', '"zh-Hant-TW"'])
+def test_translation_target_values(value: str) -> None:
+    cfg = parse_config(_replace(_repo_config_text(), "target", value))
+    assert cfg.translation.target == value.strip('"')

@@ -110,6 +110,7 @@ def test_build_site(cfg: Config, tmp_path: Path) -> None:
         "hot_count": 0,
         "timezone": "Asia/Taipei",
         "locale": "zh-TW",
+        "translation_lang": "zh-TW",
         "alert_rule": {
             "baseline_days": 7,
             "multiplier": 3.0,
@@ -301,7 +302,7 @@ def test_cli_site_copies_web_and_icon(tmp_path: Path) -> None:
     }
 
 
-def test_translations_set_zh_fields(cfg: Config, tmp_path: Path) -> None:
+def test_translations_set_tr_fields(cfg: Config, tmp_path: Path) -> None:
     data = tmp_path / "data"
     write_day(
         data,
@@ -316,13 +317,13 @@ def test_translations_set_zh_fields(cfg: Config, tmp_path: Path) -> None:
     translations = {text_key("English"): "英文", text_key("已是中文"): "已是中文"}
     out, _ = _build(cfg, tmp_path, data, translations=translations)
     items = _read(out / "data" / "trending.json")["daily"]["all"]
-    assert [(r["description_zh"], r["zh_native"]) for r in items] == [
+    assert [(r["description_tr"], r["tr_native"]) for r in items] == [
         ("英文", False),
         ("已是中文", True),
         (None, False),
     ]
     detail = _read(_repo_json(out, "o/a"))
-    assert (detail["description"], detail["description_zh"]) == ("English", "英文")
+    assert (detail["description"], detail["description_tr"]) == ("English", "英文")
     assert _read(out / "data" / "search-full.json") == [
         ["o/a", "English", "英文", ["t"]],
         ["o/b", "已是中文", None, ["t"]],

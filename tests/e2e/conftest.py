@@ -17,6 +17,7 @@ from playwright.sync_api import Browser, Page, sync_playwright
 from starstrata.backfill import backfill_path
 from starstrata.cli import main
 from starstrata.snapshots import write_jsonl
+from starstrata.translate import save, text_key
 from tests.snapshot_builder import meta, repo, search, trending, write_day
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -33,7 +34,7 @@ def write_fixture_data(root: Path) -> None:
     """9 天的快照，涵蓋各頁面需要的情況。
 
     - hot/rocket：每天 +10，最後一天 +900，觸發有基準的警示；另有回補資料。
-    - o/steady：Python，每天上 Trending，最後一天也在本週總榜。
+    - o/steady：Python，每天上 Trending，最後一天也在本週總榜；說明有繁中譯文。
     - o/typed：TypeScript，最後一天上 TypeScript 榜。
     - late/burst：倒數第二天才出現，最後一天 +300，觸發基準不足的警示。
     - late/single：最後一天才出現，只有一個快照；Trending 上沒有顯示新增數。
@@ -69,6 +70,7 @@ def write_fixture_data(root: Path) -> None:
                 repos.append(repo(node, 1000 - n, full_name=f"s/new-{n:02d}", meta=meta()))
                 searches.append(search(node, f"s/new-{n:02d}", rank=n + 1))
         write_day(root, day, repos=repos, trending_rows=rows, search_rows=searches)
+    save(root, "zh-TW", {text_key("steady"): "穩定成長"})
     write_jsonl(
         backfill_path(root, "R_hot"),
         [{"week": "2026-10-25", "days": [5, 0, 0, 3, 0, 0, 2]}],

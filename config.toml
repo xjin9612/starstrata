@@ -58,7 +58,9 @@ fallback_models = ["gemini-3.5-flash"]
 llm_top_n = 10
 
 [translation]
-# repo 說明翻成繁體中文，沿用 [reports] 的 provider 與 model。
+# repo 說明翻成這個語言（BCP 47 語言代碼，例如 zh-TW、ja），沿用 [reports] 的 provider 與 model。
+# 空字串表示不翻譯，也不呼叫模型。換語言後要從頭翻，每天最多翻 max_per_run 則。
+target = "zh-TW"
 # 每次請求送出的說明則數，上限 100。Gemini 免費方案一次送多則時常回應 503，所以設為 1。
 batch_size = 1
 # 每次執行最多翻譯幾則說明，上限 5000；0 表示不翻譯。daily workflow 的翻譯步驟逾時為 10 分鐘。

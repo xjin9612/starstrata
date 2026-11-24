@@ -18,7 +18,7 @@ starstrata 每天收集 GitHub 趨勢，累積成長期歷史，讓你看出什�
 - 每日快照：GitHub Trending（總榜加六種語言；今日、本週、本月）、Search API 找到的新建 repo，以及所有追蹤中 repo 的 star 數。
 - dashboard：Trending 卡片、新上榜、日增排行、爆紅警示，以及每個 repo 的 star 歷史。
 - Telegram 每日摘要與爆紅警示；週報、月報附 AI 解讀。
-- repo 說明翻成繁體中文。全部在 GitHub Actions 上執行，不需要伺服器或資料庫主機。
+- repo 說明翻成 `translation.target` 設定的語言（本 repo 為繁體中文）。全部在 GitHub Actions 上執行，不需要伺服器或資料庫主機。
 
 ![Trending 頁面](docs/screenshots/trending.png)
 
@@ -32,6 +32,7 @@ starstrata 每天收集 GitHub 趨勢，累積成長期歷史，讓你看出什�
 
 1. fork 這個 repo，保持公開。Actions 頁面要求啟用 workflow 時，選擇啟用。
 2. 在 `config.toml` 把 `notify.site_url` 改成 `https://<你的帳號>.github.io/<repo>/`；設為 `""` 則 Telegram 不附 dashboard 按鈕，網頁也不加分享預覽標籤。頁尾的 GitHub 專案連結會自動帶入。
+   把 `translation.target` 設成 repo 說明要翻成的語言（例如 `ja`）；設為 `""` 則不翻譯。
 3. 在 Settings → Secrets and variables → Actions 建立 secrets：
 
    | 名稱 | 必要 | 用途 |
@@ -82,7 +83,7 @@ starstrata 每天收集 GitHub 趨勢，累積成長期歷史，讓你看出什�
 | `[backfill]` | 每次執行用於回補 star 歷史的 API 請求數 |
 | `[notify]` | Telegram 摘要的長度與 dashboard 網址 |
 | `[reports]` | AI 供應商、模型、備用模型與解讀的專案數 |
-| `[translation]` | 翻譯的每批則數、每次上限與請求間隔 |
+| `[translation]` | 說明翻譯的目標語言（`target`，空字串表示不翻譯）、每批則數、每次上限與請求間隔 |
 
 執行時間寫在 `.github/workflows/daily.yml` 的 `cron`。
 
@@ -111,7 +112,7 @@ GH_PAT=<token> .venv/bin/starstrata backfill   # 回補 star 歷史
 
 ## 疑難排解與已知限制
 
-- **說明一直是英文**：Gemini 免費方案在尖峰時常回應 `503 UNAVAILABLE`。沒有譯文的說明顯示原文，每天執行時會再補翻；一再失敗的說明會排到最後。
+- **說明一直是英文**：Gemini 免費方案在尖峰時常回應 `503 UNAVAILABLE`。沒有譯文的說明顯示原文，每天執行時會再補翻；一再失敗的說明會排到最後。改了 `translation.target` 之後，新語言要從頭翻，每次執行最多翻 `translation.max_per_run` 則。
 - **Trending 停止更新**：Trending 沒有官方 API，starstrata 解析網頁 HTML。GitHub 改版可能讓解析失效，直到程式更新；Search 與 repo 快照照常運作。
 - **star 歷史比預期少**：star history API 只計入目前仍給 star 的使用者。回補每次有請求上限，老 repo 需要幾天才補齊。
 - **repo 頁面顯示「找不到」**：repo 頁面使用目前的 `owner/name`，改名後舊連結會失效。

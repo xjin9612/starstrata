@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import re
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -72,6 +73,9 @@ REPORT_PROVIDERS = ("gemini", "anthropic")
 
 SITE_LOCALES = ("zh-TW", "en")
 
+# BCP 47 語言代碼的常見形式：語言加上選用的文字、地區等子標籤，例如 ja、zh-TW、zh-Hant-TW。
+_LANGUAGE_TAG = re.compile(r"[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*")
+
 
 @dataclass(frozen=True)
 class ReportsConfig:
@@ -90,6 +94,8 @@ class ReportsConfig:
 class TranslationConfig:
     """說明翻譯沿用 reports 的 provider 與 model。"""
 
+    # 譯文的 BCP 47 語言代碼；空字串表示不翻譯。
+    target: str
     batch_size: int
     # 0 表示不翻譯。
     max_per_run: int
@@ -306,7 +312,11 @@ def _reports(root: dict[str, Any]) -> ReportsConfig:
 
 def _translation(root: dict[str, Any]) -> TranslationConfig:
     s = _Section(root, "translation")
+    target = s.get_optional_str("target")
+    if target and not _LANGUAGE_TAG.fullmatch(target):
+        raise ConfigError(f"translation.target: 無效的語言代碼 {target!r}，例如 zh-TW、ja")
     cfg = TranslationConfig(
+        target=target,
         batch_size=s.get_int("batch_size", minimum=1, maximum=100),
         max_per_run=s.get_int("max_per_run", minimum=0, maximum=5_000),
         request_interval_seconds=s.get_float("request_interval_seconds", minimum=0.0),

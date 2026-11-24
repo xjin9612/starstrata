@@ -18,7 +18,7 @@ starstrata collects GitHub trends every day and keeps them as a long-term histor
 - Daily snapshots of GitHub Trending (overall plus six languages; daily, weekly and monthly), newly created repos from the Search API, and star counts of every tracked repo.
 - A dashboard with trending cards, new entries, daily gainers, breakout alerts and per-repo star history.
 - A Telegram daily summary and breakout alerts; weekly and monthly reports with AI summaries.
-- Repo descriptions translated into Traditional Chinese. Runs entirely on GitHub Actions: no server and no database host.
+- Repo descriptions translated into the language set in `translation.target` (Traditional Chinese here). Runs entirely on GitHub Actions: no server and no database host.
 
 ![Trending page](docs/screenshots/trending.png)
 
@@ -32,6 +32,7 @@ starstrata collects GitHub trends every day and keeps them as a long-term histor
 
 1. Fork this repo and keep it public. If the Actions tab asks you to enable workflows, enable them.
 2. In `config.toml`, set `notify.site_url` to `https://<your-user>.github.io/<repo>/`, or to `""` to omit the dashboard button in Telegram and the share preview tags. The footer link to the GitHub project is filled in automatically.
+   Set `translation.target` to the language for repo descriptions (for example `ja`), or to `""` to skip translation.
 3. Create repository secrets in Settings → Secrets and variables → Actions:
 
    | Name | Required | Purpose |
@@ -82,7 +83,7 @@ All settings live in `config.toml`, with a comment on every key. Unknown keys an
 | `[backfill]` | API requests per run for star history backfill |
 | `[notify]` | Telegram summary length and dashboard URL |
 | `[reports]` | AI provider, model, fallback models and how many repos to summarize |
-| `[translation]` | Translation batch size, per-run limit and request interval |
+| `[translation]` | Target language for descriptions (`target`, empty to disable), batch size, per-run limit and request interval |
 
 The run time is the `cron` line in `.github/workflows/daily.yml`.
 
@@ -111,7 +112,7 @@ GH_PAT=<token> .venv/bin/starstrata backfill   # star history backfill
 
 ## Troubleshooting and known limitations
 
-- **Descriptions stay in English**: Gemini's free tier often answers `503 UNAVAILABLE` under load. Untranslated descriptions show the original text, and each daily run retries them. Descriptions that fail repeatedly move to the back of the queue.
+- **Descriptions stay in English**: Gemini's free tier often answers `503 UNAVAILABLE` under load. Untranslated descriptions show the original text, and each daily run retries them. Descriptions that fail repeatedly move to the back of the queue. After you change `translation.target`, the new language starts from scratch at `translation.max_per_run` descriptions per run.
 - **Trending stops updating**: Trending has no official API, so starstrata parses the HTML page. A GitHub page redesign can break it until the parser is updated; Search and repo snapshots keep working.
 - **Star history looks lower than expected**: the star history API only counts users who still star the repo. Backfill is limited per run, so older repos fill in over several days.
 - **A repo page shows "not found"**: repo pages use the current `owner/name`. After a rename, the old link stops working.

@@ -145,3 +145,22 @@ def test_no_horizontal_scroll(page: Page, base_url: str, width: int, route: str)
     expect(page.locator("#view > *").first).to_be_visible()
     overflow = page.evaluate("document.documentElement.scrollWidth - window.innerWidth")
     assert overflow <= 0
+
+
+def test_translated_and_original_descriptions(page: Page, base_url: str) -> None:
+    page.goto(base_url)
+    steady = page.locator(".card", has=page.locator(".name", has_text="o/steady"))
+    expect(steady.locator(".desc")).to_have_text("穩定成長")
+    expect(steady.locator(".desc")).to_have_attribute("lang", "zh-TW")
+    expect(steady.locator("button.ai")).to_have_attribute("title", "由 AI 翻譯成 zh-TW")
+    rocket = page.locator(".card", has=page.locator(".name", has_text="hot/rocket"))
+    expect(rocket.locator(".desc")).to_have_text("desc")
+    expect(rocket.locator(".desc")).not_to_have_attribute("lang", "zh-TW")
+    expect(rocket.locator("button.ai")).to_have_count(0)
+
+    page.goto(f"{base_url}#/repo/o/steady")
+    expect(page.locator(".d-desc")).to_contain_text("穩定成長")
+    expect(page.locator(".d-desc .orig")).to_contain_text("steady")
+    page.goto(f"{base_url}#/repo/hot/rocket")
+    expect(page.locator(".d-desc")).to_have_text("desc")
+    expect(page.locator(".d-desc .orig")).to_have_count(0)
