@@ -26,7 +26,7 @@ GAINERS_HEADING = "Star 增加最多"
 # 報告列出的排行數量。
 TOP_GAINERS = 20
 TOP_NEW = 10
-# 送給 Claude 的 README 字元上限。
+# 送給模型的 README 字元上限。
 README_LIMIT = 4000
 
 # 解讀缺漏時寫在報告中的行首文字，`report due` 依此判斷要不要重新產生。
@@ -207,7 +207,7 @@ _EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 
 
 def _plain(text: str) -> str:
-    """把 Claude 的輸出當純文字寫進 Markdown：壓成單行、移除網址與 email、跳脫 Markdown 符號。
+    """把模型的輸出當純文字寫進 Markdown：壓成單行、移除網址與 email、跳脫 Markdown 符號。
 
     解讀內容來自含 README 的 prompt，不能讓它在報告中產生連結、圖片或 HTML。
     跳脫 < 與 > 後 HTML 標籤只會顯示成文字。網址只比對 ASCII 字元，不吃掉後面的中文。
@@ -365,7 +365,7 @@ _SCHEMA: dict[str, Any] = {
 
 
 class InterpretError(Exception):
-    """Claude 沒有回傳可用的解讀。"""
+    """模型沒有回傳可用的解讀。"""
 
 
 def _data(text: str) -> str:

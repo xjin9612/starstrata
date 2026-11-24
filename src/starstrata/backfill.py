@@ -1,4 +1,4 @@
-"""回補追蹤中 repo 的歷史 star 曲線，寫入 data/backfill/<node_id>.jsonl。"""
+"""回補追蹤中 repo 的歷史 star 曲線，寫入 data/backfill/<hex>.jsonl（檔名見 backfill_path）。"""
 
 from __future__ import annotations
 

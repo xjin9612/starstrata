@@ -31,7 +31,7 @@ starstrata 每天收集 GitHub 趨勢，累積成長期歷史，讓你看出什�
 ## 部署自己的版本
 
 1. fork 這個 repo，保持公開。Actions 頁面要求啟用 workflow 時，選擇啟用。
-2. 在 `config.toml` 把 `notify.site_url` 改成 `https://<你的帳號>.github.io/<repo>/`；設為 `""` 則 Telegram 不附 dashboard 按鈕，網頁也不加分享預覽標籤。頁尾的 GitHub 專案連結會自動帶入。
+2. 在 `config.toml` 把 `notify.site_url` 改成 `https://<你的帳號>.github.io/<repo>/`；設為 `""` 則 Telegram 不附 dashboard 按鈕，網頁的分享預覽標籤也不帶網址與圖片。頁尾的 GitHub 專案連結會自動帶入。
    把 `translation.target` 設成 repo 說明要翻成的語言（例如 `ja`）；設為 `""` 則不翻譯。把 `site.locale` 改成 `en` 可以得到英文介面。
    清空 `notes.toml`：裡面的短評是原作者的個人內容。
 3. 在 Settings → Secrets and variables → Actions 建立 secrets：

@@ -382,7 +382,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--social-preview", type=Path, default=Path("assets") / SOCIAL_PREVIEW, help="分享預覽圖"
     )
     sub.add_parser(
-        "translate", help="把 repo 說明翻成繁體中文（需要 GEMINI_API_KEY 或 ANTHROPIC_API_KEY）"
+        "translate",
+        help="翻譯 repo 說明（需要 GEMINI_API_KEY 或 ANTHROPIC_API_KEY）",
     )
     p_notify = sub.add_parser(
         "notify", help="發送每日摘要與爆紅警示（需要 TELEGRAM_BOT_TOKEN、TELEGRAM_CHAT_ID）"
