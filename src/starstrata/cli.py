@@ -158,7 +158,13 @@ def cmd_site(args: argparse.Namespace, cfg: Config) -> int:
     conn = db.connect(args.db)
     try:
         stats = build_site(
-            conn, cfg, args.out, args.web, datetime.now(UTC), translate.load(args.data)
+            conn,
+            cfg,
+            args.out,
+            args.web,
+            datetime.now(UTC),
+            translate.load(args.data),
+            data_root=args.data,
         )
     finally:
         conn.close()

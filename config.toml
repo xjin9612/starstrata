@@ -65,3 +65,7 @@ batch_size = 1
 max_per_run = 60
 # 兩次請求之間等待的秒數，避免超過每分鐘的請求上限。
 request_interval_seconds = 4
+
+[site]
+# dashboard 介面文字的語言：zh-TW 或 en。repo 說明的翻譯另由 [translation] 決定。
+locale = "zh-TW"

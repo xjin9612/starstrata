@@ -13,7 +13,7 @@ from starstrata.cli import main
 from starstrata.config import Config, load_config
 from starstrata.ingest import sync
 from starstrata.site import build_site, repo_path, repo_series
-from starstrata.snapshots import write_jsonl
+from starstrata.snapshots import write_json, write_jsonl
 from starstrata.translate import text_key
 from tests.snapshot_builder import gone, meta, repo, search, trending, write_day
 
@@ -106,6 +106,16 @@ def test_build_site(cfg: Config, tmp_path: Path) -> None:
         "is_first_day": False,
         "new_count": 1,
         "hot_count": 0,
+        "timezone": "Asia/Taipei",
+        "locale": "zh-TW",
+        "alert_rule": {
+            "baseline_days": 7,
+            "multiplier": 3.0,
+            "min_daily_stars": 200,
+            "cooldown_days": 7,
+        },
+        "collected_at": None,
+        "run": None,
         "generated_at": "2026-11-23T01:00:00+00:00",
     }
     new = _read(out / "data" / "new.json")["items"]
@@ -308,3 +318,34 @@ def test_translations_set_zh_fields(cfg: Config, tmp_path: Path) -> None:
     ]
     detail = _read(_repo_json(out, "o/a"))
     assert (detail["description"], detail["description_zh"]) == ("English", "英文")
+
+
+def _meta_with_run(cfg: Config, tmp_path: Path, run: dict[str, Any] | None) -> Any:
+    data = tmp_path / "data"
+    write_day(data, date(2026, 11, 1), repos=[repo("R_a", 100, full_name="o/a", meta=meta())])
+    if run is not None:
+        write_json(data / "2026" / "11" / "01" / "run.json", run)
+    out, _ = _build(cfg, tmp_path, data, data_root=data)
+    return _read(out / "data" / "meta.json")
+
+
+def test_meta_reads_merged_run_status(cfg: Config, tmp_path: Path) -> None:
+    missing = [{"period": "weekly", "language": "rust"}]
+    run = {
+        "finished_at": "2026-11-01T00:05:00+00:00",
+        "merged": {"trending_missing": missing, "search_ok": False, "repos_missing": ["R_x"]},
+    }
+    meta_json = _meta_with_run(cfg, tmp_path, run)
+    assert meta_json["collected_at"] == "2026-11-01T00:05:00+00:00"
+    assert meta_json["run"] == {"trending_missing": missing, "search_ok": False, "repos_missing": 1}
+
+
+def test_meta_without_merged_run_status(cfg: Config, tmp_path: Path) -> None:
+    meta_json = _meta_with_run(cfg, tmp_path, {"finished_at": "2026-11-01T00:05:00+00:00"})
+    assert meta_json["collected_at"] == "2026-11-01T00:05:00+00:00"
+    assert meta_json["run"] is None
+
+
+def test_meta_without_run_json(cfg: Config, tmp_path: Path) -> None:
+    meta_json = _meta_with_run(cfg, tmp_path, None)
+    assert meta_json["collected_at"] is None and meta_json["run"] is None

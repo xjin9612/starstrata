@@ -25,6 +25,7 @@ def test_repo_config_is_valid() -> None:
     assert "python" in cfg.trending.languages
     assert cfg.trending.periods == ("daily", "weekly", "monthly")
     assert cfg.alerts.multiplier == 3.0
+    assert cfg.site.locale == "zh-TW"
 
 
 def test_integer_multiplier_is_accepted_as_float() -> None:
@@ -69,6 +70,8 @@ def test_empty_language_list_means_overall_only() -> None:
         ("request_interval_seconds", "-1", "translation.request_interval_seconds: 必須是 0.0 以上"),
         ("max_per_run", "5001", "translation.max_per_run: 必須是 0 到 5000"),
         ("trending_top", "26", "notify.trending_top: 必須是 1 到 25"),
+        ("locale", '"ja"', "site.locale: 無效的值 'ja'，可用值為 zh-TW, en"),
+        ("locale", '""', "site.locale: 必須是非空字串"),
     ],
 )
 def test_invalid_values_are_rejected(key: str, value: str, message: str) -> None:
@@ -126,3 +129,7 @@ def test_fallback_models_only_for_gemini() -> None:
         parse_config(text)
     cfg = parse_config(_replace(text, "fallback_models", "[]"))
     assert cfg.reports.models == (cfg.reports.model,)
+
+
+def test_english_locale_is_accepted() -> None:
+    assert parse_config(_replace(_repo_config_text(), "locale", '"en"')).site.locale == "en"

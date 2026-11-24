@@ -305,13 +305,28 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 
 | 檔案 | 內容 |
 |---|---|
-| `data/meta.json` | 資料日期、`active` 的 repo 數、是否首日、今日新上榜數與爆紅數（首日為 `null`） |
+| `data/meta.json` | 見下方「meta」 |
 | `data/trending.json` | 最新資料日期的 Trending，依期間與語言分頁：`{period: {all \| <語言>: [Item]}}` |
 | `data/new.json` | 今日新上榜，依今日 Trending 新增 star 排序；只出現在 Search 的 repo 沒有今日新增，排在後面。首日為空 |
 | `data/daily.json` | 與前一天快照相比的日增前 50 名 |
 | `data/alerts.json` | 最近 30 天的警示：日期、repo、當日新增、基準（四捨五入成整數，資料不足時為 `null`） |
 | `data/search-index.json` | 所有 repo 的 `[full_name, language, stars]`，依 star 數排序，供搜尋使用 |
 | `data/repos/<owner>/<name>.json` | 單一 repo 的 meta、譯文、目前 star 數、star 累計點、每日新增 star、Trending 上榜紀錄 |
+
+`meta` 的欄位：
+
+| 欄位 | 內容 |
+|---|---|
+| `data_date` | 最新資料日期 |
+| `tracked_count` | `active` 的 repo 數 |
+| `is_first_day` | 是否首日 |
+| `new_count`、`hot_count` | 今日新上榜數與爆紅數；首日為 `null` |
+| `timezone` | `schedule.timezone`，前端用它換算時間 |
+| `locale` | `site.locale`，介面文字的語言 |
+| `alert_rule` | `{ baseline_days, multiplier, min_daily_stars, cooldown_days }`，取自 `[alerts]` |
+| `collected_at` | 最新資料日期 `run.json` 的 `finished_at`，代表資料收集完成的時間；找不到 `run.json` 時為 `null` |
+| `run` | 最新資料日期 `run.json` 的 `merged`：`{ trending_missing, search_ok, repos_missing }`，`repos_missing` 是個數；`run.json` 沒有 `merged` 或找不到時為 `null` |
+| `generated_at` | 建置網站的時間。收集失敗時匯入與建置仍會成功，所以不用它判斷資料新鮮度 |
 
 `Item` 的欄位：`rank`、`full_name`、`language`、`period_stars`（期間新增，沒有資料時為 `null`）、`stargazers`、`description`、`description_zh`、`zh_native`、`created_at`、`is_new`、`is_hot`。
 

@@ -70,6 +70,8 @@ class NotifyConfig:
 
 REPORT_PROVIDERS = ("gemini", "anthropic")
 
+SITE_LOCALES = ("zh-TW", "en")
+
 
 @dataclass(frozen=True)
 class ReportsConfig:
@@ -96,6 +98,12 @@ class TranslationConfig:
 
 
 @dataclass(frozen=True)
+class SiteConfig:
+    # dashboard 介面文字的語言，與說明翻譯的目標語言無關。
+    locale: str
+
+
+@dataclass(frozen=True)
 class Config:
     schedule: ScheduleConfig
     trending: TrendingConfig
@@ -106,6 +114,7 @@ class Config:
     notify: NotifyConfig
     reports: ReportsConfig
     translation: TranslationConfig
+    site: SiteConfig
 
 
 class _Section:
@@ -306,6 +315,15 @@ def _translation(root: dict[str, Any]) -> TranslationConfig:
     return cfg
 
 
+def _site(root: dict[str, Any]) -> SiteConfig:
+    s = _Section(root, "site")
+    locale = s.get_str("locale")
+    if locale not in SITE_LOCALES:
+        raise ConfigError(f"site.locale: 無效的值 {locale!r}，可用值為 {', '.join(SITE_LOCALES)}")
+    s.finish()
+    return SiteConfig(locale=locale)
+
+
 _SECTIONS = (
     "schedule",
     "trending",
@@ -316,6 +334,7 @@ _SECTIONS = (
     "notify",
     "reports",
     "translation",
+    "site",
 )
 
 
@@ -338,6 +357,7 @@ def parse_config(text: str) -> Config:
         notify=_notify(root),
         reports=_reports(root),
         translation=_translation(root),
+        site=_site(root),
     )
 
 

@@ -19,6 +19,7 @@ from typing import Any
 from starstrata.config import Config
 from starstrata.db import OVERALL
 from starstrata.queries import active_count, is_first_day, top_gainers
+from starstrata.snapshots import RUN_FILE, day_dir
 from starstrata.translate import lookup, normalize
 
 # 日增排行的數量與爆紅警示列出的天數。
@@ -122,13 +123,48 @@ class _Context:
         }
 
 
-def _meta(conn: sqlite3.Connection, ctx: _Context, latest: date | None) -> dict[str, Any]:
+def _run_status(data_root: Path | None, latest: date | None) -> dict[str, Any]:
+    """最新資料日期的 run.json 中，收集完成時間與合併後的狀態；找不到時為 None。"""
+    path = day_dir(data_root, latest) / RUN_FILE if data_root and latest else None
+    if path is None or not path.is_file():
+        return {"collected_at": None, "run": None}
+    run = json.loads(path.read_text(encoding="utf-8"))
+    merged = run.get("merged")
+    return {
+        "collected_at": run.get("finished_at"),
+        "run": None
+        if merged is None
+        else {
+            "trending_missing": merged["trending_missing"],
+            "search_ok": merged["search_ok"],
+            "repos_missing": len(merged["repos_missing"]),
+        },
+    }
+
+
+def _meta(
+    conn: sqlite3.Connection,
+    cfg: Config,
+    ctx: _Context,
+    latest: date | None,
+    data_root: Path | None,
+) -> dict[str, Any]:
+    alerts = cfg.alerts
     return {
         "data_date": latest.isoformat() if latest else None,
         "tracked_count": active_count(conn),
         "is_first_day": ctx.first_day,
         "new_count": None if ctx.first_day else len(ctx.new_ids),
         "hot_count": None if ctx.first_day else len(ctx.hot_ids),
+        "timezone": cfg.schedule.timezone.key,
+        "locale": cfg.site.locale,
+        "alert_rule": {
+            "baseline_days": alerts.baseline_days,
+            "multiplier": alerts.multiplier,
+            "min_daily_stars": alerts.min_daily_stars,
+            "cooldown_days": alerts.cooldown_days,
+        },
+        **_run_status(data_root, latest),
     }
 
 
@@ -270,8 +306,13 @@ def build_site(
     web_dir: Path,
     generated_at: datetime,
     translations: Mapping[str, str] | None = None,
+    data_root: Path | None = None,
 ) -> SiteStats:
-    """清空 out_dir 後重新產生整個網站。translations 是說明的繁體中文譯文，見 translate.load。"""
+    """清空 out_dir 後重新產生整個網站。
+
+    translations 是說明的繁體中文譯文，見 translate.load。data_root 是快照根目錄，
+    用來讀最新資料日期的 run.json；為 None 時 collected_at 與 run 都是 null。
+    """
     if out_dir.exists():
         shutil.rmtree(out_dir)
     shutil.copytree(web_dir, out_dir)
@@ -281,7 +322,8 @@ def build_site(
 
     _write(
         data / "meta.json",
-        _meta(conn, ctx, latest) | {"generated_at": generated_at.isoformat(timespec="seconds")},
+        _meta(conn, cfg, ctx, latest, data_root)
+        | {"generated_at": generated_at.isoformat(timespec="seconds")},
     )
     trending: dict[str, Any] = {p: {} for p in cfg.trending.periods}
     new: list[dict[str, Any]] = []
