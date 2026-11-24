@@ -21,6 +21,13 @@ python3 -m venv .venv
 .venv/bin/pytest
 ```
 
+改了 `web/` 或 `site.py` 時，另外跑瀏覽器測試。第一次執行前先下載 Chromium：
+
+```sh
+.venv/bin/playwright install chromium
+.venv/bin/pytest -m e2e
+```
+
 預覽 dashboard：先執行 `.venv/bin/starstrata site`，再執行 `python3 -m http.server -d _site 8000`，開啟 `http://localhost:8000`。
 
 ## 相依套件
@@ -43,6 +50,10 @@ python3 -m venv .venv
 - 測試不連網路。HTTP 用 `httpx.MockTransport` 模擬。
 - Trending 解析的測試用存下來的真實 HTML，放在 `tests/fixtures/`。
 - 每個門檻判斷都要有邊界值測試。
+- 瀏覽器測試放在 `tests/e2e/`，標記為 `e2e`，預設的 `pytest` 不執行。
+  - 流程：用 `tests/snapshot_builder.py` 寫 fixture 快照，執行 `starstrata site`，在本機起 HTTP server，再用 Playwright 開啟。
+  - 每個測試結束時檢查：沒有 JS 錯誤、沒有失敗的請求、沒有連到本機以外的網址。預期會 404 的測試要自己檢查並清空 `failed_requests`。
+  - 用 Playwright 的等待條件，不用固定秒數的等待。
 - token 只從環境變數讀取：`GH_PAT`、`TELEGRAM_BOT_TOKEN`、`TELEGRAM_CHAT_ID`、`GEMINI_API_KEY`、`ANTHROPIC_API_KEY`。錯誤訊息與 log 不得輸出 token。
 
 ## 模組
@@ -405,7 +416,7 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 
 | workflow | 觸發 | 內容 |
 |---|---|---|
-| `ci.yml` | push 到 `main`、pull request | ruff、mypy、pytest |
+| `ci.yml` | push 到 `main`、pull request | ruff、mypy、pytest；另一個 job 跑瀏覽器測試 |
 | `daily.yml` | `cron`、`workflow_dispatch` | 每日執行流程 |
 
 `daily.yml`：
