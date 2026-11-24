@@ -232,7 +232,7 @@ def test_alerts_use_rounded_baseline(cfg: Config, tmp_path: Path) -> None:
     conn.close()
     out, _ = _build(cfg, tmp_path, data)
     assert _read(out / "data" / "alerts.json") == {
-        "items": [{"date": "2026-11-02", "full_name": "o/a", "added": 500, "baseline": 11}]
+        "items": [{"date": "2026-11-02", "full_name": "o/a", "added": 500, "baseline": 10.6}]
     }
     assert _read(out / "data" / "meta.json")["hot_count"] == 1
     assert _read(out / "data" / "daily.json")["items"][0]["is_hot"] is True

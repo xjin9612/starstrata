@@ -323,7 +323,7 @@ def _alerts(conn: sqlite3.Connection, ctx: _Context, day: date) -> list[dict[str
             "date": r["date"],
             "full_name": ctx.repos[r["node_id"]].full_name,
             "added": r["daily_stars"],
-            "baseline": None if r["baseline"] is None else round(r["baseline"]),
+            "baseline": None if r["baseline"] is None else round(r["baseline"], 1),
         }
         for r in rows
         if r["node_id"] in ctx.repos
