@@ -43,9 +43,6 @@ def test_trending_filter_without_results(page: Page, base_url: str) -> None:
 
 def test_new_shows_search_only_and_more(page: Page, base_url: str) -> None:
     page.goto(f"{base_url}#/new")
-    first = page.locator(".card").first
-    expect(first.locator(".name")).to_have_text("late/single")
-    expect(first.locator(".delta")).to_have_text("+12")
     search_only = page.locator(".card", has=page.locator(".name", has_text="s/new-00"))
     expect(search_only.locator(".per.src")).to_have_text("來自 Search，沒有今日 Trending 數字")
     expect(search_only.locator(".delta")).to_have_count(0)
@@ -55,6 +52,10 @@ def test_new_shows_search_only_and_more(page: Page, base_url: str) -> None:
     page.locator("#moreNew").click()
     expect(page.locator(".card")).to_have_count(total)
     expect(page.locator(".all-shown")).to_have_text(f"已顯示全部 {total} 筆")
+    # 在 Trending 上但沒有新增數的 repo 不標成來自 Search。
+    trending_only = page.locator(".card", has=page.locator(".name", has_text="late/single"))
+    expect(trending_only.locator(".delta")).to_have_text("—")
+    expect(trending_only.locator(".per.src")).to_have_count(0)
 
 
 def test_daily_ranks_by_gain(page: Page, base_url: str) -> None:

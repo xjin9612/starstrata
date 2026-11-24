@@ -36,7 +36,7 @@ def write_fixture_data(root: Path) -> None:
     - o/steady：Python，每天上 Trending，最後一天也在本週總榜。
     - o/typed：TypeScript，最後一天上 TypeScript 榜。
     - late/burst：倒數第二天才出現，最後一天 +300，觸發基準不足的警示。
-    - late/single：最後一天才出現，只有一個快照。
+    - late/single：最後一天才出現，只有一個快照；Trending 上沒有顯示新增數。
     - s/new-NN：最後一天只出現在 Search 的新 repo，數量超過新上榜頁一次顯示的筆數。
     Rust 沒有任何上榜，用來測篩選後的空狀態。
     """
@@ -60,7 +60,7 @@ def write_fixture_data(root: Path) -> None:
             repos.append(repo("R_single", 80, full_name="late/single", meta=meta()))
             rows += [
                 _trending("hot/rocket", 2, stars=900),
-                _trending("late/single", 3, stars=12),
+                _trending("late/single", 3, stars=None),
                 _trending("o/typed", 1, language="typescript", stars=7),
                 _trending("o/steady", 1, "weekly", stars=300),
             ]

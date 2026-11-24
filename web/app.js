@@ -204,7 +204,7 @@ async function viewNew(route, meta) {
   if (!all.length) return head + emptyHtml('quiet', '今天沒有新上榜的 repo', '今天的 Trending 與 Search 都是之前出現過的專案。', '<a class="btn" href="#/trending">看 Trending</a>');
   const shown = all.slice(0, entry().newShown || PAGE_SIZE);
   const rest = all.length - shown.length;
-  return head + `<ol class="grid" aria-label="新上榜清單">${shown.map(it => cardHtml(it, { created: true, showNew: false, nullLabel: '來自 Search，沒有今日 Trending 數字' })).join('')}</ol>
+  return head + `<ol class="grid" aria-label="新上榜清單">${shown.map(it => cardHtml(it, { created: true, showNew: false, nullLabel: it.from_search ? '來自 Search，沒有今日 Trending 數字' : '' })).join('')}</ol>
     ${rest > 0 ? `<div class="more"><button type="button" class="btn" id="moreNew">顯示更多（還有 ${fmt(rest)} 筆）</button></div>` : `<p class="all-shown">已顯示全部 ${fmt(all.length)} 筆</p>`}`;
 }
 

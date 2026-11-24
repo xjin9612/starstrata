@@ -457,3 +457,27 @@ def test_notes_are_matched_case_insensitively(
     }
     assert _read(_repo_json(out, "o/b"))["note"] is None
     assert "notes.toml 的 gone/x 對不到任何 repo" in caplog.text
+
+
+def test_new_marks_repos_only_found_by_search(cfg: Config, tmp_path: Path) -> None:
+    data = tmp_path / "data"
+    write_day(data, date(2026, 11, 1), repos=[repo("R_a", 10, full_name="o/a", meta=meta())])
+    write_day(
+        data,
+        date(2026, 11, 2),
+        repos=[
+            repo("R_t", 50, full_name="o/trend", meta=meta()),
+            repo("R_n", 40, full_name="o/nostars", meta=meta()),
+            repo("R_s", 30, full_name="o/search", meta=meta()),
+        ],
+        # Trending 有時不顯示期間新增數，這種 repo 仍算在 Trending 上。
+        trending_rows=[trending("o/trend", 1, stars=5), trending("o/nostars", 2, stars=None)],
+        search_rows=[search("R_s", "o/search")],
+    )
+    out, _ = _build(cfg, tmp_path, data)
+    new = _read(out / "data" / "new.json")["items"]
+    assert [(i["full_name"], i["period_stars"], i["from_search"]) for i in new] == [
+        ("o/trend", 5, False),
+        ("o/nostars", None, False),
+        ("o/search", None, True),
+    ]

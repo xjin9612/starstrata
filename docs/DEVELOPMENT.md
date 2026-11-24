@@ -317,7 +317,7 @@ JSON 檔：
 |---|---|
 | `data/meta.json` | 見下方「meta」 |
 | `data/trending.json` | 最新資料日期的 Trending，依期間與語言分頁：`{period: {all \| <語言>: [Item]}}` |
-| `data/new.json` | 今日新上榜，依今日 Trending 新增 star 排序；只出現在 Search 的 repo 沒有今日新增，排在後面。首日為空 |
+| `data/new.json` | 今日新上榜，依今日 Trending 新增 star 排序；只出現在 Search 的 repo 沒有今日新增，排在後面。`Item` 另有 `from_search`，表示不在今日 Trending。首日為空 |
 | `data/daily.json` | 與前一天快照相比的日增前 50 名 |
 | `data/alerts.json` | 最近 30 天的警示：日期、repo、當日新增、基準（四捨五入成整數，資料不足時為 `null`） |
 | `data/search-index.json` | 所有 repo 的 `[full_name, language, stars]`，依 star 數排序，供搜尋使用 |
@@ -359,7 +359,7 @@ JSON 檔：
 - 爆紅警示頁的欄名寫「近 7 日平均」，與 `alerts.baseline_days` 的預設值一致；改這個設定時要一起改前端文字。
 - 爆紅警示的近期平均 ≤ 0 時，倍數欄顯示 `—`。
 - repo 詳細頁的「Trending 上榜天數」是 `trending` 紀錄裡不重複的日期數。同一天出現在多個榜只算一天。
-- 新上榜頁的 `period_stars` 為 `null` 時，卡片寫「來自 Search，沒有今日 Trending 數字」。
+- 新上榜頁的 `from_search` 為 `true` 時，卡片寫「來自 Search，沒有今日 Trending 數字」。在 Trending 上但沒有顯示新增數的 repo 照常顯示 `—`。
 
 前端：
 

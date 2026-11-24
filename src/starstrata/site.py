@@ -261,7 +261,10 @@ def _trending(
 
 
 def _new(conn: sqlite3.Connection, ctx: _Context, day: date) -> list[dict[str, Any]]:
-    """新上榜依今日 Trending 新增 star 排序；只出現在 Search 的 repo 沒有今日新增，排在後面。"""
+    """新上榜依今日 Trending 新增 star 排序；只出現在 Search 的 repo 沒有今日新增，排在後面。
+
+    from_search 表示這個 repo 不在今日的 Trending。
+    """
     if ctx.first_day:
         return []
     gains = {
@@ -282,7 +285,8 @@ def _new(conn: sqlite3.Connection, ctx: _Context, day: date) -> list[dict[str, A
         ),
     )
     return [
-        ctx.item(i, ctx.repos[n].full_name, n, gains.get(n)) for i, n in enumerate(ids, start=1)
+        ctx.item(i, ctx.repos[n].full_name, n, gains.get(n)) | {"from_search": n not in gains}
+        for i, n in enumerate(ids, start=1)
     ]
 
 
