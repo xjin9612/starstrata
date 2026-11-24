@@ -130,7 +130,9 @@ function cardHtml(it, opts = {}) {
     <div class="c-top"><span class="rank"><span class="sr">第 </span>#${it.rank}<span class="sr"> 名</span></span>${langHtml(it.language)}${flags}</div>
     <h3 class="name"><a href="${repoHref(it.full_name)}">${nameHtml(it.full_name)}</a></h3>
     ${opts.created && it.created_at ? `<div class="created">建立於 <time datetime="${it.created_at}">${it.created_at}</time></div>` : ''}
-    <div class="nums"><span class="delta">${it.period_stars == null ? '—' : '+' + fmt(it.period_stars)}</span><span class="per">${opts.unit || '今日'}</span>
+    <div class="nums">${it.period_stars == null
+      ? (opts.nullLabel ? `<span class="per src">${opts.nullLabel}</span>` : `<span class="delta">—</span><span class="per">${opts.unit || '今日'}</span>`)
+      : `<span class="delta">+${fmt(it.period_stars)}</span><span class="per">${opts.unit || '今日'}</span>`}
       ${it.stargazers == null ? '' : `<span class="total" title="總 star">${ICON.star}<span class="sr">總 star </span>${fmt(it.stargazers)}</span>`}</div>
     ${desc}${ai}
   </article></li>`;
@@ -202,7 +204,7 @@ async function viewNew(route, meta) {
   if (!all.length) return head + emptyHtml('quiet', '今天沒有新上榜的 repo', '今天的 Trending 與 Search 都是之前出現過的專案。', '<a class="btn" href="#/trending">看 Trending</a>');
   const shown = all.slice(0, entry().newShown || PAGE_SIZE);
   const rest = all.length - shown.length;
-  return head + `<ol class="grid" aria-label="新上榜清單">${shown.map(it => cardHtml(it, { created: true, showNew: false })).join('')}</ol>
+  return head + `<ol class="grid" aria-label="新上榜清單">${shown.map(it => cardHtml(it, { created: true, showNew: false, nullLabel: '來自 Search，沒有今日 Trending 數字' })).join('')}</ol>
     ${rest > 0 ? `<div class="more"><button type="button" class="btn" id="moreNew">顯示更多（還有 ${fmt(rest)} 筆）</button></div>` : `<p class="all-shown">已顯示全部 ${fmt(all.length)} 筆</p>`}`;
 }
 
@@ -267,7 +269,7 @@ async function viewRepo(route) {
     <div class="kpi"><dt>總 star</dt>${total !== null ? `<dd>${fmt(total)}</dd>` : none}</div>
     <div class="kpi"><dt>近 7 日新增</dt>${gainHtml(7)}</div>
     <div class="kpi"><dt>近 30 日新增</dt>${gainHtml(30)}</div>
-    <div class="kpi"><dt>Trending 上榜次數</dt><dd>${fmt(det.trending?.length || 0)}<small>次</small></dd></div>
+    <div class="kpi"><dt>Trending 上榜天數</dt><dd>${fmt(new Set((det.trending || []).map(r => r[0])).size)}<small>天</small></dd></div>
   </dl>`;
 
   const rangeSeg = Object.entries(RANGES).map(([k, [label]]) =>
