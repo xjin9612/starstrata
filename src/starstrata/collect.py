@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -196,6 +197,34 @@ def _existing(path: Path) -> list[dict[str, Any]]:
     return read_jsonl(path) if path.is_file() else []
 
 
+def _previous_run(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        return {}
+    run: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    return run
+
+
+def _search_ok(previous: Mapping[str, Any]) -> bool:
+    """同一天先前的執行是否有一次 Search 成功；沒有 merged 的 run.json 改看 sources。"""
+    if "merged" in previous:
+        return bool(previous["merged"]["search_ok"])
+    return bool(previous.get("sources", {}).get("search", {}).get("status") == OK)
+
+
+def _trending_missing(
+    cfg: Config, kept: Sequence[Mapping[str, Any]], fetched: Sequence[TrendingEntry]
+) -> list[dict[str, str | None]]:
+    """設定的 (期間, 語言) 中，合併後仍沒有任何資料的組合，依設定順序排列。"""
+    present = {(r["language"], r["period"]) for r in kept}
+    present |= {(e.language, e.period) for e in fetched}
+    return [
+        {"period": period, "language": language}
+        for language in (None, *cfg.trending.languages)
+        for period in cfg.trending.periods
+        if (language, period) not in present
+    ]
+
+
 def _trending_order(cfg: Config) -> Callable[[Mapping[str, Any]], tuple[int, int, int]]:
     """總榜在前，語言依設定順序；同一語言內依期間設定順序與排名。"""
     languages = {lang: i for i, lang in enumerate((None, *cfg.trending.languages))}
@@ -229,6 +258,7 @@ def collect(
     同一天重跑時，這次失敗的 Trending 頁面與沒查到的 repo 保留該日期既有檔案中的資料；
     Search 失敗時保留既有的 search.jsonl。既有的列帶有 meta 時，新列也保留 meta，
     因為重跑前的 ingest 已把當天的 meta 寫進 known_meta。
+    run.json 的 sources 只記這次執行；merged 記當天所有執行合併後還缺的資料。
     """
     started_at = clock()
     out = day_dir(data_root, day)
@@ -268,6 +298,7 @@ def collect(
     if repo_rows:
         write_jsonl(out / REPOS_FILE, (repo_rows[k] for k in sorted(repo_rows)))
 
+    previous = _previous_run(out / RUN_FILE)
     run: dict[str, Any] = {
         "date": day.isoformat(),
         "started_at": started_at.isoformat(),
@@ -281,6 +312,14 @@ def collect(
         "unavailable_repos": repos.unavailable,
         "node_errors": repos.node_errors,
         "rate_remaining": dict(client.rate_remaining),
+        "merged": {
+            "trending_missing": _trending_missing(cfg, kept_trending, trending),
+            "search_ok": search_status.status == OK or _search_ok(previous),
+            "repos_missing": sorted(
+                (set(previous.get("merged", {}).get("repos_missing", [])) | set(node_ids))
+                - repo_rows.keys()
+            ),
+        },
     }
     write_json(out / RUN_FILE, run)
     return CollectResult(run=run)

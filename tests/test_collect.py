@@ -400,3 +400,72 @@ def test_trending_and_search_are_written_before_repo_queries(
         _run(fake_github, cfg, tmp_path)
     assert len(read_jsonl(_day(tmp_path) / "trending.jsonl")) == 3
     assert len(read_jsonl(_day(tmp_path) / "search.jsonl")) == 1
+
+
+def _merged(root: Path) -> dict[str, object]:
+    run = json.loads((_day(root) / "run.json").read_text(encoding="utf-8"))
+    merged: dict[str, object] = run["merged"]
+    return merged
+
+
+def _setup_failures(fake: FakeGitHub) -> None:
+    _setup_basic(fake)
+    fake.trending_status["/trending/rust?since=daily"] = 500
+    fake.search_status = 500
+    fake.graphql_rate_limited_from = 2
+
+
+def test_merged_status_lists_what_is_still_missing(
+    fake_github: FakeGitHub, cfg: Config, tmp_path: Path
+) -> None:
+    _setup_failures(fake_github)
+    _run(fake_github, cfg, tmp_path, due_ids=["R_old"])
+    assert _merged(tmp_path) == {
+        "trending_missing": [{"period": "daily", "language": "rust"}],
+        "search_ok": False,
+        "repos_missing": ["R_old"],
+    }
+
+    rerun = FakeGitHub()
+    _setup_basic(rerun)
+    _run(rerun, cfg, tmp_path, due_ids=["R_old"])
+    assert _merged(tmp_path) == {"trending_missing": [], "search_ok": True, "repos_missing": []}
+
+
+def test_failed_rerun_keeps_earlier_success_in_merged_status(
+    fake_github: FakeGitHub, cfg: Config, tmp_path: Path
+) -> None:
+    _setup_basic(fake_github)
+    _run(fake_github, cfg, tmp_path, due_ids=["R_old"])
+
+    rerun = FakeGitHub()
+    _setup_failures(rerun)
+    run = _run(rerun, cfg, tmp_path, due_ids=["R_old"])
+    assert run["sources"]["search"]["status"] == "failed"  # type: ignore[index]
+    assert _merged(tmp_path) == {"trending_missing": [], "search_ok": True, "repos_missing": []}
+
+
+def test_missing_repos_from_earlier_run_stay_missing(
+    fake_github: FakeGitHub, cfg: Config, tmp_path: Path
+) -> None:
+    _setup_failures(fake_github)
+    _run(fake_github, cfg, tmp_path, due_ids=["R_old"])
+
+    # 重跑時 R_old 不在 due_ids（例如已轉為 dormant），仍要記得它今天沒有資料。
+    rerun = FakeGitHub()
+    _setup_failures(rerun)
+    _run(rerun, cfg, tmp_path)
+    assert _merged(tmp_path)["repos_missing"] == ["R_old"]
+
+
+@pytest.mark.parametrize(("status", "expected"), [("ok", True), ("failed", False)])
+def test_search_ok_from_run_json_without_merged(
+    fake_github: FakeGitHub, cfg: Config, tmp_path: Path, status: str, expected: bool
+) -> None:
+    out = _day(tmp_path)
+    out.mkdir(parents=True)
+    legacy = {"date": DAY.isoformat(), "sources": {"search": {"status": status}}}
+    (out / "run.json").write_text(json.dumps(legacy), encoding="utf-8")
+    _setup_failures(fake_github)
+    _run(fake_github, cfg, tmp_path)
+    assert _merged(tmp_path)["search_ok"] is expected

@@ -145,7 +145,7 @@ flowchart TD
 | `trending.jsonl` | `period`、`language`（總榜為 `null`）、`rank`、`full_name`、`stars_in_period` |
 | `search.jsonl` | `rank`、`node_id`、`full_name` |
 | `repos.jsonl` | `node_id`、`full_name`、`stars`、`forks`、`watchers`、`open_issues`、選用的 `meta`；依 `node_id` 排序 |
-| `run.json` | 執行時間、各資料來源的狀態與錯誤、查不到的 Trending repo、停止查詢與暫時查不到的 repo、API 剩餘額度 |
+| `run.json` | 執行時間、各資料來源的狀態與錯誤、查不到的 Trending repo、停止查詢與暫時查不到的 repo、API 剩餘額度、當天合併後的狀態（`merged`）。`ingest` 不讀這個檔案 |
 | `notified.json` | 已發送的每日摘要與警示，由 `notify` 寫入 |
 
 `repos.jsonl` 的規則：
@@ -174,6 +174,11 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 - `trending.jsonl`：成功抓取的頁面取代該頁的舊資料，失敗的頁面保留舊資料。
 - `repos.jsonl`：以 `node_id` 合併，這次沒查到的 repo 保留舊資料。既有的列帶有 `meta` 時，新列也帶 `meta`。
 - `search.jsonl`：成功時整個取代，失敗時保留。
+- `run.json`：`sources` 只記這次執行。`merged` 記當天所有執行合併後的狀態：
+  - `trending_missing`：設定的期間 × 語言中，合併後仍沒有資料的組合，`{period, language}`，總榜的 `language` 為 `null`。
+  - `search_ok`：當天至少有一次 Search 成功。回傳 0 筆也算成功。
+  - `repos_missing`：當天查詢過、合併後仍沒有資料的 `node_id`。
+  - 先前的 `run.json` 沒有 `merged` 時，`search_ok` 改看它的 `sources.search.status`，`repos_missing` 視為空。
 
 快照格式只能新增選用欄位。既有快照必須永遠能被 `ingest` 匯入。
 
