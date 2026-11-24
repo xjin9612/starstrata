@@ -19,6 +19,7 @@ from typing import Any
 from starstrata.config import Config
 from starstrata.db import OVERALL
 from starstrata.queries import active_count, is_first_day, top_gainers
+from starstrata.site_page import fill_index
 from starstrata.snapshots import RUN_FILE, day_dir
 from starstrata.translate import lookup, normalize
 
@@ -374,15 +375,22 @@ def build_site(
     generated_at: datetime,
     translations: Mapping[str, str] | None = None,
     data_root: Path | None = None,
+    github_repo: str | None = None,
 ) -> SiteStats:
     """清空 out_dir 後重新產生整個網站。
 
     translations 是說明的繁體中文譯文，見 translate.load。data_root 是快照根目錄，
     用來讀最新資料日期的 run.json；為 None 時 collected_at 與 run 都是 null。
+    github_repo 是網站所屬的 GitHub repo（owner/name），填入頁尾連結；None 時不顯示連結。
     """
     if out_dir.exists():
         shutil.rmtree(out_dir)
     shutil.copytree(web_dir, out_dir)
+    index = out_dir / "index.html"
+    if index.is_file():
+        index.write_text(
+            fill_index(index.read_text(encoding="utf-8"), cfg, github_repo), encoding="utf-8"
+        )
     data = out_dir / "data"
     latest = _latest(conn)
     ctx = _Context(conn, latest, translations or {})

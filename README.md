@@ -31,9 +31,7 @@ starstrata collects GitHub trends every day and keeps them as a long-term histor
 ## Deploy your own
 
 1. Fork this repo and keep it public. If the Actions tab asks you to enable workflows, enable them.
-2. Edit the links that point to this repo:
-   - `config.toml`: set `notify.site_url` to `https://<your-user>.github.io/<repo>/`, or to `""` to omit the dashboard button in Telegram.
-   - `web/index.html`: the footer link to the GitHub project.
+2. In `config.toml`, set `notify.site_url` to `https://<your-user>.github.io/<repo>/`, or to `""` to omit the dashboard button in Telegram and the share preview tags. The footer link to the GitHub project is filled in automatically.
 3. Create repository secrets in Settings → Secrets and variables → Actions:
 
    | Name | Required | Purpose |

@@ -80,6 +80,7 @@ python3 -m venv .venv
 | `gemini` | 呼叫 Gemini API 取得 JSON 回應 |
 | `translate` | 把 repo 說明翻成繁體中文 |
 | `site` | 從 SQLite 產生 dashboard |
+| `site_page` | 產生網站時填入 `index.html` 的語言、說明、分享標籤與 GitHub 連結 |
 | `cli` | 命令列入口 |
 
 dashboard 前端放在 `web/`，是純 HTML/JS/CSS，不經過建置。
@@ -301,7 +302,15 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 
 ## Dashboard
 
-`starstrata site` 清空輸出目錄，複製 `web/` 與 icon，再從 SQLite 產生 JSON：
+`starstrata site` 清空輸出目錄，複製 `web/`、`assets/icon.svg` 與 `assets/social-preview.png`，填入 `index.html`，再從 SQLite 產生 JSON。
+
+`index.html` 用 HTML 註解標出填入位置，未經處理時仍是合法的頁面：
+
+- `<html lang>`：`site.locale` 為 `zh-TW` 時填 `zh-Hant`，`en` 時填 `en`。
+- `<!-- site:meta -->`：依 `site.locale` 的說明、Open Graph 與 Twitter card 標籤。`og:url`、`og:image` 用 `notify.site_url` 組成絕對網址；`site_url` 是空字串時不輸出這兩個。
+- `<!-- site:repo-link -->` 到 `<!-- /site:repo-link -->`：頁尾的 GitHub 連結，`__REPO_URL__`、`__REPO_NAME__` 換成實際值。repo 依序取 `GITHUB_REPOSITORY` 環境變數與 git 的 `origin` remote；都取不到時移除整段。
+
+JSON 檔：
 
 | 檔案 | 內容 |
 |---|---|
