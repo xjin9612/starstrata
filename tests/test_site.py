@@ -399,6 +399,7 @@ def test_prev_rank_compares_with_previous_trending_date(cfg: Config, tmp_path: P
             date(2026, 11, 1): [
                 trending("o/a", 1),
                 trending("o/b", 2),
+                trending("X/Unresolved", 4),
                 trending("o/a", 3, language="python"),
             ],
             # 11-02 沒有 Trending 資料，比較對象是 11-01。
@@ -407,6 +408,8 @@ def test_prev_rank_compares_with_previous_trending_date(cfg: Config, tmp_path: P
                 trending("o/b", 1),
                 trending("o/a", 2),
                 trending("o/c", 3),
+                # 查不到 node_id 的 repo 依不分大小寫的名稱比對。
+                trending("x/unresolved", 4),
                 trending("o/a", 3, language="python"),
             ],
         },
@@ -416,6 +419,7 @@ def test_prev_rank_compares_with_previous_trending_date(cfg: Config, tmp_path: P
         ("o/b", 2),
         ("o/a", 1),
         ("o/c", None),
+        ("x/unresolved", 4),
     ]
     assert trending_json["daily"]["python"][0]["prev_rank"] == 3
 
@@ -490,9 +494,14 @@ def test_new_marks_repos_only_found_by_search(cfg: Config, tmp_path: Path) -> No
             repo("R_t", 50, full_name="o/trend", meta=meta()),
             repo("R_n", 40, full_name="o/nostars", meta=meta()),
             repo("R_s", 30, full_name="o/search", meta=meta()),
+            repo("R_w", 20, full_name="o/weekly", meta=meta()),
         ],
         # Trending 有時不顯示期間新增數，這種 repo 仍算在 Trending 上。
-        trending_rows=[trending("o/trend", 1, stars=5), trending("o/nostars", 2, stars=None)],
+        trending_rows=[
+            trending("o/trend", 1, stars=5),
+            trending("o/nostars", 2, stars=None),
+            trending("o/weekly", 1) | {"period": "weekly"},
+        ],
         search_rows=[search("R_s", "o/search")],
     )
     out, _ = _build(cfg, tmp_path, data)
@@ -501,6 +510,7 @@ def test_new_marks_repos_only_found_by_search(cfg: Config, tmp_path: Path) -> No
         ("o/trend", 5, False),
         ("o/nostars", None, False),
         ("o/search", None, True),
+        ("o/weekly", None, False),
     ]
 
 

@@ -328,7 +328,7 @@ JSON 檔：
 |---|---|
 | `data/meta.json` | 見下方「meta」 |
 | `data/trending.json` | 最新資料日期的 Trending，依期間與語言分頁：`{period: {all \| <語言>: [Item]}}` |
-| `data/new.json` | 今日新上榜，依今日 Trending 新增 star 排序；只出現在 Search 的 repo 沒有今日新增，排在後面。`Item` 另有 `from_search`，表示不在今日 Trending。首日為空 |
+| `data/new.json` | 今日新上榜，依今日 Trending 新增 star 排序；只出現在 Search 的 repo 沒有今日新增，排在後面。`Item` 另有 `from_search`，表示不在今日的 daily Trending、只由今日的 Search 找到。首日為空 |
 | `data/daily.json` | 與前一天快照相比的日增前 50 名 |
 | `data/alerts.json` | 最近 30 天的警示：`{ items: [{ date, full_name, added, baseline }] }`。`baseline` 是近 `alerts.baseline_days` 日平均，四捨五入成整數，資料不足時為 `null` |
 | `data/search-index.json` | 所有 repo 的 `[full_name, language, stars]`，依 star 數排序，供搜尋使用 |
@@ -358,7 +358,7 @@ JSON 檔：
 `Item` 的欄位：`rank`、`full_name`、`language`、`period_stars`（期間新增，沒有資料時為 `null`）、`stargazers`、`description`、`description_tr`、`tr_native`、`created_at`、`is_new`、`is_hot`、`spark`、`has_note`。
 
 - `spark` 是最近 7 個資料日（含最新一天）的日增 star，由舊到新。某天沒有快照、或前一天沒有快照可比時為 `null`；不在 `repos` 表的 repo 整個欄位為 `null`。
-- `trending.json` 的 `Item` 另有 `prev_rank`：`trending_prev_date` 當天同期間、同語言的名次，那天沒上榜為 `null`。`trending_prev_date` 為 `null` 時不輸出這個欄位。
+- `trending.json` 的 `Item` 另有 `prev_rank`：`trending_prev_date` 當天同期間、同語言的名次，那天沒上榜為 `null`。依 `node_id` 比對，查不到 `node_id` 的列改用不分大小寫的 `full_name`。`trending_prev_date` 為 `null` 時不輸出這個欄位。
 - `description_tr` 是 `translation.target` 的譯文，沒有設定翻譯或還沒翻到時為 `null`。`tr_native` 為 `true` 表示原文就是目標語言，前端不標示「AI 翻譯」。
 - 前端只在 `translation_lang` 不是 `null`、`tr_native` 為 `false` 且有譯文時顯示譯文，譯文加上 `lang` 屬性，「AI 翻譯」標籤的 `title` 寫出目標語言；其他情況顯示原文。原文不標語言。
 - `is_new` 表示 `first_seen` 為最新資料日期，首日一律為 `false`；`is_hot` 表示最新資料日期有警示。
@@ -409,7 +409,7 @@ JSON 檔：
 - 提示條：`collected_at` 距今超過 36 小時（`STALE_HOURS`），或 `meta.run` 有缺漏時顯示，每個原因一行。GitHub 排程常延後數小時，24 小時加上延後已超過 30 小時，所以門檻設 36 小時。
 - 目前的榜在 `run.trending_missing` 裡時，空狀態寫「沒有收集到資料」，與「沒有上榜的 repo」分開。
 - repo 詳細頁的「Trending 上榜天數」是 `trending` 紀錄裡不重複的日期數。
-- 新上榜頁的 `from_search` 為 `true` 時，卡片寫「來自 Search，沒有今日 Trending 數字」；在 Trending 上但沒有顯示新增數的 repo 顯示 `—`。
+- 新上榜頁的 `from_search` 為 `true` 時，卡片寫「來自 Search，沒有今日 Trending 數字」；其他沒有今日新增數的 repo 顯示 `—`。
 - 報告的「新」標記與 `meta.reports_new` 用同一個條件：期間結束日距最新資料日期 7 天內。報告只有繁中，其他介面語言加一行說明。
 - 「上次造訪後新出現」記在 `localStorage['starstrata-seen']`，最多 5,000 筆，超過時刪最舊的；第一次造訪不標記，`localStorage` 無法使用時停用。
 - 主題預設跟隨系統，可用頁首按鈕固定為淺色或深色，選擇存在 `localStorage`。

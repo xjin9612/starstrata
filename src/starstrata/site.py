@@ -237,15 +237,25 @@ def _trending_prev_date(conn: sqlite3.Connection, day: date) -> str | None:
 def _trending(
     conn: sqlite3.Connection, cfg: Config, ctx: _Context, day: date, prev_date: str | None
 ) -> dict[str, dict[str, list[dict[str, Any]]]]:
-    """prev_date 不是 None 時，Item 加上 prev_rank：那天同期間、同語言的名次，沒上榜為 None。"""
-    prev_ranks = {
-        (r["period"], r["language"], r["node_id"]): r["rank"]
-        for r in conn.execute(
-            "SELECT period, language, node_id, rank FROM trending_entries "
-            "WHERE date = ? AND node_id IS NOT NULL",
-            (prev_date,),
-        )
-    }
+    """prev_date 不是 None 時，Item 加上 prev_rank：那天同期間、同語言的名次，沒上榜為 None。
+
+    依 node_id 比對；查不到 node_id 的列改用不分大小寫的 full_name。
+    """
+    by_node: dict[tuple[str, str, str], int] = {}
+    by_name: dict[tuple[str, str, str], int] = {}
+    for r in conn.execute(
+        "SELECT period, language, node_id, full_name, rank FROM trending_entries WHERE date = ?",
+        (prev_date,),
+    ):
+        if r["node_id"] is not None:
+            by_node[(r["period"], r["language"], r["node_id"])] = r["rank"]
+        by_name[(r["period"], r["language"], r["full_name"].lower())] = r["rank"]
+
+    def prev_rank(r: sqlite3.Row) -> int | None:
+        if r["node_id"] is not None:
+            return by_node.get((r["period"], r["language"], r["node_id"]))
+        return by_name.get((r["period"], r["language"], r["full_name"].lower()))
+
     keys = [OVERALL_KEY, *cfg.trending.languages]
     out: dict[str, dict[str, list[dict[str, Any]]]] = {
         period: {key: [] for key in keys} for period in cfg.trending.periods
@@ -262,7 +272,7 @@ def _trending(
             continue
         item = ctx.item(r["rank"], r["full_name"], r["node_id"], r["stars_in_period"])
         if prev_date is not None:
-            item["prev_rank"] = prev_ranks.get((r["period"], r["language"], r["node_id"]))
+            item["prev_rank"] = prev_rank(r)
         page.append(item)
     return out
 
@@ -270,7 +280,7 @@ def _trending(
 def _new(conn: sqlite3.Connection, ctx: _Context, day: date) -> list[dict[str, Any]]:
     """新上榜依今日 Trending 新增 star 排序；只出現在 Search 的 repo 沒有今日新增，排在後面。
 
-    from_search 表示這個 repo 不在今日的 Trending。
+    from_search 表示這個 repo 不在今日的 daily Trending、只由今日的 Search 找到。
     """
     if ctx.first_day:
         return []
@@ -282,6 +292,10 @@ def _new(conn: sqlite3.Connection, ctx: _Context, day: date) -> list[dict[str, A
             (day.isoformat(),),
         )
     }
+    searched = {
+        r["node_id"]
+        for r in conn.execute("SELECT node_id FROM search_hits WHERE date = ?", (day.isoformat(),))
+    }
     ids = sorted(
         ctx.new_ids,
         key=lambda n: (
@@ -292,7 +306,8 @@ def _new(conn: sqlite3.Connection, ctx: _Context, day: date) -> list[dict[str, A
         ),
     )
     return [
-        ctx.item(i, ctx.repos[n].full_name, n, gains.get(n)) | {"from_search": n not in gains}
+        ctx.item(i, ctx.repos[n].full_name, n, gains.get(n))
+        | {"from_search": n not in gains and n in searched}
         for i, n in enumerate(ids, start=1)
     ]
 
