@@ -99,6 +99,7 @@
 {"key":"4a1ddd0849028939","text":"逐鏡頭逆向分析任何影片：判斷是實拍、AI 生成還是程式製作，並告訴你如何重現。拆解結果以開放的 VIDEO.md 格式輸出。"}
 {"key":"4a45e9ec0b27bc2f","text":"輕巧、蓬鬆、永遠免費：AWS 本機模擬器的替代方案。"}
 {"key":"4a4eb28032c525a4","text":"給團隊與其 agent 的 AI 原生引擎，支援多 harness、多 agent，可自架。"}
+{"key":"4b88fb24849a6863","text":"一個用於尋找臭蟲與外部紅隊演練的 Claude Code 技能包——包含 84 種技能、15 個 slash 指令、681 種精選自 24 種核心漏洞類別的已公開報告模式，以及企業身分與基礎設施攻擊矩陣。"}
 {"key":"4bce776d47195553","text":"一個用於多階段安全性稽核的 coding-agent 技能，具備獨立驗證且機器可讀的稽核結果"}
 {"key":"4d191ecc1320307f","text":"🚀 PR Agent：最早的開源 PR 審查工具。這個專案不是 Qodo 的免費方案。"}
 {"key":"4d250aa3b01f2e8e","text":"為 AI 打造的 Salesforce 開源替代方案。"}
@@ -137,6 +138,7 @@
 {"key":"62e701c421046368","text":"Bend 2：以證明阻擋 AI 錯誤的快速程式語言。安裝：curl -fsSL https://bend-lang.com/install.sh | sh"}
 {"key":"636f7de747161c2c","text":"沒有 Reels、動態消息與廣告的 Instagram：開源、可更新的 Android 版 Instagram App，保留私訊與限時動態。"}
 {"key":"656ead11c03d5013","text":"Code on the Go 是能直接在 Android 手機上開發 Android App 的 IDE，不需要筆電，也不需要網路。這是 App Dev for All 的專案。"}
+{"key":"6620276e4d5381fd","text":"TradingAgents: 邁向智慧化金融研究"}
 {"key":"6635ceec2971313b","text":"開源的 Grok Bot 替代方案，可自選模型與沙箱。"}
 {"key":"66f707055e2863cd","text":"聊天示範。"}
 {"key":"67c2074e3c3a3019","text":"使用網頁前端打造更小、更快、更安全的桌面與行動應用程式。"}
