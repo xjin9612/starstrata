@@ -50,6 +50,7 @@ class _Repo:
     state: str
     last_snapshot: str | None
     stars: int | None
+    topics: tuple[str, ...]
 
 
 def _write(path: Path, obj: Any) -> None:
@@ -93,6 +94,7 @@ class _Context:
                 state=r["state"],
                 last_snapshot=r["last_snapshot"],
                 stars=r["stars"],
+                topics=tuple(json.loads(r["topics"])) if r["topics"] else (),
             )
             for r in conn.execute(
                 "SELECT r.*, s.stars FROM repos r "
@@ -281,9 +283,25 @@ def _alerts(conn: sqlite3.Connection, ctx: _Context, day: date) -> list[dict[str
     ]
 
 
+def _search_order(ctx: _Context) -> list[_Repo]:
+    return sorted(ctx.repos.values(), key=lambda r: (-(r.stars or 0), r.full_name))
+
+
 def _search_index(ctx: _Context) -> list[list[Any]]:
-    repos = sorted(ctx.repos.values(), key=lambda r: (-(r.stars or 0), r.full_name))
-    return [[r.full_name, r.language, r.stars or 0] for r in repos]
+    return [[r.full_name, r.language, r.stars or 0] for r in _search_order(ctx)]
+
+
+def _search_full(ctx: _Context) -> list[list[Any]]:
+    """與 search-index 同順序的 [full_name, 原文說明, 譯文, topics]。
+
+    沒有譯文，或原文已是目標語言時，譯文為 None。
+    """
+    rows: list[list[Any]] = []
+    for r in _search_order(ctx):
+        fields = _description_fields(ctx.translations, r.description)
+        translated = None if fields["zh_native"] else fields["description_zh"]
+        rows.append([r.full_name, r.description, translated, list(r.topics)])
+    return rows
 
 
 def _page_owners(ctx: _Context) -> dict[str, str]:
@@ -392,6 +410,7 @@ def build_site(
     _write(data / "daily.json", {"items": daily})
     _write(data / "alerts.json", {"items": alerts})
     _write(data / "search-index.json", _search_index(ctx))
+    _write(data / "search-full.json", _search_full(ctx))
 
     owners = _page_owners(ctx)
     snapshots = _Groups(conn, "SELECT node_id, date, stars FROM repo_daily ORDER BY node_id, date")

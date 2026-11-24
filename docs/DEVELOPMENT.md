@@ -311,6 +311,7 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 | `data/daily.json` | 與前一天快照相比的日增前 50 名 |
 | `data/alerts.json` | 最近 30 天的警示：日期、repo、當日新增、基準（四捨五入成整數，資料不足時為 `null`） |
 | `data/search-index.json` | 所有 repo 的 `[full_name, language, stars]`，依 star 數排序，供搜尋使用 |
+| `data/search-full.json` | 所有 repo 的 `[full_name, 說明原文, 譯文, topics]`，順序與 `search-index.json` 相同。沒有譯文或原文已是目標語言時譯文為 `null` |
 | `data/repos/<owner>/<name>.json` | 單一 repo 的 meta、譯文、目前 star 數、star 累計點、每日新增 star、Trending 上榜紀錄 |
 
 `meta` 的欄位：

@@ -210,6 +210,7 @@ def test_empty_database_builds_placeholder(cfg: Config, tmp_path: Path) -> None:
     meta_json = _read(out / "data" / "meta.json")
     assert meta_json["data_date"] is None and meta_json["is_first_day"] is True
     assert _read(out / "data" / "search-index.json") == []
+    assert _read(out / "data" / "search-full.json") == []
 
 
 def test_alerts_use_rounded_baseline(cfg: Config, tmp_path: Path) -> None:
@@ -319,6 +320,11 @@ def test_translations_set_zh_fields(cfg: Config, tmp_path: Path) -> None:
     ]
     detail = _read(_repo_json(out, "o/a"))
     assert (detail["description"], detail["description_zh"]) == ("English", "英文")
+    assert _read(out / "data" / "search-full.json") == [
+        ["o/a", "English", "英文", ["t"]],
+        ["o/b", "已是中文", None, ["t"]],
+        ["o/c", "Untranslated", None, ["t"]],
+    ]
 
 
 def _meta_with_run(cfg: Config, tmp_path: Path, run: dict[str, Any] | None) -> Any:
