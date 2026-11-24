@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -568,3 +568,40 @@ def test_reports_without_repo_or_directory(cfg: Config, tmp_path: Path) -> None:
 
     out, _ = _build(cfg, tmp_path, data, reports_root=tmp_path / "none")
     assert _read(out / "data" / "reports" / "index.json") == {"items": []}
+
+
+@pytest.mark.parametrize(("latest", "expected"), [(date(2026, 11, 29), 1), (date(2026, 11, 30), 0)])
+def test_reports_new_boundary(cfg: Config, tmp_path: Path, latest: date, expected: int) -> None:
+    data = tmp_path / "data"
+    write_day(data, latest, repos=[repo("R_a", 10, full_name="o/a", meta=meta())])
+    root = tmp_path / "reports" / "weekly"
+    root.mkdir(parents=True)
+    # 2026-W47 結束於 11-22：距 11-29 是 7 天，距 11-30 是 8 天。
+    (root / "2026-W47.md").write_text(_report("W47", "o/a"), encoding="utf-8")
+    out, _ = _build(cfg, tmp_path, data, reports_root=tmp_path / "reports")
+    assert _read(out / "data" / "meta.json")["reports_new"] == expected
+
+
+def test_alerts_cover_last_thirty_days(cfg: Config, tmp_path: Path) -> None:
+    data = tmp_path / "data"
+    latest = date(2026, 11, 30)
+    write_day(data, latest, repos=[repo("R_a", 10, full_name="o/a", meta=meta())])
+    db_path = tmp_path / "db.sqlite"
+    sync(db_path, cfg, data)
+    conn = db.connect(db_path)
+    try:
+        for days_ago in (29, 30):
+            day = (latest - timedelta(days=days_ago)).isoformat()
+            conn.execute(
+                "INSERT INTO alerts (node_id, date, daily_stars, baseline) VALUES (?, ?, ?, ?)",
+                ("R_a", day, 300 + days_ago, None),
+            )
+        conn.commit()
+        out = tmp_path / "_site"
+        web = tmp_path / "web"
+        web.mkdir()
+        build_site(conn, cfg, out, web, NOW)
+    finally:
+        conn.close()
+    items = _read(out / "data" / "alerts.json")["items"]
+    assert [i["date"] for i in items] == ["2026-11-01"]

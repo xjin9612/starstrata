@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import threading
 from collections.abc import Callable, Iterator
 from datetime import date, datetime, timedelta
@@ -32,6 +33,7 @@ FIRST_DAY = date(2026, 11, 16)
 LAST_DAY = date(2026, 11, 24)
 SEARCH_ONLY_NEW = 30
 GITHUB_REPO = "me/site"
+SITE_URL = "https://me.example/site/"
 # 最後一天的收集完成時間（台北 07:38）；page fixture 把瀏覽器時鐘固定在它之後 2 小時。
 COLLECTED_AT = "2026-11-23T23:38:00+00:00"
 NOW = datetime.fromisoformat(COLLECTED_AT) + timedelta(hours=2)
@@ -127,10 +129,18 @@ def write_reports(root: Path) -> None:
         (root / kind / f"{label}.md").write_text(text, encoding="utf-8")
 
 
+def _config(locale: str) -> str:
+    """repo 的 config.toml 換上測試用的網址、介面語言與翻譯目標，不受 fork 的設定影響。"""
+    text = (REPO_ROOT / "config.toml").read_text(encoding="utf-8")
+    for key, value in [("site_url", SITE_URL), ("locale", locale), ("target", "zh-TW")]:
+        text, count = re.subn(rf"(?m)^{key} = .*$", f'{key} = "{value}"', text)
+        assert count == 1, key
+    return text
+
+
 def _build(work: Path, data: Path, out: Path, locale: str) -> None:
     config = work / f"config-{locale}.toml"
-    text = (REPO_ROOT / "config.toml").read_text(encoding="utf-8")
-    config.write_text(text.replace('locale = "zh-TW"', f'locale = "{locale}"'), encoding="utf-8")
+    config.write_text(_config(locale), encoding="utf-8")
     with mock.patch.dict(os.environ, {"GITHUB_REPOSITORY": GITHUB_REPO}):
         code = main(
             [

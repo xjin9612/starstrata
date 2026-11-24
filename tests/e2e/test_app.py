@@ -3,15 +3,23 @@
 from __future__ import annotations
 
 import re
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
 import pytest
 from playwright.sync_api import Locator, Page, Route, expect
 
-from tests.e2e.conftest import GITHUB_REPO, NOW, SEARCH_ONLY_NEW, Patch, store_seen
+from tests.e2e.conftest import (
+    COLLECTED_AT,
+    GITHUB_REPO,
+    SEARCH_ONLY_NEW,
+    SITE_URL,
+    Patch,
+    store_seen,
+)
 
 pytestmark = pytest.mark.e2e
+COLLECTED = datetime.fromisoformat(COLLECTED_AT)
 
 # 介面文字：移除 repo 說明、名稱、作者短評、報告內容等資料後的文字與屬性。
 _UI_TEXT_JS = """() => {
@@ -106,8 +114,8 @@ def test_trending_missing_board(page: Page, base_url: str, patch_json: Patch) ->
     expect(page.locator("#notice")).to_contain_text("有部分 Trending 榜沒有收集到資料：今日・Rust")
 
 
-def test_fresh_data_has_no_notice(page: Page, base_url: str) -> None:
-    page.clock.set_fixed_time(NOW + timedelta(hours=33))
+def test_data_exactly_36_hours_old_has_no_notice(page: Page, base_url: str) -> None:
+    page.clock.set_fixed_time(COLLECTED + timedelta(hours=36))
     page.goto(base_url)
     expect(page.locator("#hdrUpd")).to_have_text("・07:38 更新")
     _loaded(page)
@@ -116,7 +124,7 @@ def test_fresh_data_has_no_notice(page: Page, base_url: str) -> None:
 
 def test_stale_and_partial_notice(page: Page, base_url: str, patch_json: Patch) -> None:
     patch_json("meta", _with_run(search_ok=False, repos_missing=3))
-    page.clock.set_fixed_time(NOW + timedelta(hours=35))
+    page.clock.set_fixed_time(COLLECTED + timedelta(hours=36, minutes=1))
     page.goto(base_url)
     notice = page.locator("#notice")
     expect(notice).to_contain_text("資料超過一天未更新，最後更新 11-24 07:38。")
@@ -327,7 +335,7 @@ def test_page_meta_and_footer(page: Page, base_url: str) -> None:
     page.goto(base_url)
     expect(page.locator("html")).to_have_attribute("lang", "zh-Hant")
     expect(page.locator('meta[property="og:image"]')).to_have_attribute(
-        "content", "https://xjin9612.github.io/starstrata/social-preview.png"
+        "content", f"{SITE_URL}social-preview.png"
     )
     link = page.locator(".gh-link")
     expect(link).to_have_attribute("href", f"https://github.com/{GITHUB_REPO}")
@@ -358,13 +366,32 @@ def test_no_horizontal_scroll(page: Page, base_url: str, width: int, route: str)
 
 
 @pytest.mark.parametrize("width", [360, 1440])
-def test_english_no_horizontal_scroll(page: Page, base_url_en: str, width: int) -> None:
+@pytest.mark.parametrize("route", ROUTES)
+def test_english_no_horizontal_scroll(page: Page, base_url_en: str, width: int, route: str) -> None:
     page.set_viewport_size({"width": width, "height": 900})
-    for route in ROUTES:
-        page.goto(base_url_en + route)
-        _loaded(page)
-        overflow = page.evaluate("document.documentElement.scrollWidth - window.innerWidth")
-        assert overflow <= 0, route
+    page.goto(base_url_en + route)
+    _loaded(page)
+    assert page.evaluate("document.documentElement.scrollWidth - window.innerWidth") <= 0
+
+
+@pytest.mark.parametrize(("data_date", "fresh"), [("2026-11-29", 1), ("2026-11-30", 0)])
+def test_report_new_mark_boundary(
+    page: Page, base_url: str, patch_json: Patch, data_date: str, fresh: int
+) -> None:
+    patch_json("meta", lambda meta: meta | {"data_date": data_date})
+    page.goto(f"{base_url}#/reports")
+    # 2026-W47 結束於 11-22：距 11-29 是 7 天，距 11-30 是 8 天。
+    expect(page.locator(".rp-item").first.locator(".flag.new")).to_have_count(fresh)
+
+
+def test_seen_store_keeps_newest_entries(page: Page, base_url: str) -> None:
+    store_seen(page, [f"old/{n}" for n in range(5000)])
+    page.goto(base_url)
+    expect(page.locator(".card")).to_have_count(4)
+    _loaded(page)
+    seen = page.evaluate("JSON.parse(localStorage.getItem('starstrata-seen'))")
+    assert len(seen) == 5000
+    assert {"o/steady", "hot/rocket", "late/single", "o/typed"} <= set(seen)
 
 
 def test_english_missing_board_name(page: Page, base_url_en: str, patch_json: Patch) -> None:
