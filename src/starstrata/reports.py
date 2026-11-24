@@ -103,20 +103,25 @@ def report_path(root: Path, period: Period) -> Path:
 
 
 def parse_period(kind: str, label: str) -> Period | None:
-    """report_path 檔名的反向：由種類與 label（2026-W47、2026-11）還原期間，格式不符時回傳 None。"""
+    """report_path 檔名的反向：由種類與 label（2026-W47、2026-11）還原期間。
+
+    label 不是 Period.label 的正規寫法時回傳 None，避免兩個檔名對應到同一期。
+    """
     try:
         if kind == WEEKLY:
             year, week = label.split("-W")
             start = date.fromisocalendar(int(year), int(week), 1)
-            return Period(kind, start, start + timedelta(days=6))
-        if kind == MONTHLY:
+            period = Period(kind, start, start + timedelta(days=6))
+        elif kind == MONTHLY:
             year, month = label.split("-")
             start = date(int(year), int(month), 1)
             end = (start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-            return Period(kind, start, end)
+            period = Period(kind, start, end)
+        else:
+            return None
     except ValueError:
         return None
-    return None
+    return period if period.label == label else None
 
 
 @dataclass(frozen=True)

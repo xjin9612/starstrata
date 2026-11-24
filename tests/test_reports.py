@@ -600,7 +600,17 @@ def test_parse_period_reverses_label(kind: str, label: str, expected: tuple[date
 
 @pytest.mark.parametrize(
     ("kind", "label"),
-    [("weekly", "2026-11"), ("weekly", "2026-W54"), ("monthly", "2026-13"), ("daily", "2026-11")],
+    [
+        ("weekly", "2026-11"),
+        ("weekly", "2026-W54"),
+        ("weekly", "2026-W047"),
+        ("weekly", "2026-W4_7"),
+        ("monthly", "2026-13"),
+        ("monthly", "2026-1"),
+        ("monthly", " 2026-01"),
+        ("monthly", "2026-+1"),
+        ("daily", "2026-11"),
+    ],
 )
 def test_parse_period_rejects_unknown_labels(kind: str, label: str) -> None:
     assert parse_period(kind, label) is None
