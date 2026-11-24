@@ -18,6 +18,7 @@ from starstrata.collect import collect, run_date
 from starstrata.config import Config, ConfigError, ReportsConfig, load_config
 from starstrata.github.http import GitHubClient
 from starstrata.ingest import SyncResult, sync
+from starstrata.notes import load_notes
 from starstrata.site import build_site
 from starstrata.site_page import SOCIAL_PREVIEW, detect_repo
 from starstrata.snapshots import RepoMeta, write_text_atomic
@@ -167,6 +168,7 @@ def cmd_site(args: argparse.Namespace, cfg: Config) -> int:
             translate.load(args.data),
             data_root=args.data,
             github_repo=detect_repo(os.environ, Path.cwd()),
+            notes=load_notes(args.notes),
         )
     finally:
         conn.close()
@@ -362,6 +364,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_site.add_argument("--out", type=Path, default=Path("_site"), help="輸出目錄，會先清空")
     p_site.add_argument("--web", type=Path, default=Path("web"), help="前端靜態檔目錄")
     p_site.add_argument("--icon", type=Path, default=Path("assets/icon.svg"))
+    p_site.add_argument("--notes", type=Path, default=Path("notes.toml"), help="作者短評")
     p_site.add_argument(
         "--social-preview", type=Path, default=Path("assets") / SOCIAL_PREVIEW, help="分享預覽圖"
     )

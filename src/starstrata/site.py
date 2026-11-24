@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import itertools
 import json
+import logging
 import re
 import shutil
 import sqlite3
@@ -18,6 +19,7 @@ from typing import Any
 
 from starstrata.config import Config
 from starstrata.db import OVERALL
+from starstrata.notes import Note
 from starstrata.queries import active_count, is_first_day, top_gainers
 from starstrata.site_page import fill_index
 from starstrata.snapshots import RUN_FILE, day_dir
@@ -29,6 +31,8 @@ ALERT_DAYS = 30
 OVERALL_KEY = "all"
 # 卡片走勢線涵蓋的資料日數。
 SPARK_DAYS = 7
+
+log = logging.getLogger(__name__)
 
 # GitHub 的 owner 與 repo 名稱只含這些字元；用 full_name 組檔案路徑前先確認。
 _SEGMENT = re.compile(r"[A-Za-z0-9_.-]+")
@@ -81,9 +85,14 @@ def _description_fields(translations: Mapping[str, str], description: str | None
 
 class _Context:
     def __init__(
-        self, conn: sqlite3.Connection, latest: date | None, translations: Mapping[str, str]
+        self,
+        conn: sqlite3.Connection,
+        latest: date | None,
+        translations: Mapping[str, str],
+        notes: Mapping[str, Note],
     ) -> None:
         self.translations = translations
+        self.notes = notes
         self.repos = {
             r["node_id"]: _Repo(
                 node_id=r["node_id"],
@@ -151,6 +160,17 @@ class _Context:
             "is_new": node_id in self.new_ids,
             "is_hot": node_id in self.hot_ids,
             "spark": self.spark(node_id),
+            "has_note": (repo.full_name if repo else full_name).lower() in self.notes,
+        }
+
+    def note(self, full_name: str) -> dict[str, Any] | None:
+        note = self.notes.get(full_name.lower())
+        if note is None:
+            return None
+        return {
+            "text": note.text,
+            "article_url": note.article_url,
+            "updated": note.updated.isoformat(),
         }
 
 
@@ -376,12 +396,14 @@ def build_site(
     translations: Mapping[str, str] | None = None,
     data_root: Path | None = None,
     github_repo: str | None = None,
+    notes: Mapping[str, Note] | None = None,
 ) -> SiteStats:
     """清空 out_dir 後重新產生整個網站。
 
     translations 是說明的繁體中文譯文，見 translate.load。data_root 是快照根目錄，
     用來讀最新資料日期的 run.json；為 None 時 collected_at 與 run 都是 null。
     github_repo 是網站所屬的 GitHub repo（owner/name），填入頁尾連結；None 時不顯示連結。
+    notes 是作者短評，key 是小寫的 full_name，見 notes.load_notes。
     """
     if out_dir.exists():
         shutil.rmtree(out_dir)
@@ -393,7 +415,10 @@ def build_site(
         )
     data = out_dir / "data"
     latest = _latest(conn)
-    ctx = _Context(conn, latest, translations or {})
+    ctx = _Context(conn, latest, translations or {}, notes or {})
+    known = {r.full_name.lower() for r in ctx.repos.values()}
+    for key in sorted(set(ctx.notes) - known):
+        log.warning("notes.toml 的 %s 對不到任何 repo", key)
 
     meta = _meta(conn, cfg, ctx, latest, data_root) | {
         "generated_at": generated_at.isoformat(timespec="seconds")
@@ -459,6 +484,7 @@ def build_site(
                 "trending": [
                     [t["date"], t["period"], t["language"] or None, t["rank"]] for t in history
                 ],
+                "note": ctx.note(r["full_name"]),
             },
         )
         count += 1

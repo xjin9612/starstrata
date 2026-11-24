@@ -12,6 +12,7 @@ from starstrata.backfill import backfill_path
 from starstrata.cli import main
 from starstrata.config import Config, load_config
 from starstrata.ingest import sync
+from starstrata.notes import parse_notes
 from starstrata.site import build_site, repo_path, repo_series
 from starstrata.snapshots import write_json, write_jsonl
 from starstrata.translate import text_key
@@ -427,3 +428,32 @@ def test_spark_covers_last_seven_data_days(cfg: Config, tmp_path: Path) -> None:
         "o/c": [1, 1, 1, None, None, 1, 1],
         "x/none": None,
     }
+
+
+def test_notes_are_matched_case_insensitively(
+    cfg: Config, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    data = tmp_path / "data"
+    write_day(
+        data,
+        date(2026, 11, 1),
+        repos=[
+            repo("R_a", 10, full_name="Owner/A", meta=meta()),
+            repo("R_b", 5, full_name="o/b", meta=meta()),
+        ],
+        trending_rows=[trending("Owner/A"), trending("o/b", 2)],
+    )
+    notes = parse_notes(
+        '["owner/a"]\nnote = "好用"\nupdated = 2026-11-20\n'
+        '["gone/x"]\nnote = "找不到"\nupdated = 2026-11-20\n'
+    )
+    out, _ = _build(cfg, tmp_path, data, notes=notes)
+    items = _read(out / "data" / "trending.json")["daily"]["all"]
+    assert [(i["full_name"], i["has_note"]) for i in items] == [("Owner/A", True), ("o/b", False)]
+    assert _read(_repo_json(out, "Owner/A"))["note"] == {
+        "text": "好用",
+        "article_url": None,
+        "updated": "2026-11-20",
+    }
+    assert _read(_repo_json(out, "o/b"))["note"] is None
+    assert "notes.toml 的 gone/x 對不到任何 repo" in caplog.text

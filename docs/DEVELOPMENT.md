@@ -80,6 +80,7 @@ python3 -m venv .venv
 | `gemini` | 呼叫 Gemini API 取得 JSON 回應 |
 | `translate` | 把 repo 說明翻成繁體中文 |
 | `site` | 從 SQLite 產生 dashboard |
+| `notes` | 讀取並驗證作者短評 `notes.toml` |
 | `site_page` | 產生網站時填入 `index.html` 的語言、說明、分享標籤與 GitHub 連結 |
 | `cli` | 命令列入口 |
 
@@ -321,7 +322,7 @@ JSON 檔：
 | `data/alerts.json` | 最近 30 天的警示：日期、repo、當日新增、基準（四捨五入成整數，資料不足時為 `null`） |
 | `data/search-index.json` | 所有 repo 的 `[full_name, language, stars]`，依 star 數排序，供搜尋使用 |
 | `data/search-full.json` | 所有 repo 的 `[full_name, 說明原文, 譯文, topics]`，順序與 `search-index.json` 相同。沒有譯文或原文已是目標語言時譯文為 `null` |
-| `data/repos/<owner>/<name>.json` | 單一 repo 的 meta、譯文、目前 star 數、star 累計點、每日新增 star、Trending 上榜紀錄 |
+| `data/repos/<owner>/<name>.json` | 單一 repo 的 meta、譯文、目前 star 數、star 累計點、每日新增 star、Trending 上榜紀錄、作者短評（`note`：`{ text, article_url, updated }`，沒有時為 `null`） |
 
 `meta` 的欄位：
 
@@ -339,7 +340,7 @@ JSON 檔：
 | `run` | 最新資料日期 `run.json` 的 `merged`：`{ trending_missing, search_ok, repos_missing }`，`repos_missing` 是個數；`run.json` 沒有 `merged` 或找不到時為 `null` |
 | `generated_at` | 建置網站的時間。收集失敗時匯入與建置仍會成功，所以不用它判斷資料新鮮度 |
 
-`Item` 的欄位：`rank`、`full_name`、`language`、`period_stars`（期間新增，沒有資料時為 `null`）、`stargazers`、`description`、`description_zh`、`zh_native`、`created_at`、`is_new`、`is_hot`、`spark`。
+`Item` 的欄位：`rank`、`full_name`、`language`、`period_stars`（期間新增，沒有資料時為 `null`）、`stargazers`、`description`、`description_zh`、`zh_native`、`created_at`、`is_new`、`is_hot`、`spark`、`has_note`。
 
 - `spark` 是最近 7 個資料日（含最新一天）的日增 star，由舊到新。某天沒有快照、或前一天沒有快照可比時為 `null`；不在 `repos` 表的 repo 整個欄位為 `null`。
 - `trending.json` 的 `Item` 另有 `prev_rank`：`trending_prev_date` 當天同期間、同語言的名次，那天沒上榜為 `null`。`trending_prev_date` 為 `null` 時不輸出這個欄位。
@@ -369,6 +370,23 @@ JSON 檔：
 - 返回上一頁時還原捲動位置、篩選、已展開筆數、圖表期間與焦點，這些狀態存在 `sessionStorage`。
 
 部署由 `daily.yml` 的 `deploy` job 執行。`daily` job 因收集失敗而標為失敗時，dashboard 仍照常部署。
+
+### 作者短評
+
+repo 根目錄的 `notes.toml` 是作者手寫的短評。檔案不存在時照常建置。
+
+```toml
+["nginx/nginx"]
+note = "適合當 reverse proxy 的入門參考，但設定檔學習曲線陡。"
+article = "https://example.com/posts/nginx"  # 選填
+updated = 2026-11-24
+```
+
+- key 是 `owner/name`，不分大小寫比對 `full_name`；只差在大小寫的兩個 key 視為錯誤。
+- `note` 必填，去掉頭尾空白後 1 到 200 字。`article` 選填，必須是 `https://` 開頭。`updated` 必須是 TOML 日期。
+- 不認得的鍵、格式錯誤都讓 `starstrata site` 失敗，結束碼 `2`。`tests/test_notes.py` 驗證 repo 裡的 `notes.toml`，錯誤在 CI 就會擋下。
+- 對不到任何 repo 的 key 只記警告。
+- 短評是作者的個人內容，fork 後要清空或刪除。
 
 ## 定期報告
 

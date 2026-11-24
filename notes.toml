@@ -1,0 +1,8 @@
+# 作者對個別 repo 的一句話短評，顯示在 dashboard 的詳細頁與卡片上。
+# 這是作者的個人內容：fork 後請清空或刪除這個檔案。
+# 格式與驗證規則見 docs/DEVELOPMENT.md「作者短評」。範例：
+#
+# ["nginx/nginx"]
+# note = "適合當 reverse proxy 的入門參考，但設定檔學習曲線陡。"
+# article = "https://example.com/posts/nginx"  # 選填
+# updated = 2026-11-24
