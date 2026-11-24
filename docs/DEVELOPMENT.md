@@ -324,12 +324,14 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 | `timezone` | `schedule.timezone`，前端用它換算時間 |
 | `locale` | `site.locale`，介面文字的語言 |
 | `alert_rule` | `{ baseline_days, multiplier, min_daily_stars, cooldown_days }`，取自 `[alerts]` |
+| `trending_prev_date` | 最新資料日期之前，最近一個有 Trending 資料的日期；沒有時為 `null` |
 | `collected_at` | 最新資料日期 `run.json` 的 `finished_at`，代表資料收集完成的時間；找不到 `run.json` 時為 `null` |
 | `run` | 最新資料日期 `run.json` 的 `merged`：`{ trending_missing, search_ok, repos_missing }`，`repos_missing` 是個數；`run.json` 沒有 `merged` 或找不到時為 `null` |
 | `generated_at` | 建置網站的時間。收集失敗時匯入與建置仍會成功，所以不用它判斷資料新鮮度 |
 
 `Item` 的欄位：`rank`、`full_name`、`language`、`period_stars`（期間新增，沒有資料時為 `null`）、`stargazers`、`description`、`description_zh`、`zh_native`、`created_at`、`is_new`、`is_hot`。
 
+- `trending.json` 的 `Item` 另有 `prev_rank`：`trending_prev_date` 當天同期間、同語言的名次，那天沒上榜為 `null`。`trending_prev_date` 為 `null` 時不輸出這個欄位。
 - `description_zh` 是譯文，沒有譯文時為 `null`。`zh_native` 為 `true` 表示原文就是繁體中文，前端不標示「AI 翻譯」。
 - `is_new` 表示 `first_seen` 為最新資料日期，首日一律為 `false`；`is_hot` 表示最新資料日期有警示。
 - Trending 頁面查不到的 repo 仍列出，`language` 與 `stargazers` 為 `null`。

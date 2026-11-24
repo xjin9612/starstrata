@@ -117,6 +117,7 @@ def test_build_site(cfg: Config, tmp_path: Path) -> None:
         "collected_at": None,
         "run": None,
         "generated_at": "2026-11-23T01:00:00+00:00",
+        "trending_prev_date": "2026-11-01",
     }
     new = _read(out / "data" / "new.json")["items"]
     assert [(r["rank"], r["full_name"], r["period_stars"], r["is_new"]) for r in new] == [
@@ -349,3 +350,51 @@ def test_meta_without_merged_run_status(cfg: Config, tmp_path: Path) -> None:
 def test_meta_without_run_json(cfg: Config, tmp_path: Path) -> None:
     meta_json = _meta_with_run(cfg, tmp_path, None)
     assert meta_json["collected_at"] is None and meta_json["run"] is None
+
+
+def _trending_build(
+    cfg: Config, tmp_path: Path, days: dict[date, list[dict[str, Any]]]
+) -> tuple[Any, Any]:
+    data = tmp_path / "data"
+    repos = [repo(f"R_{n}", 10, full_name=f"o/{n}", meta=meta()) for n in "abc"]
+    for day, rows in days.items():
+        write_day(data, day, repos=repos, trending_rows=rows)
+    out, _ = _build(cfg, tmp_path, data)
+    return _read(out / "data" / "meta.json"), _read(out / "data" / "trending.json")
+
+
+def test_prev_rank_compares_with_previous_trending_date(cfg: Config, tmp_path: Path) -> None:
+    meta_json, trending_json = _trending_build(
+        cfg,
+        tmp_path,
+        {
+            date(2026, 11, 1): [
+                trending("o/a", 1),
+                trending("o/b", 2),
+                trending("o/a", 3, language="python"),
+            ],
+            # 11-02 沒有 Trending 資料，比較對象是 11-01。
+            date(2026, 11, 2): [],
+            date(2026, 11, 3): [
+                trending("o/b", 1),
+                trending("o/a", 2),
+                trending("o/c", 3),
+                trending("o/a", 3, language="python"),
+            ],
+        },
+    )
+    assert meta_json["trending_prev_date"] == "2026-11-01"
+    assert [(i["full_name"], i["prev_rank"]) for i in trending_json["daily"]["all"]] == [
+        ("o/b", 2),
+        ("o/a", 1),
+        ("o/c", None),
+    ]
+    assert trending_json["daily"]["python"][0]["prev_rank"] == 3
+
+
+def test_no_prev_rank_without_previous_trending_date(cfg: Config, tmp_path: Path) -> None:
+    meta_json, trending_json = _trending_build(
+        cfg, tmp_path, {date(2026, 11, 1): [trending("o/a", 1)]}
+    )
+    assert meta_json["trending_prev_date"] is None
+    assert "prev_rank" not in trending_json["daily"]["all"][0]

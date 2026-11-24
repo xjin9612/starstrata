@@ -168,9 +168,26 @@ def _meta(
     }
 
 
+def _trending_prev_date(conn: sqlite3.Connection, day: date) -> str | None:
+    """day 之前最近一個有 Trending 資料的日期。"""
+    row = conn.execute(
+        "SELECT max(date) AS d FROM trending_entries WHERE date < ?", (day.isoformat(),)
+    ).fetchone()
+    return str(row["d"]) if row["d"] else None
+
+
 def _trending(
-    conn: sqlite3.Connection, cfg: Config, ctx: _Context, day: date
+    conn: sqlite3.Connection, cfg: Config, ctx: _Context, day: date, prev_date: str | None
 ) -> dict[str, dict[str, list[dict[str, Any]]]]:
+    """prev_date 不是 None 時，Item 加上 prev_rank：那天同期間、同語言的名次，沒上榜為 None。"""
+    prev_ranks = {
+        (r["period"], r["language"], r["node_id"]): r["rank"]
+        for r in conn.execute(
+            "SELECT period, language, node_id, rank FROM trending_entries "
+            "WHERE date = ? AND node_id IS NOT NULL",
+            (prev_date,),
+        )
+    }
     keys = [OVERALL_KEY, *cfg.trending.languages]
     out: dict[str, dict[str, list[dict[str, Any]]]] = {
         period: {key: [] for key in keys} for period in cfg.trending.periods
@@ -183,8 +200,12 @@ def _trending(
     for r in rows:
         key = OVERALL_KEY if r["language"] == OVERALL else r["language"]
         page = out.get(r["period"], {}).get(key)
-        if page is not None:
-            page.append(ctx.item(r["rank"], r["full_name"], r["node_id"], r["stars_in_period"]))
+        if page is None:
+            continue
+        item = ctx.item(r["rank"], r["full_name"], r["node_id"], r["stars_in_period"])
+        if prev_date is not None:
+            item["prev_rank"] = prev_ranks.get((r["period"], r["language"], r["node_id"]))
+        page.append(item)
     return out
 
 
@@ -320,23 +341,24 @@ def build_site(
     latest = _latest(conn)
     ctx = _Context(conn, latest, translations or {})
 
-    _write(
-        data / "meta.json",
-        _meta(conn, cfg, ctx, latest, data_root)
-        | {"generated_at": generated_at.isoformat(timespec="seconds")},
-    )
+    meta = _meta(conn, cfg, ctx, latest, data_root) | {
+        "generated_at": generated_at.isoformat(timespec="seconds")
+    }
     trending: dict[str, Any] = {p: {} for p in cfg.trending.periods}
     new: list[dict[str, Any]] = []
     daily: list[dict[str, Any]] = []
     alerts: list[dict[str, Any]] = []
+    prev_date = _trending_prev_date(conn, latest) if latest else None
+    meta["trending_prev_date"] = prev_date
     if latest:
-        trending = _trending(conn, cfg, ctx, latest)
+        trending = _trending(conn, cfg, ctx, latest, prev_date)
         new = _new(conn, ctx, latest)
         daily = [
             ctx.item(i, r.full_name, r.node_id, r.delta)
             for i, r in enumerate(top_gainers(conn, latest, GAINERS_LIMIT), start=1)
         ]
         alerts = _alerts(conn, ctx, latest)
+    _write(data / "meta.json", meta)
     _write(data / "trending.json", trending)
     _write(data / "new.json", {"items": new})
     _write(data / "daily.json", {"items": daily})
