@@ -86,15 +86,31 @@ def test_snapshot_gap_is_interpolated_and_conserves_total() -> None:
     assert [src for _, _, _, src in got] == ["s", "i", "i", "s"]
 
 
+DAY_MS = 86_400_000
+
+
+def _points(*gains: int | None) -> list[dict[str, Any]]:
+    return [{"t": i * DAY_MS, "n": n} for i, n in enumerate(gains)]
+
+
 def test_sum_last_ignores_unknown_days() -> None:
-    points = [{"n": None}, {"n": 5}, {"n": 7}]
-    assert call("sumLast", points, 7) == 12
-    assert call("sumLast", points, 2) == 12
-    assert call("sumLast", points, 1) == 7
+    points = _points(None, 5, 7)
+    end = 2 * DAY_MS
+    assert call("sumLast", points, 7, end) == 12
+    assert call("sumLast", points, 2, end) == 12
+    assert call("sumLast", points, 1, end) == 7
 
 
 def test_sum_last_all_unknown_is_null() -> None:
-    assert call("sumLast", [{"n": None}], 7) is None
+    assert call("sumLast", _points(None), 7, 0) is None
+
+
+def test_sum_last_counts_days_up_to_end() -> None:
+    points = _points(1, 2, 4)
+    # 序列在 end 前兩天就結束：只算 end 往前 k 天內的點。
+    assert call("sumLast", points, 3, 4 * DAY_MS) == 4
+    assert call("sumLast", points, 2, 4 * DAY_MS) is None
+    assert call("sumLast", points, 7, 30 * DAY_MS) is None
 
 
 @pytest.mark.parametrize(

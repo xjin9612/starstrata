@@ -11,7 +11,7 @@ const SKELETON_DELAY = 150;    // 載入超過這個毫秒數才顯示骨架，�
 const STALE_HOURS = 36;        // collected_at（收集完成時間）距今超過這個時數就提示資料過期；GitHub 排程常延後數小時（實測 7.5 小時），提示條只表示流程停擺
 const SEEN_MAX = 5000;         // 「上次造訪後新出現」最多記住的 repo 數
 
-// 語言由 site.py 依 site.locale 寫入的 <html lang> 決定
+// 語言由 site_page.py 依 site.locale 寫入的 <html lang> 決定
 const LOCALE = document.documentElement.lang.toLowerCase().startsWith('en') ? 'en' : 'zh-TW';
 const DICT = window.I18N[LOCALE];
 document.documentElement.lang = DICT['html.lang'];
@@ -56,7 +56,7 @@ const ROUTES = ['trending', 'new', 'daily', 'alerts', 'reports'];
 const REPORT_KINDS = ['weekly', 'monthly'];
 const langName = key => (key === 'all' ? t('filter.all') : LANG_NAMES[key] || key);
 // 「期間・語言」榜名，例如「本週・Rust」「本月・全部語言」；language 為 null 表示總榜
-const boardName = m => `${t('period.' + m.period)}・${m.language == null ? t('summary.allLangs') : langName(m.language)}`;
+const boardName = m => t('board', { period: t('period.' + m.period), lang: m.language == null ? t('summary.allLangs') : langName(m.language) });
 const isMissing = (meta, period, lang) => (meta.run?.trending_missing || []).some(m => m.period === period && (m.language ?? 'all') === lang);
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -242,8 +242,9 @@ function sparkHtml(vals) {
   if (!Array.isArray(vals)) return '';
   const nums = vals.filter(v => v !== null);
   if (!nums.length) return `<span class="sr">${t('card.sparkNone')}</span>`;
-  const W = 72, H = 22, P = 3, max = Math.max(...nums, 1);
-  const x = i => P + i * (W - 2 * P) / (vals.length - 1), y = v => H - P - v / max * (H - 2 * P);
+  // star 減少時日增為負，下緣取最小值，走勢線不會超出圖框
+  const W = 72, H = 22, P = 3, max = Math.max(...nums, 1), min = Math.min(...nums, 0);
+  const x = i => P + i * (W - 2 * P) / (vals.length - 1), y = v => H - P - (v - min) / (max - min) * (H - 2 * P);
   let d = '', pen = false, lastI = -1;
   vals.forEach((v, i) => {
     if (v === null) { pen = false; return; }
@@ -253,7 +254,7 @@ function sparkHtml(vals) {
     const isolated = v !== null && (i === 0 || vals[i - 1] === null) && (i === vals.length - 1 || vals[i + 1] === null);
     return (isolated || i === lastI) && v !== null ? `<circle class="sp-d" cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${i === lastI ? 2.5 : 1.5}"/>` : '';
   }).join('');
-  return `<svg class="spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true"><line class="sp-b" x1="${P}" x2="${W - P}" y1="${H - P}" y2="${H - P}"/><path class="sp-l" d="${d}"/>${dots}</svg><span class="sr">${esc(t('card.spark', { n: fmt(nums.reduce((a, b) => a + b, 0)) }))}</span>`;
+  return `<svg class="spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true"><line class="sp-b" x1="${P}" x2="${W - P}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}"/><path class="sp-l" d="${d}"/>${dots}</svg><span class="sr">${esc(t('card.spark', { n: fmt(nums.reduce((a, b) => a + b, 0)) }))}</span>`;
 }
 
 // 翻譯目標由 meta.translation_lang 決定（config 的 translation.target），沒設定時只顯示原文
@@ -268,7 +269,7 @@ function cardHtml(it, opts = {}) {
   const flags = (it.is_hot ? `<span class="flag hot">${t('card.hot')}</span>` : '') + (it.is_new && opts.showNew !== false ? `<span class="flag new">${t('card.new')}</span>` : '');
   const text = descText(it);
   const desc = text ? `<p class="desc"${isTranslated(it) ? ` lang="${esc(trLang())}"` : ''}>${esc(text)}</p>` : `<p class="desc none">${t('card.noDesc')}</p>`;
-  // 有譯文才標「AI 翻譯」；原文就是繁中、沒有說明、英文版都不標
+  // 只有顯示譯文時才標「AI 翻譯」，與介面語言無關
   const translated = isTranslated(it);
   const ai = translated
     ? `<div class="c-foot"><button type="button" class="ai" aria-expanded="false" title="${esc(t('card.aiTitle', { lang: trLangName() }))}">${t('card.ai')}</button>
@@ -358,7 +359,7 @@ async function viewTrending(route, meta) {
   if (trendingHash(route) !== location.hash && location.hash.startsWith('#/trending')) history.replaceState(history.state, '', trendingHash(route));
   let list = data[route.period]?.[route.lang] || [];
   if (route.sort === 'stars') list = [...list].sort((a, b) => (b.period_stars ?? -1) - (a.period_stars ?? -1) || a.rank - b.rank);
-  recordSeenLater(list, meta);
+  recordSeenLater(route, list, meta);
   const lname = route.lang === 'all' ? t('summary.allLangs') : langName(route.lang);
   const body = list.length
     ? `<ol class="grid" aria-label="${t('list.trending')}">${list.map(it => cardHtml(it, { unit: t('unit.' + route.period), showChange: route.sort === 'rank', markSeen: true })).join('')}</ol>`
@@ -379,7 +380,7 @@ async function viewNew(route, meta) {
   const all = (await getData('new')).items;
   if (!all.length) return head + emptyHtml('quiet', t('new.none'), t('new.noneText'), `<a class="btn" href="#/trending">${t('empty.viewTrending')}</a>`);
   const shown = all.slice(0, entry().newShown || PAGE_SIZE);
-  recordSeenLater(shown, meta);
+  recordSeenLater(route, shown, meta);
   const rest = all.length - shown.length;
   return head + `<ol class="grid" aria-label="${t('new.list')}">${shown.map(it => cardHtml(it, { unit: t('unit.daily'), created: true, showNew: false, markSeen: true, nullLabel: it.from_search ? t('card.fromSearch') : '' })).join('')}</ol>
     ${rest > 0 ? `<div class="more"><button type="button" class="btn" id="moreNew">${esc(t('new.more', { n: fmt(rest) }))}</button></div>` : `<p class="all-shown">${esc(t('new.allShown', { n: fmt(all.length) }))}</p>`}`;
@@ -390,7 +391,7 @@ async function viewDaily(route, meta) {
   if (meta.is_first_day) return head + emptyHtml('day1', t('empty.day1'), t('daily.day1'));
   const list = (await getData('daily')).items.slice(0, 50);
   if (!list.length) return head + emptyHtml('quiet', t('daily.none'), t('daily.noneText'));
-  recordSeenLater(list, meta);
+  recordSeenLater(route, list, meta);
   return head + `<ol class="grid" aria-label="${t('daily.list')}">${list.map(it => cardHtml(it, { unit: t('unit.gain'), markSeen: true })).join('')}</ol>`;
 }
 
@@ -441,11 +442,11 @@ async function viewReports(route, meta) {
   if (!list.length) return head + emptyHtml('quiet', t('reports.none'), t('reports.noneText'));
   const groups = new Map();
   for (const r of list) { const y = r.end.slice(0, 4); if (!groups.has(y)) groups.set(y, []); groups.get(y).push(r); }
-  return head + [...groups].map(([y, rs]) => `<section class="rp-year" aria-labelledby="rpy${y}"><h3 class="section-title" id="rpy${y}">${y}</h3>
+  return head + [...groups].map(([y, rs]) => `<section class="rp-year" aria-labelledby="rpy${esc(y)}"><h3 class="section-title" id="rpy${esc(y)}">${esc(y)}</h3>
     <ol class="rp-list">${rs.map(r => {
       const fresh = isNewReport(r, meta);
       return `<li><article class="rp-item">
-        <div class="rp-top"><span class="rp-kind ${r.kind}">${t('reports.kind.' + r.kind)}</span><span class="mono">${esc(r.period)}</span><span class="rp-range">${esc(shortRange(r))}</span>${fresh ? `<span class="flag new">${t('reports.newBadge')}</span>` : ''}</div>
+        <div class="rp-top"><span class="rp-kind ${esc(r.kind)}">${t('reports.kind.' + r.kind)}</span><span class="mono">${esc(r.period)}</span><span class="rp-range">${esc(shortRange(r))}</span>${fresh ? `<span class="flag new">${t('reports.newBadge')}</span>` : ''}</div>
         <h4 class="name"><a href="${reportHref(r)}">${esc(t('reports.title.' + r.kind, { period: r.period }))}</a></h4>
         ${r.top?.length ? `<p class="rp-tops"><span class="sr">${t('reports.top')}</span>${r.top.map(n => `<span>${nameHtml(n)}</span>`).join('')}</p>` : ''}
       </article></li>`;
@@ -504,13 +505,14 @@ async function viewRepo(route) {
   }
   const full = det.full_name;
   const series = buildSeries(det);
-  detailSeries = series;
   const total = det.stargazers ?? (series ? series[series.length - 1].c : null);
   // 合計裡含回補或推算（快照缺日補齊）的日子時，數字後面註明
-  const tileNote = n => ['b', 'i'].filter(k => series.slice(-n).some(p => p.n !== null && p.s === k)).map(k => t(k === 'b' ? 'tile.backfill' : 'tile.estimated')).join(LOCALE === 'en' ? ', ' : '、');
+  // 近 N 日以最新資料日期為準；序列較早結束的 repo（例如 gone）沒有這段期間的資料
+  const end = META?.data_date ? toMs(META.data_date) : (series ? series[series.length - 1].t : 0);
+  const tileNote = n => ['b', 'i'].filter(k => lastDays(series, n, end).some(p => p.n !== null && p.s === k)).map(k => t(k === 'b' ? 'tile.backfill' : 'tile.estimated')).join(LOCALE === 'en' ? ', ' : '、');
   const none = `<dd class="none">${t('tile.none')}</dd>`;
   const statTile = (label, n) => {
-    const v = series ? sumLast(series, n) : null;
+    const v = series ? sumLast(series, n, end) : null;
     return `<div class="kpi"><dt>${t(label)}</dt>${v === null ? none : `<dd class="acc">+${fmt(v)}${tileNote(n) ? `<small>${tileNote(n)}</small>` : ''}</dd>`}</div>`;
   };
   const days = new Set((det.trending || []).map(r => r[0])).size;
@@ -545,7 +547,7 @@ async function viewRepo(route) {
     </section>`
     : `<section class="panel"><div class="panel-head"><h3>${t('chart.history')}</h3></div>
         <div class="chart-empty"><div><b>${t('chart.collecting')}</b><br>${t('chart.collectingText')}</div></div></section>`;
-  if (!(series && series.length > 1)) detailSeries = null;
+  route.series = series && series.length > 1 ? series : null;
 
   const trRows = [...(det.trending || [])].sort((a, b) => b[0].localeCompare(a[0]) || a[3] - b[3]);
   const table = `<h3 class="section-title">${t('hist.title')}</h3>` + (trRows.length
@@ -762,15 +764,15 @@ const chartRO = new ResizeObserver(() => drawCharts());
  *       'update' 同一頁更新（保留捲動）｜'init' 第一次載入
  * ===================================================================== */
 let renderToken = 0;
-let pendingSeen = null;
-function recordSeenLater(items, meta) { pendingSeen = { names: items.map(i => i.full_name), date: meta.data_date || '' }; }
+// 頁面函式把要記錄的 repo 與圖表序列放在這次 render 的 route 上，
+// render 確認自己仍是最新的一次後才使用，被取代的 render 不會影響目前的頁面。
+function recordSeenLater(route, items, meta) { route.seen = { names: items.map(i => i.full_name), date: meta.data_date || '' }; }
 
 async function render(mode = 'update') {
   const token = ++renderToken;
   const route = parseRoute();
   currentRoute = route;
   detailSeries = null;
-  pendingSeen = null;
   chartRO.disconnect();
   const view = $('#view');
   document.title = (route.name === 'repo' ? route.full : route.name === 'report' ? routeLabel(route) : t('route.' + route.name)) + t('title.suffix');
@@ -804,7 +806,8 @@ async function render(mode = 'update') {
     view.innerHTML = html;
     view.removeAttribute('aria-busy');
     if (skeletonShown) $('#live').textContent = t('live.loaded');
-    if (pendingSeen) recordSeen(pendingSeen.names, pendingSeen.date);
+    if (route.seen) recordSeen(route.seen.names, route.seen.date);
+    detailSeries = route.series || null;
   } catch (e) {
     if (token !== renderToken) return;
     clearTimeout(skTimer);

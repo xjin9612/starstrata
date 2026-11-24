@@ -7,7 +7,7 @@ from datetime import timedelta
 from typing import Any
 
 import pytest
-from playwright.sync_api import Locator, Page, expect
+from playwright.sync_api import Locator, Page, Route, expect
 
 from tests.e2e.conftest import GITHUB_REPO, NOW, SEARCH_ONLY_NEW, Patch, store_seen
 
@@ -22,7 +22,7 @@ _UI_TEXT_JS = """() => {
     ["aria-label", "title", "placeholder"].map(a => e.getAttribute(a)).join(" "));
   return c.innerText + ' ' + attrs.join(' ') + ' ' + document.title;
 }"""
-_CJK = re.compile(r"[㐀-鿿＀-￯　-〿]")
+_CJK = re.compile(r"[㐀-鿿＀-￯　-〿぀-ヿ]")
 
 ROUTES = [
     "#/trending",
@@ -365,3 +365,28 @@ def test_english_no_horizontal_scroll(page: Page, base_url_en: str, width: int) 
         _loaded(page)
         overflow = page.evaluate("document.documentElement.scrollWidth - window.innerWidth")
         assert overflow <= 0, route
+
+
+def test_english_missing_board_name(page: Page, base_url_en: str, patch_json: Patch) -> None:
+    patch_json("meta", _with_run(trending_missing=[{"period": "weekly", "language": "rust"}]))
+    page.goto(base_url_en)
+    expect(page.locator("#notice")).to_contain_text("This week · Rust")
+
+
+def test_late_repo_response_does_not_affect_next_page(page: Page, base_url: str) -> None:
+    """repo 詳細檔晚到時，已換到的下一頁不能被它影響（例如找不到圖表元素而出錯）。"""
+    held: dict[str, Route] = {}
+    page.route("**/data/repos/**", lambda route: held.__setitem__("repo", route))
+    page.route("**/data/trending.json", lambda route: held.__setitem__("trending", route))
+    with page.expect_request("**/data/repos/**"):
+        page.goto(f"{base_url}#/repo/hot/rocket")
+    with page.expect_request("**/data/trending.json"):
+        page.evaluate("location.hash = '#/trending'")
+    with page.expect_response("**/data/repos/**"):
+        held["repo"].continue_()
+    # 等舊的 render 處理完晚到的詳細檔，再放行下一頁的資料。
+    page.evaluate("new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
+    held["trending"].continue_()
+    expect(page.locator(".card")).to_have_count(4)
+    page.wait_for_load_state("networkidle")
+    expect(page.locator("#chartCum")).to_have_count(0)

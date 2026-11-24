@@ -37,13 +37,18 @@ function buildSeries(d) {
   return out;
 }
 
-// series 末 k 天已知新增量的合計；全部未知時為 null。
-function sumLast(series, k) {
-  const known = series.slice(-k).filter(p => p.n !== null);
+// 截至 end（毫秒，含當天）的 k 天內的點。序列在 end 之前就結束時，缺的日子不算。
+function lastDays(series, k, end) {
+  return series.filter(p => p.t <= end && p.t > end - k * DAY);
+}
+
+// 截至 end 的 k 天內已知新增量的合計；全部未知時為 null。
+function sumLast(series, k, end) {
+  const known = lastDays(series, k, end).filter(p => p.n !== null);
   return known.length ? known.reduce((s, p) => s + p.n, 0) : null;
 }
 
 // 警示當日新增相對基準的倍數；基準 ≤ 0 或資料不足時為 null。
 const alertRatio = a => (a.baseline > 0 ? a.added / a.baseline : null);
 
-if (typeof module === 'object') module.exports = { DAY, toMs, toDate, buildSeries, sumLast, alertRatio };
+if (typeof module === 'object') module.exports = { DAY, toMs, toDate, buildSeries, lastDays, sumLast, alertRatio };
