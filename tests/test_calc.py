@@ -82,6 +82,8 @@ def test_snapshot_gap_is_interpolated_and_conserves_total() -> None:
     )
     assert [c for _, c, _, _ in got] == [100, 110, 120, 130]
     assert [n for _, _, n, _ in got] == [None, 10, 10, 10]
+    # 補齊的點不是回補資料，標為 i；有快照的日子仍是 s。
+    assert [src for _, _, _, src in got] == ["s", "i", "i", "s"]
 
 
 def test_sum_last_ignores_unknown_days() -> None:
