@@ -324,7 +324,7 @@ JSON 檔：
 | `data/trending.json` | 最新資料日期的 Trending，依期間與語言分頁：`{period: {all \| <語言>: [Item]}}` |
 | `data/new.json` | 今日新上榜，依今日 Trending 新增 star 排序；只出現在 Search 的 repo 沒有今日新增，排在後面。`Item` 另有 `from_search`，表示不在今日 Trending。首日為空 |
 | `data/daily.json` | 與前一天快照相比的日增前 50 名 |
-| `data/alerts.json` | 最近 30 天的警示：日期、repo、當日新增、基準（四捨五入成整數，資料不足時為 `null`） |
+| `data/alerts.json` | 最近 30 天的警示：`{ items: [{ date, full_name, added, baseline }] }`。`baseline` 是近 `alerts.baseline_days` 日平均，四捨五入成整數，資料不足時為 `null` |
 | `data/search-index.json` | 所有 repo 的 `[full_name, language, stars]`，依 star 數排序，供搜尋使用 |
 | `data/search-full.json` | 所有 repo 的 `[full_name, 說明原文, 譯文, topics]`，順序與 `search-index.json` 相同。沒有譯文或原文已是目標語言時譯文為 `null` |
 | `data/reports/index.json` | 所有報告，新的在前：`{ items: [{ kind, period, start, end, title, url, top }] }`。`top` 是「Star 增加最多」表格的前 3 個 repo；`url` 是 GitHub 上的原始檔，取不到 repo 時為 `null` |

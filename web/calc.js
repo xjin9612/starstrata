@@ -43,6 +43,6 @@ function sumLast(series, k) {
 }
 
 // 警示當日新增相對基準的倍數；基準 ≤ 0 或資料不足時為 null。
-const alertRatio = a => (a.baseline_7d > 0 ? a.added / a.baseline_7d : null);
+const alertRatio = a => (a.baseline > 0 ? a.added / a.baseline : null);
 
 if (typeof module === 'object') module.exports = { DAY, toMs, toDate, buildSeries, sumLast, alertRatio };

@@ -100,4 +100,4 @@ def test_sum_last_all_unknown_is_null() -> None:
     [(None, None), (0, None), (-3.5, None), (0.5, 600.0), (100, 3.0)],
 )
 def test_alert_ratio(baseline: float | None, expected: float | None) -> None:
-    assert call("alertRatio", {"added": 300, "baseline_7d": baseline}) == expected
+    assert call("alertRatio", {"added": 300, "baseline": baseline}) == expected

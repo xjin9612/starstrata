@@ -236,7 +236,7 @@ async function viewAlerts(route, meta) {
         <td data-label="日期" class="mono">${a.date}</td>
         <td class="repo"><a href="${repoHref(a.full_name)}">${nameHtml(a.full_name)}</a></td>
         <td data-label="當日新增" class="num added">+${fmt(a.added)}</td>
-        <td data-label="近 7 日平均" class="num">${a.baseline_7d == null ? '資料不足' : fmt(a.baseline_7d)}</td>
+        <td data-label="近 7 日平均" class="num">${a.baseline == null ? '資料不足' : fmt(a.baseline)}</td>
         <td data-label="倍數" class="wide">${alertRatio(a) == null ? '—' : `<span class="mult-bar" style="width:${Math.round(alertRatio(a) / maxX * 120)}px" aria-hidden="true"></span><span class="mult">×${alertRatio(a).toFixed(1)}</span>`}</td>
       </tr>`).join('')}</tbody></table></div>`;
 }
