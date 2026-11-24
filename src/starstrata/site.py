@@ -26,6 +26,8 @@ from starstrata.translate import lookup, normalize
 GAINERS_LIMIT = 50
 ALERT_DAYS = 30
 OVERALL_KEY = "all"
+# 卡片走勢線涵蓋的資料日數。
+SPARK_DAYS = 7
 
 # GitHub 的 owner 與 repo 名稱只含這些字元；用 full_name 組檔案路徑前先確認。
 _SEGMENT = re.compile(r"[A-Za-z0-9_.-]+")
@@ -105,6 +107,31 @@ class _Context:
         self.hot_ids = {
             r["node_id"] for r in conn.execute("SELECT node_id FROM alerts WHERE date = ?", (day,))
         }
+        self.spark_days = [
+            date.fromisoformat(r["date"])
+            for r in conn.execute(
+                "SELECT date FROM ingested_dates WHERE date <= ? ORDER BY date DESC LIMIT ?",
+                (day, SPARK_DAYS),
+            )
+        ][::-1]
+        self.window: dict[str, dict[date, int]] = {}
+        if self.spark_days:
+            start = self.spark_days[0] - timedelta(days=1)
+            for r in conn.execute(
+                "SELECT node_id, date, stars FROM repo_daily WHERE date >= ?", (start.isoformat(),)
+            ):
+                self.window.setdefault(r["node_id"], {})[date.fromisoformat(r["date"])] = r["stars"]
+
+    def spark(self, node_id: str | None) -> list[int | None] | None:
+        """最近 SPARK_DAYS 個資料日的日增 star；不在 repos 表的 repo 為 None。"""
+        if node_id is None or node_id not in self.repos:
+            return None
+        stars = self.window.get(node_id, {})
+        out: list[int | None] = []
+        for d in self.spark_days:
+            today, before = stars.get(d), stars.get(d - timedelta(days=1))
+            out.append(today - before if today is not None and before is not None else None)
+        return out
 
     def item(
         self, rank: int, full_name: str, node_id: str | None, period_stars: int | None
@@ -120,6 +147,7 @@ class _Context:
             "created_at": repo.created_at if repo else None,
             "is_new": node_id in self.new_ids,
             "is_hot": node_id in self.hot_ids,
+            "spark": self.spark(node_id),
         }
 
 

@@ -329,8 +329,9 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 | `run` | 最新資料日期 `run.json` 的 `merged`：`{ trending_missing, search_ok, repos_missing }`，`repos_missing` 是個數；`run.json` 沒有 `merged` 或找不到時為 `null` |
 | `generated_at` | 建置網站的時間。收集失敗時匯入與建置仍會成功，所以不用它判斷資料新鮮度 |
 
-`Item` 的欄位：`rank`、`full_name`、`language`、`period_stars`（期間新增，沒有資料時為 `null`）、`stargazers`、`description`、`description_zh`、`zh_native`、`created_at`、`is_new`、`is_hot`。
+`Item` 的欄位：`rank`、`full_name`、`language`、`period_stars`（期間新增，沒有資料時為 `null`）、`stargazers`、`description`、`description_zh`、`zh_native`、`created_at`、`is_new`、`is_hot`、`spark`。
 
+- `spark` 是最近 7 個資料日（含最新一天）的日增 star，由舊到新。某天沒有快照、或前一天沒有快照可比時為 `null`；不在 `repos` 表的 repo 整個欄位為 `null`。
 - `trending.json` 的 `Item` 另有 `prev_rank`：`trending_prev_date` 當天同期間、同語言的名次，那天沒上榜為 `null`。`trending_prev_date` 為 `null` 時不輸出這個欄位。
 - `description_zh` 是譯文，沒有譯文時為 `null`。`zh_native` 為 `true` 表示原文就是繁體中文，前端不標示「AI 翻譯」。
 - `is_new` 表示 `first_seen` 為最新資料日期，首日一律為 `false`；`is_hot` 表示最新資料日期有警示。

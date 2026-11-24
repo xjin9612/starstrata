@@ -398,3 +398,26 @@ def test_no_prev_rank_without_previous_trending_date(cfg: Config, tmp_path: Path
     )
     assert meta_json["trending_prev_date"] is None
     assert "prev_rank" not in trending_json["daily"]["all"][0]
+
+
+def test_spark_covers_last_seven_data_days(cfg: Config, tmp_path: Path) -> None:
+    data = tmp_path / "data"
+    for n in range(8):
+        repos = [repo("R_a", 100 + 10 * n, full_name="o/a", meta=meta())]
+        if n in (0, 7):
+            # 每 7 天才有一次快照，與 dormant 相同。
+            repos.append(repo("R_b", 50 + n, full_name="o/b", meta=meta()))
+        if n != 4:
+            repos.append(repo("R_c", 10 + n, full_name="o/c", meta=meta()))
+        rows = [trending("o/a", 1), trending("o/b", 2), trending("o/c", 3), trending("x/none", 4)]
+        write_day(data, date(2026, 11, 1 + n), repos=repos, trending_rows=rows)
+    out, _ = _build(cfg, tmp_path, data)
+    sparks = {
+        i["full_name"]: i["spark"] for i in _read(out / "data" / "trending.json")["daily"]["all"]
+    }
+    assert sparks == {
+        "o/a": [10] * 7,
+        "o/b": [None] * 7,
+        "o/c": [1, 1, 1, None, None, 1, 1],
+        "x/none": None,
+    }
