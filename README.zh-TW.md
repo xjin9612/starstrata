@@ -16,7 +16,7 @@ starstrata 每天收集 GitHub 趨勢，累積成長期歷史，讓你看出什�
 **線上 dashboard：<https://xjin9612.github.io/starstrata/>**
 
 - 每日快照：GitHub Trending（總榜加六種語言；今日、本週、本月）、Search API 找到的新建 repo，以及所有追蹤中 repo 的 star 數。
-- dashboard：Trending 卡片、新上榜、日增排行、爆紅警示，以及每個 repo 的 star 歷史。
+- dashboard：Trending 卡片（名次變化、7 日走勢線、依新增 star 排序）、新上榜、日增排行、爆紅警示、週報與月報，以及每個 repo 的 star 歷史與作者短評。介面可選繁體中文或英文。
 - Telegram 每日摘要與爆紅警示；週報、月報附 AI 解讀。
 - repo 說明翻成 `translation.target` 設定的語言（本 repo 為繁體中文）。全部在 GitHub Actions 上執行，不需要伺服器或資料庫主機。
 
@@ -32,7 +32,8 @@ starstrata 每天收集 GitHub 趨勢，累積成長期歷史，讓你看出什�
 
 1. fork 這個 repo，保持公開。Actions 頁面要求啟用 workflow 時，選擇啟用。
 2. 在 `config.toml` 把 `notify.site_url` 改成 `https://<你的帳號>.github.io/<repo>/`；設為 `""` 則 Telegram 不附 dashboard 按鈕，網頁也不加分享預覽標籤。頁尾的 GitHub 專案連結會自動帶入。
-   把 `translation.target` 設成 repo 說明要翻成的語言（例如 `ja`）；設為 `""` 則不翻譯。
+   把 `translation.target` 設成 repo 說明要翻成的語言（例如 `ja`）；設為 `""` 則不翻譯。把 `site.locale` 改成 `en` 可以得到英文介面。
+   清空 `notes.toml`：裡面的短評是原作者的個人內容。
 3. 在 Settings → Secrets and variables → Actions 建立 secrets：
 
    | 名稱 | 必要 | 用途 |
@@ -83,9 +84,12 @@ starstrata 每天收集 GitHub 趨勢，累積成長期歷史，讓你看出什�
 | `[backfill]` | 每次執行用於回補 star 歷史的 API 請求數 |
 | `[notify]` | Telegram 摘要的長度與 dashboard 網址 |
 | `[reports]` | AI 供應商、模型、備用模型與解讀的專案數 |
+| `[site]` | dashboard 介面文字的語言：`zh-TW` 或 `en` |
 | `[translation]` | 說明翻譯的目標語言（`target`，空字串表示不翻譯）、每批則數、每次上限與請求間隔 |
 
 執行時間寫在 `.github/workflows/daily.yml` 的 `cron`。
+
+`notes.toml` 是選用的作者一句話短評，顯示在 repo 詳細頁與卡片上。格式不合時 `starstrata site` 停止，結束碼 `2`；格式見 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)。
 
 ## 本機執行
 

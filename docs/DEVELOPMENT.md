@@ -28,6 +28,12 @@ python3 -m venv .venv
 .venv/bin/pytest -m e2e
 ```
 
+README 的截圖 `docs/screenshots/trending.png` 由 `scripts/screenshot.py` 產生：用 `data/` 建置網站，瀏覽器時鐘固定在收集完成後 2 小時再截圖。需要先下載 Chromium。
+
+```sh
+.venv/bin/python scripts/screenshot.py
+```
+
 預覽 dashboard：先執行 `.venv/bin/starstrata site`，再執行 `python3 -m http.server -d _site 8000`，開啟 `http://localhost:8000`。
 
 ## 相依套件
@@ -363,21 +369,60 @@ JSON 檔：
 - 產生 repo 檔時依 `node_id` 排序逐一讀取歷史資料，記憶體用量不隨歷史長度增長。
 - star 累計點：第一筆快照之前用回補資料累加，之後用快照。每個點標記來源，`b` 為回補、`s` 為快照。
 - 每日新增 star：回補期間用回補資料；快照期間只在前一天也有快照時計算。
-- 前端組每日序列時，回補期間沒有資料的日子新增為 0，累計沿用前一天。
-- 快照缺日時，前端線性補齊累計點，新增取相鄰兩天累計的差。
-- 第一筆快照沒有前一天可比較，新增為未知；未知的日子不計入「近 7 日新增」「近 30 日新增」。
-- 爆紅警示頁的欄名寫「近 7 日平均」，與 `alerts.baseline_days` 的預設值一致；改這個設定時要一起改前端文字。
-- 爆紅警示的近期平均 ≤ 0 時，倍數欄顯示 `—`。
-- repo 詳細頁的「Trending 上榜天數」是 `trending` 紀錄裡不重複的日期數。同一天出現在多個榜只算一天。
-- 新上榜頁的 `from_search` 為 `true` 時，卡片寫「來自 Search，沒有今日 Trending 數字」。在 Trending 上但沒有顯示新增數的 repo 照常顯示 `—`。
 
-前端：
+### 前端
 
-- `web/` 是純 HTML/JS/CSS，不經過建置，視覺規格來自 Claude Design 產生的設計系統「地層儀表」。
-- 插入 HTML 的資料一律先經過 `esc()` 跳脫。
-- 不碰 DOM 的計算函式放在 `web/calc.js`，由 `tests/test_calc.py` 測試。
+`web/` 是純 HTML/JS/CSS，不經過建置，也不載入外部字型或 CDN。視覺來自 Claude Design 的設計系統「地層儀表」，`web/` 是唯一的實作；下一輪設計從目前的 `web/` 匯入 Claude Design 開始，設計稿改完逐檔比對後移植，不整檔覆蓋。
+
+| 檔案 | 內容 |
+|---|---|
+| `index.html` | 頁面骨架；`site_page` 填入的位置見上方 |
+| `style.css` | 樣式，設計 token 在開頭的 `:root` |
+| `i18n.js` | 介面文字，`{ "zh-TW": {...}, en: {...} }` |
+| `calc.js` | 不碰 DOM 的計算：每日序列、近 N 日合計、爆紅倍數 |
+| `app.js` | 路由、頁面、圖表與搜尋 |
+
+路由：
+
+| 網址 | 頁面 |
+|---|---|
+| `#/trending?lang=<key>&period=<period>&sort=stars` | Trending，篩選與排序寫在網址，預設值不寫 |
+| `#/new`、`#/daily`、`#/alerts` | 新上榜、日增排行、爆紅警示 |
+| `#/reports?kind=weekly\|monthly` | 報告列表 |
+| `#/reports/<kind>/<period>` | 報告閱讀 |
+| `#/repo/<owner>/<name>` | repo 詳細頁 |
+
+規則：
+
+- 介面文字只寫在 `i18n.js`，程式用 `t(key, vars)` 取用。兩種語言的 key 必須相同，新增文字時兩種語言一起補；e2e 測試檢查英文介面沒有中文。
+- 介面語言取自 `site_page` 寫入的 `<html lang>`。千分位一律用 `en-US`；圖表刻度縮寫 `zh-TW` 用「萬」，`en` 用 k、M；日期寫 `YYYY-MM-DD`，時間依 `meta.timezone` 換算。
+- 插入 HTML 的資料一律先經過 `esc()` 跳脫，作者短評也一樣。報告的 `html` 已由 `report_html` 跳脫，直接插入。
+- 語言與期間的選項取自 `trending.json` 的 key。
+- 每日序列由 `calc.js` 的 `buildSeries()` 組成，`n` 為 `null` 表示新增未知：
+  - 回補期間沒有資料的日子，以及回補結束到第一筆快照之間：新增為 0，累計沿用前一點，來源 `b`。
+  - 第一筆快照沒有前一天可比，新增未知，前面有回補資料時也一樣：回補是 UTC 的日資料，快照是收集當下的 star 數，兩者相減不是當天的新增。
+  - 第一筆快照之後的快照缺日（例如 `dormant` 每 7 天才有一次快照）：線性補齊累計，新增取累計差，來源 `i`（推算）。
+- 「近 7 日新增」「近 30 日新增」只加總已知的日子，全部未知時寫「尚無資料」；含回補或推算的日子時註明。
+- 長條圖點數太多時合成 7 日或 30 日一組，只在回補與快照時期的分界斷開；組內有推算的日子時整組標為推算。全部未知的組視為沒有資料。
+- 爆紅警示頁的規則說明與欄名取自 `meta.alert_rule`。倍數是當日新增除以基準，基準 ≤ 0 或為 `null` 時顯示 `—`。
+- 名次旁顯示和 `trending_prev_date` 相比的變化；依新增 star 排序時不顯示。
+- 提示條：`collected_at` 距今超過 36 小時（`STALE_HOURS`），或 `meta.run` 有缺漏時顯示，每個原因一行。GitHub 排程常延後數小時，24 小時加上延後已超過 30 小時，所以門檻設 36 小時。
+- 目前的榜在 `run.trending_missing` 裡時，空狀態寫「沒有收集到資料」，與「沒有上榜的 repo」分開。
+- repo 詳細頁的「Trending 上榜天數」是 `trending` 紀錄裡不重複的日期數。
+- 新上榜頁的 `from_search` 為 `true` 時，卡片寫「來自 Search，沒有今日 Trending 數字」；在 Trending 上但沒有顯示新增數的 repo 顯示 `—`。
+- 報告的「新」標記與 `meta.reports_new` 用同一個條件：期間結束日距最新資料日期 7 天內。報告只有繁中，其他介面語言加一行說明。
+- 「上次造訪後新出現」記在 `localStorage['starstrata-seen']`，最多 5,000 筆，超過時刪最舊的；第一次造訪不標記，`localStorage` 無法使用時停用。
 - 主題預設跟隨系統，可用頁首按鈕固定為淺色或深色，選擇存在 `localStorage`。
-- 返回上一頁時還原捲動位置、篩選、已展開筆數、圖表期間與焦點，這些狀態存在 `sessionStorage`。
+- 返回上一頁時還原捲動位置、篩選、排序、已展開筆數、圖表期間與焦點，這些狀態存在 `sessionStorage`。
+
+視覺：
+
+- 寬度支援 360 到 2560 px，只有一個斷點 720 px。e2e 測試檢查各頁沒有橫向捲軸。
+- 字型只用系統字型（`--font-sans`、`--font-mono`）。
+- `accent` 只用在主要數字、選取狀態、名次上升與實測資料；`hot` 只表示爆紅。
+- 語言色點旁一定寫出語言名稱。名次變化、走勢線、短評圖示、上次造訪標記都附 `.sr` 文字或 `title`，不只靠顏色或圖形。
+- 對比符合 WCAG AA：文字至少 4.5:1，控制項邊框、焦點外框、圖表標記至少 3:1。
+- 分頁計數徽章裡的 `.sr` 文字使用絕對定位，所在容器必須設 `position: relative`，否則手機上會撐出橫向捲軸。
 
 部署由 `daily.yml` 的 `deploy` job 執行。`daily` job 因收集失敗而標為失敗時，dashboard 仍照常部署。
 

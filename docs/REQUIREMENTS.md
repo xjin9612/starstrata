@@ -126,7 +126,15 @@ stateDiagram-v2
 - 部署在 GitHub Pages。
 - Python 從 SQLite 產生 JSON，前端用純 HTML/JS，不需要 npm 建置。
 - 產生的 JSON 不 commit，由 Actions 直接部署。
-- 頁面：今日榜單、爆紅列表、語言篩選、repo star 曲線。
+- 頁面：
+  - Trending：語言與期間篩選、依名次或新增 star 排序、名次變化、7 日走勢線。
+  - 新上榜、日增排行、爆紅警示（寫出警示規則）。
+  - 報告：週報與月報的列表與站內閱讀。
+  - repo 詳細頁：star 曲線、近 7／30 日新增、Trending 上榜紀錄、作者短評。
+  - 搜尋 repo 名稱、說明與 topics。
+- 介面文字提供繁體中文與英文，建置時由設定選定一種。
+- 資料超過一天沒有更新，或當天有來源沒有收集到時，頁面顯示提示。
+- 作者短評寫在 `notes.toml`，是作者的個人內容。
 
 ### 說明翻譯
 
@@ -178,6 +186,7 @@ stateDiagram-v2
 - 執行日期的時區
 - 中文解讀與說明翻譯的模型供應商與模型名稱
 - 說明翻譯的目標語言與每次執行最多翻譯的則數
+- dashboard 介面文字的語言
 
 祕密存在 GitHub Actions secrets：
 

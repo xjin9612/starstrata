@@ -1,4 +1,4 @@
-/* starstrata dashboard 樣式。設計 token 定義在開頭的 :root，色彩與字體的使用規則見 docs/DEVELOPMENT.md「前端」。 */
+/* starstrata dashboard 樣式。設計 token 定義在開頭的 :root，色彩與字型的使用規則見 docs/DEVELOPMENT.md「前端」。 */
 :root {
   color-scheme: light;
   --bg: #f3f6fa; --surface: #ffffff; --surface-raised: #ffffff;
