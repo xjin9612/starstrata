@@ -25,6 +25,7 @@ const PERIODS = { daily: '今日', weekly: '本週', monthly: '本月' };
 const STATES = { active: '追蹤中', dormant: '休眠', gone: '已消失' };
 const ROUTE_LABELS = { trending: 'Trending', new: '新上榜', daily: '日增排行', alerts: '爆紅警示' };
 const langKey = l => (l === '全部' ? 'all' : l.toLowerCase());
+const langLabel = key => LANG_FILTERS.find(l => langKey(l) === key) ?? key;
 
 const $ = (s, r = document) => r.querySelector(s);
 const fmt = n => n.toLocaleString('en-US');
@@ -291,7 +292,7 @@ async function viewRepo(route) {
   const table = `<h3 class="section-title">Trending 上榜紀錄</h3>` + (trRows.length
     ? `<div class="table-wrap"><table class="data"><caption class="sr">Trending 上榜紀錄</caption>
       <thead><tr><th scope="col">日期</th><th scope="col">期間</th><th scope="col">語言</th><th scope="col" class="num">名次</th></tr></thead>
-      <tbody>${trRows.map(([dt, p, l, rk]) => `<tr><td data-label="日期" class="mono">${dt}</td><td data-label="期間">${PERIODS[p] || esc(p)}</td><td data-label="語言">${l ? esc(l) : '全部語言'}</td><td data-label="名次" class="num"><b>#${rk}</b></td></tr>`).join('')}</tbody></table></div>`
+      <tbody>${trRows.map(([dt, p, l, rk]) => `<tr><td data-label="日期" class="mono">${dt}</td><td data-label="期間">${PERIODS[p] || esc(p)}</td><td data-label="語言">${l ? esc(langLabel(l)) : '全部語言'}</td><td data-label="名次" class="num"><b>#${rk}</b></td></tr>`).join('')}</tbody></table></div>`
     : '<div class="chart-empty" style="height:120px">還沒有上榜紀錄</div>');
 
   return `${backHtml()}
