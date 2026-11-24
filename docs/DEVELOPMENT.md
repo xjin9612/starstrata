@@ -80,6 +80,7 @@ python3 -m venv .venv
 | `gemini` | 呼叫 Gemini API 取得 JSON 回應 |
 | `translate` | 把 repo 說明翻成繁體中文 |
 | `site` | 從 SQLite 產生 dashboard |
+| `report_html` | 把報告 Markdown 轉成 dashboard 用的 HTML |
 | `notes` | 讀取並驗證作者短評 `notes.toml` |
 | `site_page` | 產生網站時填入 `index.html` 的語言、說明、分享標籤與 GitHub 連結 |
 | `cli` | 命令列入口 |
@@ -322,6 +323,8 @@ JSON 檔：
 | `data/alerts.json` | 最近 30 天的警示：日期、repo、當日新增、基準（四捨五入成整數，資料不足時為 `null`） |
 | `data/search-index.json` | 所有 repo 的 `[full_name, language, stars]`，依 star 數排序，供搜尋使用 |
 | `data/search-full.json` | 所有 repo 的 `[full_name, 說明原文, 譯文, topics]`，順序與 `search-index.json` 相同。沒有譯文或原文已是目標語言時譯文為 `null` |
+| `data/reports/index.json` | 所有報告，新的在前：`{ items: [{ kind, period, start, end, title, url, top }] }`。`top` 是「Star 增加最多」表格的前 3 個 repo；`url` 是 GitHub 上的原始檔，取不到 repo 時為 `null` |
+| `data/reports/<kind>/<period>.json` | 單份報告：`{ kind, period, start, end, title, url, html }` |
 | `data/repos/<owner>/<name>.json` | 單一 repo 的 meta、譯文、目前 star 數、star 累計點、每日新增 star、Trending 上榜紀錄、作者短評（`note`：`{ text, article_url, updated }`，沒有時為 `null`） |
 
 `meta` 的欄位：
@@ -338,6 +341,7 @@ JSON 檔：
 | `trending_prev_date` | 最新資料日期之前，最近一個有 Trending 資料的日期；沒有時為 `null` |
 | `collected_at` | 最新資料日期 `run.json` 的 `finished_at`，代表資料收集完成的時間；找不到 `run.json` 時為 `null` |
 | `run` | 最新資料日期 `run.json` 的 `merged`：`{ trending_missing, search_ok, repos_missing }`，`repos_missing` 是個數；`run.json` 沒有 `merged` 或找不到時為 `null` |
+| `reports_new` | 期間結束日距最新資料日期 7 天內的報告份數 |
 | `generated_at` | 建置網站的時間。收集失敗時匯入與建置仍會成功，所以不用它判斷資料新鮮度 |
 
 `Item` 的欄位：`rank`、`full_name`、`language`、`period_stars`（期間新增，沒有資料時為 `null`）、`stargazers`、`description`、`description_zh`、`zh_native`、`created_at`、`is_new`、`is_hot`、`spark`、`has_note`。
@@ -434,6 +438,16 @@ updated = 2026-11-24
 |---|---|
 | API 錯誤、拒答、輸出截斷或格式不符 | `1` |
 | 模型只回傳部分 repo 的解讀 | `1` |
+
+### 報告轉 HTML
+
+`starstrata site` 讀取 `reports/weekly/*.md` 與 `reports/monthly/*.md`，由 `report_html` 轉成 HTML。檔名無法還原成期間的報告記警告後略過。
+
+- 只轉換 `reports.render()` 會用到的語法：標題、段落、清單、引言、表格、反斜線跳脫、行內 code、repo 連結。不引入 Markdown 套件。
+- 所有文字一律跳脫。只有網址與文字是同一個 `https://github.com/<owner>/<name>` 的連結會轉成站內的 `#/repo/<owner>/<name>`，其他連結只留文字。解讀內容源自 README，不能在頁面產生外部連結。
+- 標題層級下移一級（`##` 轉成 `h3`），報告的 `#` 標題不輸出，由頁面顯示。
+- `top` 由 `reports.GAINERS_HEADING` 段落的表格取得，`render()` 用同一個常數輸出標題。
+- `tests/test_report_html.py` 用 `reports.generate()` 實際產生的報告測試轉換結果。
 
 ## Telegram
 

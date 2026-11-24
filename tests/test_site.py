@@ -13,6 +13,7 @@ from starstrata.cli import main
 from starstrata.config import Config, load_config
 from starstrata.ingest import sync
 from starstrata.notes import parse_notes
+from starstrata.reports import GAINERS_HEADING
 from starstrata.site import build_site, repo_path, repo_series
 from starstrata.snapshots import write_json, write_jsonl
 from starstrata.translate import text_key
@@ -119,6 +120,7 @@ def test_build_site(cfg: Config, tmp_path: Path) -> None:
         "run": None,
         "generated_at": "2026-11-23T01:00:00+00:00",
         "trending_prev_date": "2026-11-01",
+        "reports_new": 0,
     }
     new = _read(out / "data" / "new.json")["items"]
     assert [(r["rank"], r["full_name"], r["period_stars"], r["is_new"]) for r in new] == [
@@ -481,3 +483,59 @@ def test_new_marks_repos_only_found_by_search(cfg: Config, tmp_path: Path) -> No
         ("o/nostars", None, False),
         ("o/search", None, True),
     ]
+
+
+def _report(title: str, top: str) -> str:
+    return (
+        f"# {title}\n\n## 摘要\n\n- x\n\n## {GAINERS_HEADING}\n\n"
+        "| # | Repo |\n|---:|---|\n"
+        f"| 1 | [{top}](https://github.com/{top}) |\n"
+    )
+
+
+def test_reports_are_converted_and_listed(
+    cfg: Config, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    data = tmp_path / "data"
+    write_day(data, date(2026, 11, 24), repos=[repo("R_a", 10, full_name="o/a", meta=meta())])
+    root = tmp_path / "reports"
+    for kind, label, top in [
+        ("weekly", "2026-W46", "o/old"),
+        ("weekly", "2026-W47", "o/new"),
+        ("monthly", "2026-10", "o/month"),
+        ("weekly", "draft", "o/x"),
+    ]:
+        (root / kind).mkdir(parents=True, exist_ok=True)
+        (root / kind / f"{label}.md").write_text(_report(f"報告 {label}", top), encoding="utf-8")
+
+    out, _ = _build(cfg, tmp_path, data, reports_root=root, github_repo="me/site")
+
+    index = _read(out / "data" / "reports" / "index.json")["items"]
+    assert [(i["kind"], i["period"], i["start"], i["end"], i["top"]) for i in index] == [
+        ("weekly", "2026-W47", "2026-11-16", "2026-11-22", ["o/new"]),
+        ("weekly", "2026-W46", "2026-11-09", "2026-11-15", ["o/old"]),
+        ("monthly", "2026-10", "2026-10-01", "2026-10-31", ["o/month"]),
+    ]
+    assert index[0]["title"] == "報告 2026-W47"
+    assert index[0]["url"] == "https://github.com/me/site/blob/HEAD/reports/weekly/2026-W47.md"
+    detail = _read(out / "data" / "reports" / "weekly" / "2026-W47.json")
+    assert "top" not in detail
+    assert '<a href="#/repo/o/new">' in detail["html"] and "<h1" not in detail["html"]
+    # 2026-11-24 與 W47 的結束日相差 2 天、與 W46 相差 9 天。
+    assert _read(out / "data" / "meta.json")["reports_new"] == 1
+    assert "略過無法辨識期間的報告" in caplog.text
+
+
+def test_reports_without_repo_or_directory(cfg: Config, tmp_path: Path) -> None:
+    data = tmp_path / "data"
+    write_day(data, date(2026, 11, 24), repos=[repo("R_a", 10, full_name="o/a", meta=meta())])
+    root = tmp_path / "reports"
+    (root / "monthly").mkdir(parents=True)
+    (root / "monthly" / "2026-10.md").write_text("沒有標題\n", encoding="utf-8")
+    out, _ = _build(cfg, tmp_path, data, reports_root=root)
+    [item] = _read(out / "data" / "reports" / "index.json")["items"]
+    assert item["url"] is None and item["top"] == []
+    assert item["title"] == "starstrata 月報 2026-10（2026-10-01 至 2026-10-31）"
+
+    out, _ = _build(cfg, tmp_path, data, reports_root=tmp_path / "none")
+    assert _read(out / "data" / "reports" / "index.json") == {"items": []}

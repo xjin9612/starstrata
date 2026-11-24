@@ -169,6 +169,7 @@ def cmd_site(args: argparse.Namespace, cfg: Config) -> int:
             data_root=args.data,
             github_repo=detect_repo(os.environ, Path.cwd()),
             notes=load_notes(args.notes),
+            reports_root=args.reports,
         )
     finally:
         conn.close()
@@ -365,6 +366,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_site.add_argument("--web", type=Path, default=Path("web"), help="前端靜態檔目錄")
     p_site.add_argument("--icon", type=Path, default=Path("assets/icon.svg"))
     p_site.add_argument("--notes", type=Path, default=Path("notes.toml"), help="作者短評")
+    p_site.add_argument("--reports", type=Path, default=Path("reports"), help="報告根目錄")
     p_site.add_argument(
         "--social-preview", type=Path, default=Path("assets") / SOCIAL_PREVIEW, help="分享預覽圖"
     )

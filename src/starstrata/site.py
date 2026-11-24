@@ -21,6 +21,8 @@ from starstrata.config import Config
 from starstrata.db import OVERALL
 from starstrata.notes import Note
 from starstrata.queries import active_count, is_first_day, top_gainers
+from starstrata.report_html import title, to_html, top_repos
+from starstrata.reports import MONTHLY, WEEKLY, Period, parse_period
 from starstrata.site_page import fill_index
 from starstrata.snapshots import RUN_FILE, day_dir
 from starstrata.translate import lookup, normalize
@@ -29,6 +31,8 @@ from starstrata.translate import lookup, normalize
 GAINERS_LIMIT = 50
 ALERT_DAYS = 30
 OVERALL_KEY = "all"
+# 期間結束後這麼多天內的報告標為新報告。
+REPORT_NEW_DAYS = 7
 # 卡片走勢線涵蓋的資料日數。
 SPARK_DAYS = 7
 
@@ -391,6 +395,37 @@ def repo_series(
     return points, daily
 
 
+def _reports(
+    reports_root: Path, data: Path, github_repo: str | None
+) -> list[tuple[Period, dict[str, Any]]]:
+    """把 reports_root 下的週報與月報轉成 data/reports/ 的 JSON，回傳新的在前的期間與索引項目。"""
+    found: list[tuple[Period, dict[str, Any]]] = []
+    for kind in (WEEKLY, MONTHLY):
+        for path in sorted((reports_root / kind).glob("*.md")):
+            period = parse_period(kind, path.stem)
+            if period is None:
+                log.warning("略過無法辨識期間的報告 %s", path)
+                continue
+            md = path.read_text(encoding="utf-8")
+            url = (
+                f"https://github.com/{github_repo}/blob/HEAD/{reports_root.name}/{kind}/{path.name}"
+                if github_repo
+                else None
+            )
+            item = {
+                "kind": kind,
+                "period": period.label,
+                "start": period.start.isoformat(),
+                "end": period.end.isoformat(),
+                "title": title(md) or period.title,
+                "url": url,
+            }
+            _write(data / "reports" / kind / f"{period.label}.json", item | {"html": to_html(md)})
+            found.append((period, item | {"top": top_repos(md)}))
+    found.sort(key=lambda f: (f[0].end, f[0].kind == MONTHLY), reverse=True)
+    return found
+
+
 def build_site(
     conn: sqlite3.Connection,
     cfg: Config,
@@ -401,6 +436,7 @@ def build_site(
     data_root: Path | None = None,
     github_repo: str | None = None,
     notes: Mapping[str, Note] | None = None,
+    reports_root: Path | None = None,
 ) -> SiteStats:
     """清空 out_dir 後重新產生整個網站。
 
@@ -408,6 +444,7 @@ def build_site(
     用來讀最新資料日期的 run.json；為 None 時 collected_at 與 run 都是 null。
     github_repo 是網站所屬的 GitHub repo（owner/name），填入頁尾連結；None 時不顯示連結。
     notes 是作者短評，key 是小寫的 full_name，見 notes.load_notes。
+    reports_root 是週報與月報的根目錄；為 None 時報告清單是空的。
     """
     if out_dir.exists():
         shutil.rmtree(out_dir)
@@ -441,6 +478,13 @@ def build_site(
             for i, r in enumerate(top_gainers(conn, latest, GAINERS_LIMIT), start=1)
         ]
         alerts = _alerts(conn, ctx, latest)
+    reports = _reports(reports_root, data, github_repo) if reports_root else []
+    _write(data / "reports" / "index.json", {"items": [item for _, item in reports]})
+    meta["reports_new"] = (
+        sum(1 for period, _ in reports if (latest - period.end).days <= REPORT_NEW_DAYS)
+        if latest
+        else 0
+    )
     _write(data / "meta.json", meta)
     _write(data / "trending.json", trending)
     _write(data / "new.json", {"items": new})

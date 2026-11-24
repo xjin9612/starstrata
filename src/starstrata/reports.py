@@ -20,6 +20,9 @@ log = logging.getLogger(__name__)
 WEEKLY = "weekly"
 MONTHLY = "monthly"
 
+# 「Star 增加最多」段落的標題，report_html.top_repos 依此找排行表。
+GAINERS_HEADING = "Star 增加最多"
+
 # 報告列出的排行數量。
 TOP_GAINERS = 20
 TOP_NEW = 10
@@ -97,6 +100,23 @@ def has_data(conn: sqlite3.Connection, period: Period) -> bool:
 
 def report_path(root: Path, period: Period) -> Path:
     return root / period.kind / f"{period.label}.md"
+
+
+def parse_period(kind: str, label: str) -> Period | None:
+    """report_path 檔名的反向：由種類與 label（2026-W47、2026-11）還原期間，格式不符時回傳 None。"""
+    try:
+        if kind == WEEKLY:
+            year, week = label.split("-W")
+            start = date.fromisocalendar(int(year), int(week), 1)
+            return Period(kind, start, start + timedelta(days=6))
+        if kind == MONTHLY:
+            year, month = label.split("-")
+            start = date(int(year), int(month), 1)
+            end = (start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+            return Period(kind, start, end)
+    except ValueError:
+        return None
+    return None
 
 
 @dataclass(frozen=True)
@@ -254,7 +274,7 @@ def render(
     lines.append(f"- 本期新上榜：{len(new):,} 個{baseline_note}")
     lines.append(f"- 爆紅警示：{len(alerts):,} 則")
 
-    lines += ["", "## Star 增加最多", ""]
+    lines += ["", f"## {GAINERS_HEADING}", ""]
     if top:
         lines += ["| # | Repo | 語言 | 本期新增 ★ | 總 ★ |", "|---:|---|---|---:|---:|"]
         lines += [

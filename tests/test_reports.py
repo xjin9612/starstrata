@@ -30,6 +30,7 @@ from starstrata.reports import (
     has_missing,
     interpret_with_claude,
     model_label,
+    parse_period,
     period_before,
 )
 from tests.json_schema import object_schemas
@@ -580,3 +581,26 @@ def test_gainers_ignore_baseline_older_than_lookback(cfg: Config, tmp_path: Path
 def test_model_label() -> None:
     assert model_label(["a"]) == "`a`"
     assert model_label(["a", "b", "c"]) == "`a`（無法使用時改用 `b`、`c`）"
+
+
+@pytest.mark.parametrize(
+    ("kind", "label", "expected"),
+    [
+        ("weekly", "2026-W47", (date(2026, 11, 16), date(2026, 11, 22))),
+        ("weekly", "2027-W01", (date(2027, 1, 4), date(2027, 1, 10))),
+        ("monthly", "2026-02", (date(2026, 2, 1), date(2026, 2, 28))),
+        ("monthly", "2026-12", (date(2026, 12, 1), date(2026, 12, 31))),
+    ],
+)
+def test_parse_period_reverses_label(kind: str, label: str, expected: tuple[date, date]) -> None:
+    period = parse_period(kind, label)
+    assert period is not None and (period.start, period.end) == expected
+    assert period.label == label
+
+
+@pytest.mark.parametrize(
+    ("kind", "label"),
+    [("weekly", "2026-11"), ("weekly", "2026-W54"), ("monthly", "2026-13"), ("daily", "2026-11")],
+)
+def test_parse_period_rejects_unknown_labels(kind: str, label: str) -> None:
+    assert parse_period(kind, label) is None
