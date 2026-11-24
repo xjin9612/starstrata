@@ -1,16 +1,16 @@
 {
   "date": "2026-11-24",
-  "finished_at": "2026-11-23T17:14:11.124169+00:00",
+  "finished_at": "2026-11-24T00:54:20.203705+00:00",
   "node_errors": [],
   "rate_remaining": {
-    "graphql": 4985,
+    "graphql": 4971,
     "search": 29
   },
   "sources": {
     "repos": {
-      "count": 349,
+      "count": 352,
       "errors": [],
-      "gone": 0,
+      "gone": 2,
       "status": "ok"
     },
     "search": {
@@ -19,12 +19,12 @@
       "status": "ok"
     },
     "trending": {
-      "count": 337,
+      "count": 339,
       "errors": [],
       "status": "ok"
     }
   },
-  "started_at": "2026-11-23T17:12:37.213958+00:00",
+  "started_at": "2026-11-24T00:52:54.201149+00:00",
   "unavailable_repos": [],
   "unresolved_trending_repos": []
 }

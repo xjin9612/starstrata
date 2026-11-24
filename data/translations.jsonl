@@ -56,6 +56,7 @@
 {"key":"28cef45e1dd36cd5","text":"全世界的法律都在 git 裡：任何條文、任何國家、任何日期，以及寫下每個字的那條法律。"}
 {"key":"2926722ffa59f169","text":"Worktrunk 是管理 Git worktree 的 CLI，專為平行的 AI agent 工作流程設計。"}
 {"key":"2948c35a9fd047d8","text":"在 Android 裝置上執行的 AI agent，會操作 App 與網頁幫你把事情做完。"}
+{"key":"2c2e669d8ff4cb7b","text":"適用於 Windows 的 Xbox Series 相容層 - 可原生執行主機遊戲程式碼、重新實作主機系統函式庫，並將 RDNA2 著色器重新編譯為 DXIL"}
 {"key":"2e9758321ce57821","text":"Claude Code 與 Codex 的 AI 影片 skill：用 Remotion 製作電影感、可編輯的產品宣傳片，含 124 張鏡頭配方卡、150 個動態預覽、節拍同步、音效設計、Motion Workbench 與剪映（CapCut 中國版）匯出。"}
 {"key":"2ee5d5809daddc03","text":"提升 CI/CD 可靠性的開源 agent。"}
 {"key":"2f1029892f0df443","text":"在 Kubernetes 上執行 Apache Kafka®。"}
@@ -116,6 +117,7 @@
 {"key":"540d7923ce4c8803","text":"Apache Iceberg。"}
 {"key":"5449d3ae5b7a7503","text":"隨處編排一切。跨資料、基礎設施、業務流程與 AI agent 的開源工作流程控制平面：宣告式 YAML、事件驅動、支援任何語言、以 Git 版本控管，可擴展到數百萬次執行。"}
 {"key":"560508a3b267f786","text":"NATS.io 的高效能伺服器，NATS 是雲端與邊緣原生的訊息系統。"}
+{"key":"562e666a06c93090","text":"嘗試在 PC 上執行 GTA VI"}
 {"key":"56a3a613fa45e321","text":"JDK 主線開發。https://openjdk.org/projects/jdk"}
 {"key":"5711d2a3ba893e91","text":"在 iOS 與 iPadOS 上模擬 macOS。"}
 {"key":"5916d6cb5c0b92b1","text":"開源的 Loom 替代方案，美觀且方便分享的螢幕錄影。"}
@@ -142,6 +144,7 @@
 {"key":"69543395bd442a7b","text":"免費的 Claude skill：讓 Claude 打造得獎等級、電影感的登陸頁。由 MotionSites 製作。"}
 {"key":"69dfe0f437b79603","text":"在瀏覽器中執行的開源預視化軟體：安排場景走位、擺放角色姿勢、設計運鏡與剪接，再把同樣的鏡頭交給 AI 影片模型。"}
 {"key":"69f03e8e370c876f","text":"給 bot 與 agent 用的 AI 搜尋引擎與 MCP server。單一 Rust 執行檔即可為程式碼、文件、日誌、JSONL/CSV 與 PDF 建立索引，支援 BM25 全文、向量與混合搜尋、不需 grep 的程式碼搜尋、agent 記憶與 RAG。提供相容 Elasticsearch 的 API；Corpus Hub 提供數百個參考記憶語料庫。"}
+{"key":"6a1f4682ef24fe29","text":"XNU as a loadable kernel module inside Linux (macOS personality for arm64 Linux)"}
 {"key":"6b168f4400b9dd19","text":"完全可自訂且支援 agent 的開源設計系統。"}
 {"key":"6d14eb562586cfc9","text":"Dependency-Track 是智慧元件分析平台，協助組織找出並降低軟體供應鏈的風險。"}
 {"key":"6e08f7d0fd517f4d","text":"Spring Framework。"}
@@ -233,6 +236,7 @@
 {"key":"ae0a6377166d1ccc","text":"給 AI 程式開發 agent 的 skill。"}
 {"key":"ae2bb53ceb06e4fd","text":"輕量的沙箱工具，在作業系統層級對任意程序強制套用檔案系統與網路限制，不需要容器。"}
 {"key":"aed593b091190736","text":"1407 張 AI 女裝參考圖集與虛擬試穿網站，支援中英文檢索，可使用 OpenAI Images、Gemini、豆包，或自訂 Base URL、API Key 與模型。https://github.com/paipiange/nvzhuang"}
+{"key":"afefa27b107d18a5","text":"DaVinci Resolve Studio 的 MCP 伺服器整合"}
 {"key":"b0252816f5f70ee6","text":"Cage：為 Claude 特化的輕量虛擬機，徹底杜絕網路洩漏。支援多平台、多帳號管理、遠端部署與行動裝置操控。"}
 {"key":"b127bc945e6fd3a2","text":"在 Minecraft 中以高細節重現真實世界的任何地點。"}
 {"key":"b1c8185705baa709","text":"把《瑪利歐賽車 World》（Nintendo Switch 2）靜態重新編譯成原生 PC 程式。"}
