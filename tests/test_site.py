@@ -11,10 +11,10 @@ import pytest
 from starstrata import db
 from starstrata.backfill import backfill_path
 from starstrata.cli import main
-from starstrata.config import AlertsConfig, Config, load_config
+from starstrata.config import AlertsConfig, Config, I18nConfig, load_config
 from starstrata.ingest import sync
+from starstrata.messages import EN, ZH_TW
 from starstrata.notes import parse_notes
-from starstrata.reports import GAINERS_HEADING
 from starstrata.site import build_site, repo_path, repo_series
 from starstrata.snapshots import write_json, write_jsonl
 from starstrata.translate import text_key
@@ -522,7 +522,7 @@ def test_new_marks_repos_only_found_by_search(cfg: Config, tmp_path: Path) -> No
 
 def _report(title: str, top: str) -> str:
     return (
-        f"# {title}\n\n## 摘要\n\n- x\n\n## {GAINERS_HEADING}\n\n"
+        f"# {title}\n\n## 摘要\n\n- x\n\n## {ZH_TW.gainers_report_heading}\n\n"
         "| # | Repo |\n|---:|---|\n"
         f"| 1 | [{top}](https://github.com/{top}) |\n"
     )
@@ -552,6 +552,7 @@ def test_reports_are_converted_and_listed(
         ("monthly", "2026-10", "2026-10-01", "2026-10-31", ["o/month"]),
     ]
     assert index[0]["title"] == "報告 2026-W47"
+    assert index[0]["lang"] == "zh-Hant"
     assert index[0]["url"] == "https://github.com/me/site/blob/HEAD/reports/weekly/2026-W47.md"
     detail = _read(out / "data" / "reports" / "weekly" / "2026-W47.json")
     assert "top" not in detail
@@ -571,9 +572,27 @@ def test_reports_without_repo_or_directory(cfg: Config, tmp_path: Path) -> None:
     [item] = _read(out / "data" / "reports" / "index.json")["items"]
     assert item["url"] is None and item["top"] == []
     assert item["title"] == "starstrata 月報 2026-10（2026-10-01 至 2026-10-31）"
+    assert item["lang"] is None
 
     out, _ = _build(cfg, tmp_path, data, reports_root=tmp_path / "none")
     assert _read(out / "data" / "reports" / "index.json") == {"items": []}
+
+
+def test_english_report_lang_and_fallback_title(cfg: Config, tmp_path: Path) -> None:
+    cfg = replace(cfg, i18n=I18nConfig(locale="en"))
+    data = tmp_path / "data"
+    write_day(data, date(2026, 11, 24), repos=[repo("R_a", 10, full_name="o/a", meta=meta())])
+    root = tmp_path / "reports"
+    (root / "weekly").mkdir(parents=True)
+    md = (
+        f"## {EN.gainers_report_heading}\n\n"
+        "| # | Repo |\n|---:|---|\n| 1 | [o/a](https://github.com/o/a) |\n"
+    )
+    (root / "weekly" / "2026-W47.md").write_text(md, encoding="utf-8")
+    out, _ = _build(cfg, tmp_path, data, reports_root=root)
+    [item] = _read(out / "data" / "reports" / "index.json")["items"]
+    assert item["lang"] == "en" and item["top"] == ["o/a"]
+    assert item["title"] == "starstrata weekly report 2026-W47 (2026-11-16 to 2026-11-22)"
 
 
 @pytest.mark.parametrize(("latest", "expected"), [(date(2026, 11, 29), 1), (date(2026, 11, 30), 0)])

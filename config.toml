@@ -48,7 +48,7 @@ top_gainers = 10
 site_url = "https://xjin9612.github.io/starstrata/"
 
 [reports]
-# 中文解讀的模型供應商：gemini（需要 GEMINI_API_KEY）或 anthropic（需要 ANTHROPIC_API_KEY）。
+# 報告解讀的模型供應商：gemini（需要 GEMINI_API_KEY）或 anthropic（需要 ANTHROPIC_API_KEY）。
 provider = "gemini"
 # 供應商的模型名稱，例如 gemini-3.5-flash-lite 或 claude-opus-5-5。
 model = "gemini-3.5-flash-lite"
@@ -68,6 +68,6 @@ max_per_run = 60
 # 兩次請求之間等待的秒數，避免超過每分鐘的請求上限。
 request_interval_seconds = 4
 
-[site]
-# dashboard 介面文字的語言：zh-TW 或 en。repo 說明的翻譯另由 [translation] 決定。
+[i18n]
+# dashboard、Telegram 訊息與週報月報的語言：zh-TW 或 en。repo 說明的翻譯另由 [translation] 決定。
 locale = "zh-TW"

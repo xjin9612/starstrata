@@ -19,10 +19,11 @@ from typing import Any
 
 from starstrata.config import Config
 from starstrata.db import OVERALL
+from starstrata.messages import HTML_LANG, MESSAGES
 from starstrata.notes import Note
 from starstrata.queries import active_count, is_first_day, top_gainers
 from starstrata.report_html import title, to_html, top_repos
-from starstrata.reports import MONTHLY, WEEKLY, Period, parse_period
+from starstrata.reports import MONTHLY, WEEKLY, Period, parse_period, report_locale
 from starstrata.site_page import fill_index
 from starstrata.snapshots import RUN_FILE, day_dir
 from starstrata.translate import lookup, normalize
@@ -214,7 +215,7 @@ def _meta(
         "new_count": None if ctx.first_day else len(ctx.new_ids),
         "hot_count": None if ctx.first_day else len(ctx.hot_ids),
         "timezone": cfg.schedule.timezone.key,
-        "locale": cfg.site.locale,
+        "locale": cfg.i18n.locale,
         "translation_lang": cfg.translation.target or None,
         "alert_rule": {
             "baseline_days": alerts.baseline_days,
@@ -412,9 +413,12 @@ def repo_series(
 
 
 def _reports(
-    reports_root: Path, data: Path, github_repo: str | None
+    reports_root: Path, data: Path, github_repo: str | None, locale: str
 ) -> list[tuple[Period, dict[str, Any]]]:
-    """把 reports_root 下的週報與月報轉成 data/reports/ 的 JSON，回傳新的在前的期間與索引項目。"""
+    """把 reports_root 下的週報與月報轉成 data/reports/ 的 JSON，回傳新的在前的期間與索引項目。
+
+    locale 用於沒有標題的報告；lang 依報告內容判斷，報告可能以先前的 locale 產生。
+    """
     found: list[tuple[Period, dict[str, Any]]] = []
     for kind in (WEEKLY, MONTHLY):
         for path in sorted((reports_root / kind).glob("*.md")):
@@ -423,6 +427,7 @@ def _reports(
                 log.warning("略過無法辨識期間的報告 %s", path)
                 continue
             md = path.read_text(encoding="utf-8")
+            lang = report_locale(md)
             url = (
                 f"https://github.com/{github_repo}/blob/HEAD/{reports_root.name}/{kind}/{path.name}"
                 if github_repo
@@ -433,7 +438,8 @@ def _reports(
                 "period": period.label,
                 "start": period.start.isoformat(),
                 "end": period.end.isoformat(),
-                "title": title(md) or period.title,
+                "title": title(md) or period.title(MESSAGES[locale]),
+                "lang": HTML_LANG[lang] if lang else None,
                 "url": url,
             }
             _write(data / "reports" / kind / f"{period.label}.json", item | {"html": to_html(md)})
@@ -494,7 +500,7 @@ def build_site(
             for i, r in enumerate(top_gainers(conn, latest, GAINERS_LIMIT), start=1)
         ]
         alerts = _alerts(conn, ctx, latest)
-    reports = _reports(reports_root, data, github_repo) if reports_root else []
+    reports = _reports(reports_root, data, github_repo, cfg.i18n.locale) if reports_root else []
     _write(data / "reports" / "index.json", {"items": [item for _, item in reports]})
     meta["reports_new"] = (
         sum(1 for period, _ in reports if (latest - period.end).days <= REPORT_NEW_DAYS)

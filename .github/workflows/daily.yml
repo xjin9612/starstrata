@@ -30,6 +30,7 @@ jobs:
       contents: write
     outputs:
       site: ${{ steps.site.outputs.uploaded }}
+      locale: ${{ steps.locale.outputs.locale }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -38,6 +39,11 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.14"
+      # 失敗通知依 i18n.locale 選用語言；讀不到時用繁中。
+      - name: 讀取語言
+        id: locale
+        continue-on-error: true
+        run: python -c 'import tomllib; print("locale=" + tomllib.load(open("config.toml", "rb"))["i18n"]["locale"])' >> "$GITHUB_OUTPUT"
       - name: 安裝相依套件（驗證 hash）
         run: python -m pip install --require-hashes -r requirements.txt
 
@@ -179,13 +185,19 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          LOCALE: ${{ steps.locale.outputs.locale }}
         run: |
           if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
             exit 0
           fi
+          if [ "$LOCALE" = "en" ]; then
+            text="starstrata daily workflow failed or timed out: $RUN_URL"
+          else
+            text="starstrata daily workflow 失敗或逾時：$RUN_URL"
+          fi
           curl -sS --fail -o /dev/null \
             --data-urlencode "chat_id=$TELEGRAM_CHAT_ID" \
-            --data-urlencode "text=starstrata daily workflow 失敗或逾時：$RUN_URL" \
+            --data-urlencode "text=$text" \
             "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
 
   deploy:
@@ -210,11 +222,17 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          LOCALE: ${{ needs.daily.outputs.locale }}
         run: |
           if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
             exit 0
           fi
+          if [ "$LOCALE" = "en" ]; then
+            text="starstrata dashboard deployment failed: $RUN_URL"
+          else
+            text="starstrata dashboard 部署失敗：$RUN_URL"
+          fi
           curl -sS --fail -o /dev/null \
             --data-urlencode "chat_id=$TELEGRAM_CHAT_ID" \
-            --data-urlencode "text=starstrata dashboard 部署失敗：$RUN_URL" \
+            --data-urlencode "text=$text" \
             "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"

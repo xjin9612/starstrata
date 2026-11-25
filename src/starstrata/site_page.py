@@ -12,6 +12,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from starstrata.config import Config
+from starstrata.messages import HTML_LANG
 
 META_MARK = "<!-- site:meta -->"
 REPO_START = "<!-- site:repo-link -->"
@@ -20,7 +21,6 @@ REPO_URL_TOKEN = "__REPO_URL__"
 REPO_NAME_TOKEN = "__REPO_NAME__"
 SOCIAL_PREVIEW = "social-preview.png"
 
-HTML_LANG = {"zh-TW": "zh-Hant", "en": "en"}
 DESCRIPTIONS = {
     "zh-TW": (
         "starstrata 每天收集 GitHub 趨勢，累積成長期歷史：今天什麼在紅、"
@@ -60,7 +60,7 @@ def detect_repo(environ: Mapping[str, str], cwd: Path) -> str | None:
 
 
 def _meta_tags(cfg: Config) -> str:
-    description = html.escape(DESCRIPTIONS[cfg.site.locale])
+    description = html.escape(DESCRIPTIONS[cfg.i18n.locale])
     tags = [
         f'<meta name="description" content="{description}">',
         '<meta property="og:type" content="website">',
@@ -81,7 +81,7 @@ def _meta_tags(cfg: Config) -> str:
 def fill_index(text: str, cfg: Config, repo: str | None) -> str:
     """填入 index.html 的內容。repo 為 None 時移除頁尾的 GitHub 連結。"""
     text = re.sub(
-        r"<html lang=\"[^\"]*\"", f'<html lang="{HTML_LANG[cfg.site.locale]}"', text, count=1
+        r"<html lang=\"[^\"]*\"", f'<html lang="{HTML_LANG[cfg.i18n.locale]}"', text, count=1
     )
     text = text.replace(META_MARK, _meta_tags(cfg), 1)
     start, end = text.find(REPO_START), text.find(REPO_END)

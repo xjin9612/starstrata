@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from starstrata.config import Config, SiteConfig, load_config
+from starstrata.config import Config, I18nConfig, load_config
 from starstrata.site_page import detect_repo, fill_index
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -36,7 +36,7 @@ def _with(
     cfg: Config, *, locale: str = "zh-TW", site_url: str = "https://u.github.io/s/"
 ) -> Config:
     return replace(
-        cfg, site=SiteConfig(locale=locale), notify=replace(cfg.notify, site_url=site_url)
+        cfg, i18n=I18nConfig(locale=locale), notify=replace(cfg.notify, site_url=site_url)
     )
 
 

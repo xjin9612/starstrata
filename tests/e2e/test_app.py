@@ -350,10 +350,9 @@ def test_english_interface_has_no_chinese(page: Page, base_url_en: str, route: s
     assert _CJK.findall(page.evaluate(_UI_TEXT_JS)) == []
 
 
-def test_english_reports_note(page: Page, base_url_en: str) -> None:
-    page.goto(f"{base_url_en}#/reports")
-    note = page.get_by_text("Reports are currently available in Traditional Chinese only.")
-    expect(note).to_be_visible()
+def test_report_body_keeps_its_own_language(page: Page, base_url_en: str) -> None:
+    page.goto(f"{base_url_en}#/reports/weekly/2026-W47")
+    expect(page.locator(".report")).to_have_attribute("lang", "zh-Hant")
 
 
 @pytest.mark.parametrize("width", [360, 768, 1440, 2560])

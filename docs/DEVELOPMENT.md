@@ -82,7 +82,7 @@ README 的截圖 `docs/screenshots/trending.png` 由 `scripts/screenshot.py` 產
 | `queries` | dashboard 與通知共用的查詢 |
 | `telegram` | 發送 Telegram 訊息 |
 | `notify` | 每日摘要與爆紅警示 |
-| `reports` | 週報、月報與 AI 中文解讀 |
+| `reports` | 週報、月報與 AI 解讀 |
 | `gemini` | 呼叫 Gemini API 取得 JSON 回應 |
 | `translate` | 把 repo 說明翻成 `translation.target` 的語言 |
 | `site` | 從 SQLite 產生 dashboard |
@@ -323,8 +323,8 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 
 `index.html` 用 HTML 註解標出填入位置，未經處理時仍是合法的頁面：
 
-- `<html lang>`：`site.locale` 為 `zh-TW` 時填 `zh-Hant`，`en` 時填 `en`。
-- `<!-- site:meta -->`：依 `site.locale` 的說明、Open Graph 與 Twitter card 標籤。`og:url`、`og:image` 用 `notify.site_url` 組成絕對網址；`site_url` 是空字串時不輸出這兩個。
+- `<html lang>`：`i18n.locale` 為 `zh-TW` 時填 `zh-Hant`，`en` 時填 `en`。
+- `<!-- site:meta -->`：依 `i18n.locale` 的說明、Open Graph 與 Twitter card 標籤。`og:url`、`og:image` 用 `notify.site_url` 組成絕對網址；`site_url` 是空字串時不輸出這兩個。
 - `<!-- site:repo-link -->` 到 `<!-- /site:repo-link -->`：頁尾的 GitHub 連結，`__REPO_URL__`、`__REPO_NAME__` 換成實際值。repo 依序取 `GITHUB_REPOSITORY` 環境變數與 git 的 `origin` remote；都取不到時移除整段。
 
 JSON 檔：
@@ -338,8 +338,8 @@ JSON 檔：
 | `data/alerts.json` | 最近 30 天的警示：`{ items: [{ date, full_name, added, baseline }] }`。`baseline` 是近 `alerts.baseline_days` 日平均，四捨五入到小數一位，資料不足時為 `null`。前端用它計算倍數，所以不取整數 |
 | `data/search-index.json` | 所有 repo 的 `[full_name, language, stars]`，依 star 數排序，供搜尋使用 |
 | `data/search-full.json` | 所有 repo 的 `[full_name, 說明原文, 譯文, topics]`，順序與 `search-index.json` 相同。沒有譯文或原文已是目標語言時譯文為 `null` |
-| `data/reports/index.json` | 所有報告，新的在前：`{ items: [{ kind, period, start, end, title, url, top }] }`。`top` 是「Star 增加最多」表格的前 3 個 repo；`url` 是 GitHub 上的原始檔，取不到 repo 時為 `null` |
-| `data/reports/<kind>/<period>.json` | 單份報告：`{ kind, period, start, end, title, url, html }` |
+| `data/reports/index.json` | 所有報告，新的在前：`{ items: [{ kind, period, start, end, title, lang, url, top }] }`。`top` 是「Star 增加最多」表格的前 3 個 repo；`lang` 是報告內文的 HTML 語言代碼，認不出時為 `null`；`url` 是 GitHub 上的原始檔，取不到 repo 時為 `null` |
+| `data/reports/<kind>/<period>.json` | 單份報告：`{ kind, period, start, end, title, lang, url, html }` |
 | `data/repos/<owner>/<name>.json` | 單一 repo 的 meta、譯文、目前 star 數、star 累計點、每日新增 star、Trending 上榜紀錄、作者短評（`note`：`{ text, article_url, updated }`，沒有時為 `null`） |
 
 `meta` 的欄位：
@@ -351,7 +351,7 @@ JSON 檔：
 | `is_first_day` | 是否首日 |
 | `new_count`、`hot_count` | 今日新上榜數與爆紅數；首日為 `null` |
 | `timezone` | `schedule.timezone`，前端用它換算時間 |
-| `locale` | `site.locale`，介面文字的語言 |
+| `locale` | `i18n.locale`，介面文字的語言 |
 | `translation_lang` | `translation.target`；沒有設定翻譯時為 `null` |
 | `alert_rule` | `{ baseline_days, multiplier, min_daily_stars, cooldown_days }`，取自 `[alerts]` |
 | `trending_prev_date` | 最新資料日期之前，最近一個有 Trending 資料的日期；沒有時為 `null` |
@@ -416,7 +416,7 @@ JSON 檔：
 - 目前的榜在 `run.trending_missing` 裡時，空狀態寫「沒有收集到資料」，與「沒有上榜的 repo」分開。
 - repo 詳細頁的「Trending 上榜天數」是 `trending` 紀錄裡不重複的日期數。
 - 新上榜頁的 `from_search` 為 `true` 時，卡片寫「來自 Search，沒有今日 Trending 數字」；其他沒有今日新增數的 repo 顯示 `—`。
-- 報告的「新」標記與 `meta.reports_new` 用同一個條件：期間結束日距最新資料日期 7 天內。報告只有繁中，其他介面語言加一行說明。
+- 報告的「新」標記與 `meta.reports_new` 用同一個條件：期間結束日距最新資料日期 7 天內。報告內文標上報告本身的語言，因為報告可能是以先前的 `i18n.locale` 產生的。
 - 「上次造訪後新出現」記在 `localStorage['starstrata-seen']`，最多 5,000 筆，超過時刪最舊的；第一次造訪不標記，`localStorage` 無法使用時停用。
 - 主題預設跟隨系統，可用頁首按鈕固定為淺色或深色，選擇存在 `localStorage`。
 - 返回上一頁時還原捲動位置、篩選、排序、已展開筆數、圖表期間與焦點，這些狀態存在 `sessionStorage`。
@@ -461,6 +461,7 @@ updated = 2026-11-24
 報告：
 
 - 路徑：`reports/weekly/YYYY-Www.md`（ISO 週）、`reports/monthly/YYYY-MM.md`。
+- 文字與給模型的提示詞依 `i18n.locale` 取自 `messages.py`。改 `i18n.locale` 不會改寫既有的報告。
 - 期間內 star 增加量：期間內最後一筆快照，減去期間開始前 `tracking.dormant_snapshot_interval_days` 天內最後一筆快照。這段時間沒有快照時，改用期間內第一筆，避免把期間外的增加量算進來。
 - 內容：本期有快照的 repo 數、star 增加最多的 20 個 repo、重點專案解讀、新上榜、爆紅警示。
 - 第一個匯入日只建立基準，當天首次出現的 repo 不算新上榜。期間包含這一天時，摘要註明不含這些 repo。
@@ -487,9 +488,9 @@ updated = 2026-11-24
 - `reports.model` 與 `reports.fallback_models` 只能包含小寫英數字、點與連字號，因為 Gemini 的模型名稱會放進網址路徑。
 - `reports.fallback_models` 只用於 Gemini：`reports.model` 重試後仍回應 429 或 5xx、回應 404 或連線失敗時，依序改用清單中的模型。其他錯誤（例如 400、403、被擋下、輸出截斷）不換模型。報告的模型說明列出備用模型。
 
-未設定所選供應商的 API key 時，解讀段落寫 `> 未產生解讀：` 開頭的說明，報告視為完整，結束碼 `0`。
+未設定所選供應商的 API key 時，解讀段落寫 `skipped_marker`（繁中為 `> 未產生解讀：`）開頭的說明，報告視為完整，結束碼 `0`。
 
-解讀缺漏時，解讀段落以 `> 解讀缺漏：` 開頭的一行說明原因，`report due` 只比對這個行首：
+解讀缺漏時，解讀段落以 `missing_marker`（繁中為 `> 解讀缺漏：`）開頭的一行說明原因。`report due` 只比對這個行首，各語言的行首都認得：
 
 | 情況 | 結束碼 |
 |---|---|
@@ -503,7 +504,7 @@ updated = 2026-11-24
 - 只轉換 `reports.render()` 會用到的語法：標題、段落、清單、引言、表格、反斜線跳脫、行內 code、repo 連結。不引入 Markdown 套件。
 - 所有文字一律跳脫。只有網址與文字是同一個 `https://github.com/<owner>/<name>` 的連結會轉成站內的 `#/repo/<owner>/<name>`，其他連結只留文字。解讀內容源自 README，不能在頁面產生外部連結。
 - 標題層級下移一級（`##` 轉成 `h3`），報告的 `#` 標題不輸出，由頁面顯示。
-- `top` 由 `reports.GAINERS_HEADING` 段落的表格取得，`render()` 用同一個常數輸出標題。
+- `top` 由「Star 增加最多」段落的表格取得，標題取自 `messages`，各語言的標題都認得。`lang` 也依這個標題判斷。
 - `tests/test_report_html.py` 用 `reports.generate()` 實際產生的報告測試轉換結果。
 
 ## Telegram
@@ -560,7 +561,7 @@ updated = 2026-11-24
 
 - push 步驟以 `always()` 執行，任何步驟失敗或 job 被取消後都會嘗試保住當天已收集的快照。
 - `collect`、`backfill`、`report` 設有步驟逾時。官方文件沒有說明步驟逾時是否套用 `continue-on-error`，尚未查證。
-- job 失敗、逾時或被取消時，發送 Telegram 失敗通知。
+- job 失敗、逾時或被取消時，發送 Telegram 失敗通知。通知依 `i18n.locale` 選用繁中或英文；讀不到設定時用繁中。
 - `deploy` job 在 dashboard 產生並上傳後執行，`daily` job 標為失敗也照常部署。
 
 其他：

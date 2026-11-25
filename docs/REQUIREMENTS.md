@@ -132,7 +132,7 @@ stateDiagram-v2
   - 報告：週報與月報的列表與站內閱讀。
   - repo 詳細頁：star 曲線、近 7／30 日新增、Trending 上榜紀錄、作者短評。
   - 搜尋 repo 名稱、說明與 topics。
-- 介面文字提供繁體中文與英文，建置時由設定選定一種。
+- 介面文字提供繁體中文與英文，由設定選定一種；Telegram 訊息與週報月報使用同一個語言。
 - 資料超過 36 小時沒有更新，或當天有來源沒有收集到時，頁面顯示提示。
 - 作者短評寫在 `notes.toml`，是作者的個人內容。
 
@@ -154,7 +154,7 @@ stateDiagram-v2
 - 月報：涵蓋整個月，下個月的第一次執行產生，路徑 `reports/monthly/YYYY-MM.md`。
 - 排程漏跑時，之後的執行補產。
 - 報告 commit 進 repo。
-- 用 AI 模型為前 10 名專案產生中文解讀：專案在做什麼、為什麼受關注。
+- 用 AI 模型為前 10 名專案產生解讀：專案在做什麼、為什麼受關注。解讀使用設定的語言。
 - 預設使用 Gemini API 的免費方案，可改用 Claude API。
 - 模型 API 失敗時，照常產生報告，並在解讀段落標示缺漏。
 - 模型名稱寫在設定檔。
@@ -184,7 +184,7 @@ stateDiagram-v2
 - 爆紅判定與降頻門檻
 - 每日回補請求預算
 - 執行日期的時區
-- 中文解讀與說明翻譯的模型供應商與模型名稱
+- 報告解讀與說明翻譯的模型供應商與模型名稱
 - 說明翻譯的目標語言與每次執行最多翻譯的則數
 - dashboard 介面文字的語言
 
@@ -195,8 +195,8 @@ stateDiagram-v2
 | `GH_PAT` | 呼叫 GitHub API 收集資料，額度每小時 5,000 次 |
 | `TELEGRAM_BOT_TOKEN` | Telegram Bot |
 | `TELEGRAM_CHAT_ID` | 推播對象 |
-| `GEMINI_API_KEY` | 說明翻譯與報告的中文解讀（預設供應商） |
-| `ANTHROPIC_API_KEY` | 說明翻譯與報告的中文解讀（改用 Claude 時） |
+| `GEMINI_API_KEY` | 說明翻譯與報告解讀（預設供應商） |
+| `ANTHROPIC_API_KEY` | 說明翻譯與報告解讀（改用 Claude 時） |
 
 內建的 `GITHUB_TOKEN` 只用於 commit、上傳 Release 與部署 Pages。
 它的 API 額度是每個 repo 每小時 1,000 次，比 PAT 少，不用於收集資料。
@@ -224,7 +224,7 @@ stateDiagram-v2
 | 排程 | GitHub Actions |
 | Dashboard 部署 | GitHub Pages |
 | 推播 | Telegram Bot API |
-| 中文解讀與說明翻譯 | Gemini API（預設）或 Claude API |
+| 報告解讀與說明翻譯 | Gemini API（預設）或 Claude API |
 
 ## 範圍外
 

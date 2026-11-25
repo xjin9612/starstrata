@@ -157,17 +157,21 @@ def test_interpret_with_gemini_parses_and_filters() -> None:
         ]
     }
     transport = _transport(_ok(json.dumps(payload)))
-    result = interpret_with_gemini(KEY, ["m"], "prompt", ["o/a", "o/b"], transport=transport)
+    result = interpret_with_gemini(
+        KEY, ["m"], "system", "prompt", ["o/a", "o/b"], transport=transport
+    )
     assert result == {"o/a": Interpretation(what="w", why="y")}
 
 
 def test_interpret_with_gemini_wraps_errors() -> None:
     with pytest.raises(InterpretError, match="回應中止：SAFETY"):
         interpret_with_gemini(
-            KEY, ["m"], "p", ["o/a"], transport=_transport(_ok("", finish="SAFETY"))
+            KEY, ["m"], "s", "p", ["o/a"], transport=_transport(_ok("", finish="SAFETY"))
         )
     with pytest.raises(InterpretError, match="Gemini 回應格式不符"):
-        interpret_with_gemini(KEY, ["m"], "p", ["o/a"], transport=_transport(_ok('{"items": 3}')))
+        interpret_with_gemini(
+            KEY, ["m"], "s", "p", ["o/a"], transport=_transport(_ok('{"items": 3}'))
+        )
 
 
 def _by_model(responses: dict[str, list[httpx.Response]], seen: list[str]) -> httpx.MockTransport:

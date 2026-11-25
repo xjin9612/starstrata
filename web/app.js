@@ -427,16 +427,12 @@ const REPORT_NEW_DAYS = 7;
 const isNewReport = (r, meta) => !!meta.data_date && toMs(meta.data_date) - toMs(r.end) <= REPORT_NEW_DAYS * DAY;
 const reportHref = r => `#/reports/${r.kind}/${encodeURIComponent(r.period)}`;
 const shortRange = r => `${r.start.slice(5)} – ${r.end.slice(5)}`;
-function reportsNotice() {
-  // 報告目前只有繁體中文；介面是其他語言時提示
-  return LOCALE === 'zh-TW' ? '' : `<p class="rule">${t('reports.zhOnly')}</p>`;
-}
 
 async function viewReports(route, meta) {
   const kinds = ['all', ...REPORT_KINDS];
   const seg = kinds.map(k => `<button type="button" data-rkind="${k}" aria-pressed="${route.kind === k}">${t('reports.kind.' + k)}</button>`).join('');
   const head = `<div class="view-head"><h2 tabindex="-1">${t('reports.title')}</h2><p>${t('reports.desc')}</p></div>
-    <div class="filters rp-filters"><div class="seg" role="group" aria-label="${t('reports.kindLabel')}">${seg}</div></div>${reportsNotice()}`;
+    <div class="filters rp-filters"><div class="seg" role="group" aria-label="${t('reports.kindLabel')}">${seg}</div></div>`;
   const all = (await getData('reports/index')).items;
   const list = all.filter(r => route.kind === 'all' || r.kind === route.kind);
   if (!list.length) return head + emptyHtml('quiet', t('reports.none'), t('reports.noneText'));
@@ -474,8 +470,7 @@ async function viewReport(route) {
       <p class="rp-meta"><span class="mono">${esc(rp.start)} – ${esc(rp.end)}</span>
         ${rp.url ? `<a href="${esc(rp.url)}" target="_blank" rel="noopener noreferrer">${t('reports.source')} ↗<span class="sr">${t('newTab')}</span></a>` : ''}</p>
     </div>
-    ${reportsNotice()}
-    <div class="report" lang="zh-Hant">${rp.html}</div>
+    <div class="report"${rp.lang ? ` lang="${esc(rp.lang)}"` : ''}>${rp.html}</div>
     ${nav}`;
 }
 

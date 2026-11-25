@@ -18,6 +18,7 @@ from starstrata.collect import collect, run_date
 from starstrata.config import Config, ConfigError, ReportsConfig, load_config
 from starstrata.github.http import GitHubClient
 from starstrata.ingest import SyncResult, sync
+from starstrata.messages import MESSAGES
 from starstrata.notes import load_notes
 from starstrata.site import build_site
 from starstrata.site_page import SOCIAL_PREVIEW, detect_repo
@@ -118,6 +119,7 @@ def cmd_notify(args: argparse.Namespace, cfg: Config) -> int:
                 day,
                 args.data,
                 lambda m: sender.send(m.text, silent=m.silent, buttons=m.buttons),
+                messages=MESSAGES[cfg.i18n.locale],
                 translations=_translations(args.data, cfg),
             )
     except TelegramError as e:
@@ -197,8 +199,10 @@ def _gemini_interpreter(models: Sequence[str]) -> reports.Interpreter | None:
     if not api_key:
         return None
 
-    def interpret(prompt: str, expected: Sequence[str]) -> dict[str, reports.Interpretation]:
-        return reports.interpret_with_gemini(api_key, models, prompt, expected)
+    def interpret(
+        system: str, prompt: str, expected: Sequence[str]
+    ) -> dict[str, reports.Interpretation]:
+        return reports.interpret_with_gemini(api_key, models, system, prompt, expected)
 
     return interpret
 
@@ -210,9 +214,11 @@ def _claude_interpreter(model: str) -> reports.Interpreter | None:
 
     client = anthropic.Anthropic()
 
-    def interpret(prompt: str, expected: Sequence[str]) -> dict[str, reports.Interpretation]:
+    def interpret(
+        system: str, prompt: str, expected: Sequence[str]
+    ) -> dict[str, reports.Interpretation]:
         try:
-            return reports.interpret_with_claude(client, model, prompt, expected)
+            return reports.interpret_with_claude(client, model, system, prompt, expected)
         except anthropic.APIStatusError as e:
             raise reports.InterpretError(f"API 回應 {e.status_code}") from e
         except anthropic.APIConnectionError as e:
@@ -318,6 +324,7 @@ def cmd_report(args: argparse.Namespace, cfg: Config) -> int:
 
     token = os.environ.get("GH_PAT", "").strip() or None
     interpreter = _interpreter(cfg.reports)
+    messages = MESSAGES[cfg.i18n.locale]
     complete = True
     conn = db.connect(args.db)
     try:
@@ -330,11 +337,13 @@ def cmd_report(args: argparse.Namespace, cfg: Config) -> int:
                     model=reports.model_label(
                         cfg.reports.models
                         if cfg.reports.provider == "gemini"
-                        else [cfg.reports.model]
+                        else [cfg.reports.model],
+                        messages,
                     ),
                     base_lookback_days=cfg.tracking.dormant_snapshot_interval_days,
                     interpreter=interpreter,
                     fetch_readme=client.get_readme if token else None,
+                    messages=messages,
                 )
                 path = reports.report_path(args.reports, period)
                 if args.kind == "due" and path.is_file():

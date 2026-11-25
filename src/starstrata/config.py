@@ -11,6 +11,7 @@ from typing import Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from starstrata.gemini import MODEL_PATTERN
+from starstrata.messages import LOCALES
 
 TRENDING_PERIODS = ("daily", "weekly", "monthly")
 
@@ -71,8 +72,6 @@ class NotifyConfig:
 
 REPORT_PROVIDERS = ("gemini", "anthropic")
 
-SITE_LOCALES = ("zh-TW", "en")
-
 # BCP 47 語言代碼的常見形式：語言加上選用的文字、地區等子標籤，例如 ja、zh-TW、zh-Hant-TW。
 _LANGUAGE_TAG = re.compile(r"[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*")
 
@@ -104,8 +103,8 @@ class TranslationConfig:
 
 
 @dataclass(frozen=True)
-class SiteConfig:
-    # dashboard 介面文字的語言，與說明翻譯的目標語言無關。
+class I18nConfig:
+    # dashboard、Telegram 訊息與報告的語言，與說明翻譯的目標語言無關。
     locale: str
 
 
@@ -120,7 +119,7 @@ class Config:
     notify: NotifyConfig
     reports: ReportsConfig
     translation: TranslationConfig
-    site: SiteConfig
+    i18n: I18nConfig
 
 
 class _Section:
@@ -325,13 +324,13 @@ def _translation(root: dict[str, Any]) -> TranslationConfig:
     return cfg
 
 
-def _site(root: dict[str, Any]) -> SiteConfig:
-    s = _Section(root, "site")
+def _i18n(root: dict[str, Any]) -> I18nConfig:
+    s = _Section(root, "i18n")
     locale = s.get_str("locale")
-    if locale not in SITE_LOCALES:
-        raise ConfigError(f"site.locale: 無效的值 {locale!r}，可用值為 {', '.join(SITE_LOCALES)}")
+    if locale not in LOCALES:
+        raise ConfigError(f"i18n.locale: 無效的值 {locale!r}，可用值為 {', '.join(LOCALES)}")
     s.finish()
-    return SiteConfig(locale=locale)
+    return I18nConfig(locale=locale)
 
 
 _SECTIONS = (
@@ -344,7 +343,7 @@ _SECTIONS = (
     "notify",
     "reports",
     "translation",
-    "site",
+    "i18n",
 )
 
 
@@ -367,7 +366,7 @@ def parse_config(text: str) -> Config:
         notify=_notify(root),
         reports=_reports(root),
         translation=_translation(root),
-        site=_site(root),
+        i18n=_i18n(root),
     )
 
 

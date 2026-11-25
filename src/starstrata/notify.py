@@ -12,6 +12,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from starstrata.config import NotifyConfig
+from starstrata.messages import Messages
 from starstrata.queries import (
     AlertLine,
     RepoLine,
@@ -103,14 +104,14 @@ def _facts(language: str | None, stars: int | None) -> list[str]:
     return facts
 
 
-def _trending_lines(data: SummaryData) -> list[str]:
-    lines = ["", "<b>📈 今日新增最多</b>"]
+def _trending_lines(data: SummaryData, m: Messages) -> list[str]:
+    lines = ["", f"<b>{m.trending_heading}</b>"]
     for i, t in enumerate(data.trending):
         gain = f"<b>+{t.gain:,}</b>" if t.gain is not None else ""
         facts = _facts(t.language, t.stars)
         if i < len(MEDALS):
             lines.append(f"{MEDALS[i]} {_link(t.full_name)}{_marks(t.node_id, data)}")
-            detail = [f"{gain} 今日"] if gain else []
+            detail = [m.gain_today.format(gain=gain)] if gain else []
             lines.append(INDENT + " · ".join(detail + facts))
             description = lookup(data.translations, t.description) or t.description
             if description:
@@ -123,35 +124,35 @@ def _trending_lines(data: SummaryData) -> list[str]:
     return lines
 
 
-def format_summary(day: date, data: SummaryData | None) -> str:
+def format_summary(day: date, data: SummaryData | None, m: Messages) -> str:
     """data 為 None 表示當天沒有匯入快照。"""
-    lines = ["<b>⭐ starstrata 每日摘要</b>"]
+    lines = [f"<b>{m.summary_title}</b>"]
     if data is None:
-        lines += [day.isoformat(), "", "今天沒有匯入任何快照，請檢查 daily workflow。"]
+        lines += [day.isoformat(), "", m.no_snapshot]
         return "\n".join(lines)
 
-    lines.append(f"{day.isoformat()} · 追蹤 {data.active:,} 個 repo")
+    lines.append(m.tracking.format(day=day.isoformat(), n=f"{data.active:,}"))
     if data.first_day:
-        lines += ["", "首日建立基準，新上榜與日增明天開始計算。"]
+        lines += ["", m.first_day]
     if data.trending:
-        lines += _trending_lines(data)
+        lines += _trending_lines(data, m)
     if data.gainers:
-        lines += ["", "<b>🚀 日增最多</b>（追蹤中的 repo）"]
+        lines += ["", f"<b>{m.gainers_heading}</b>{m.gainers_scope}"]
         for i, repo in enumerate(data.gainers, start=1):
             stars = f" · ★{short_count(repo.stars)}" if repo.stars is not None else ""
             lines.append(
                 f"{i}. {_link(repo.full_name)}{_marks(repo.node_id, data)}"
                 f"  <b>+{repo.delta:,}</b>{stars}"
             )
-    stats = [] if data.first_day else [f"新上榜 {len(data.new_ids)}"]
-    stats.append(f"爆紅 {len(data.alert_ids)}")
+    stats = [] if data.first_day else [m.stat_new.format(n=len(data.new_ids))]
+    stats.append(m.stat_alerts.format(n=len(data.alert_ids)))
     lines += ["", " · ".join(stats)]
     return "\n".join(lines)
 
 
-def summary_message(cfg: NotifyConfig, day: date, data: SummaryData | None) -> Message:
-    buttons = (Button("開啟 dashboard", cfg.site_url),) if cfg.site_url else ()
-    return Message(format_summary(day, data), silent=True, buttons=buttons)
+def summary_message(cfg: NotifyConfig, day: date, data: SummaryData | None, m: Messages) -> Message:
+    buttons = (Button(m.open_dashboard, cfg.site_url),) if cfg.site_url else ()
+    return Message(format_summary(day, data, m), silent=True, buttons=buttons)
 
 
 def repo_page_url(site_url: str, full_name: str) -> str:
@@ -160,25 +161,35 @@ def repo_page_url(site_url: str, full_name: str) -> str:
 
 
 def alert_message(
-    cfg: NotifyConfig, day: date, alert: AlertLine, translations: Mapping[str, str] | None = None
+    cfg: NotifyConfig,
+    day: date,
+    alert: AlertLine,
+    m: Messages,
+    translations: Mapping[str, str] | None = None,
 ) -> Message:
     buttons = [Button("GitHub", f"https://github.com/{quote(alert.repo.full_name)}")]
     if cfg.site_url:
-        buttons.append(Button("詳細頁", repo_page_url(cfg.site_url, alert.repo.full_name)))
-    return Message(format_alert(day, alert, translations), silent=False, buttons=tuple(buttons))
+        buttons.append(Button(m.repo_page, repo_page_url(cfg.site_url, alert.repo.full_name)))
+    return Message(format_alert(day, alert, m, translations), silent=False, buttons=tuple(buttons))
 
 
-def format_alert(day: date, alert: AlertLine, translations: Mapping[str, str] | None = None) -> str:
+def format_alert(
+    day: date, alert: AlertLine, m: Messages, translations: Mapping[str, str] | None = None
+) -> str:
     repo = alert.repo
-    baseline = "基準資料不足" if alert.baseline is None else f"近期平均 {alert.baseline:+,.1f}/日"
+    baseline = (
+        m.alert_no_baseline
+        if alert.baseline is None
+        else m.alert_baseline.format(value=f"{alert.baseline:+,.1f}")
+    )
     lines = [
-        f"🔥 <b>爆紅警示</b> {day.isoformat()}",
+        f"🔥 <b>{m.alert_title}</b> {day.isoformat()}",
         _link(repo.full_name),
-        f"日增 ★+{alert.daily_stars:,}，{baseline}",
+        m.alert_daily.format(n=f"{alert.daily_stars:,}", baseline=baseline),
     ]
     detail = []
     if repo.stars is not None:
-        detail.append(f"目前 ★{repo.stars:,}")
+        detail.append(m.alert_total.format(n=f"{repo.stars:,}"))
     if repo.language:
         detail.append(html.escape(repo.language))
     if detail:
@@ -204,6 +215,7 @@ def notify(
     data_root: Path,
     send: Callable[[Message], None],
     *,
+    messages: Messages,
     translations: Mapping[str, str] | None = None,
 ) -> NotifyResult:
     """發送 day 的摘要與每則警示。
@@ -235,7 +247,7 @@ def notify(
             if ingested
             else None
         )
-        send(summary_message(cfg, day, data))
+        send(summary_message(cfg, day, data, messages))
         result.summary_sent = True
         if ingested:
             summary_sent = True
@@ -243,7 +255,7 @@ def notify(
     for alert in alerts:
         if alert.repo.node_id in sent_alerts:
             continue
-        send(alert_message(cfg, day, alert, translations))
+        send(alert_message(cfg, day, alert, messages, translations))
         sent_alerts.append(alert.repo.node_id)
         result.alerts_sent.append(alert.repo.node_id)
         save()

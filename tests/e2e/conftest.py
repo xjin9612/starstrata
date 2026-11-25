@@ -23,7 +23,7 @@ from playwright.sync_api import Browser, Page, Route, sync_playwright
 
 from starstrata.backfill import backfill_path
 from starstrata.cli import main
-from starstrata.reports import GAINERS_HEADING
+from starstrata.messages import ZH_TW
 from starstrata.snapshots import RUN_FILE, day_dir, write_json, write_jsonl
 from starstrata.translate import save, text_key
 from tests.snapshot_builder import meta, repo, search, trending, write_day
@@ -111,7 +111,8 @@ def write_fixture_data(root: Path) -> None:
 
 def _report(title: str, top: str) -> str:
     return (
-        f"# {title}\n\n## 摘要\n\n- 本期有快照的 repo：3 個\n\n## {GAINERS_HEADING}\n\n"
+        f"# {title}\n\n## 摘要\n\n- 本期有快照的 repo：3 個\n\n"
+        f"## {ZH_TW.gainers_report_heading}\n\n"
         "| # | Repo | 本期新增 ★ |\n|---:|---|---:|\n"
         f"| 1 | [{top}](https://github.com/{top}) | +100 |\n\n"
         "## 重點專案解讀\n\n> 由 AI 模型（`m`）依 repo 描述與 README 產生，可能有誤。\n"

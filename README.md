@@ -16,7 +16,7 @@ starstrata collects GitHub trends every day and keeps them as a long-term histor
 **Live dashboard: <https://xjin9612.github.io/starstrata/>** (interface in Traditional Chinese)
 
 - Daily snapshots of GitHub Trending (overall plus six languages; daily, weekly and monthly), newly created repos from the Search API, and star counts of every tracked repo.
-- A dashboard with trending cards (rank changes, 7-day sparklines, sort by stars gained), new entries, daily gainers, breakout alerts, weekly and monthly reports, and per-repo star history with optional author notes. The interface is available in Traditional Chinese or English.
+- A dashboard with trending cards (rank changes, 7-day sparklines, sort by stars gained), new entries, daily gainers, breakout alerts, weekly and monthly reports, and per-repo star history with optional author notes. The interface, Telegram messages and reports are available in Traditional Chinese or English.
 - A Telegram daily summary and breakout alerts; weekly and monthly reports with AI summaries.
 - Repo descriptions translated into the language set in `translation.target` (Traditional Chinese here). Runs entirely on GitHub Actions: no server and no database host.
 
@@ -32,7 +32,7 @@ starstrata collects GitHub trends every day and keeps them as a long-term histor
 
 1. Fork this repo and keep it public. If the Actions tab asks you to enable workflows, enable them.
 2. In `config.toml`, set `notify.site_url` to `https://<your-user>.github.io/<repo>/`, or to `""` to omit the dashboard button in Telegram and the page URL and image in the share preview tags. The footer link to the GitHub project is filled in automatically.
-   Set `translation.target` to the language for repo descriptions (for example `ja`), or to `""` to skip translation. Set `site.locale` to `en` for an English interface.
+   Set `translation.target` to the language for repo descriptions (for example `ja`), or to `""` to skip translation. Set `i18n.locale` to `en` for an English dashboard, Telegram messages and reports.
    Empty `notes.toml`: its notes are the original author's personal comments.
 3. Create repository secrets in Settings → Secrets and variables → Actions:
 
@@ -84,7 +84,7 @@ All settings live in `config.toml`, with a comment on every key. Unknown keys an
 | `[backfill]` | API requests per run for star history backfill |
 | `[notify]` | Telegram summary length and dashboard URL |
 | `[reports]` | AI provider, model, fallback models and how many repos to summarize |
-| `[site]` | Dashboard interface language: `zh-TW` or `en` |
+| `[i18n]` | Language of the dashboard, Telegram messages and reports: `zh-TW` or `en` |
 | `[translation]` | Target language for descriptions (`target`, empty to disable), batch size, per-run limit and request interval |
 
 The run time is the `cron` line in `.github/workflows/daily.yml`.

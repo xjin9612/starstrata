@@ -14,7 +14,7 @@ from __future__ import annotations
 import html
 import re
 
-from starstrata.reports import GAINERS_HEADING
+from starstrata.reports import GAINERS_HEADINGS
 
 _REPO_URL = re.compile(r"https://github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)")
 _LINK = re.compile(r"\[([^\]\\]+)\]\((https://[^)\s]+)\)")
@@ -150,8 +150,9 @@ def title(md: str) -> str | None:
 
 
 def top_repos(md: str, n: int = 3) -> list[str]:
-    """GAINERS_HEADING 段落表格的前 n 個 repo；找不到段落時回傳空清單。"""
-    section = re.search(rf"^## {re.escape(GAINERS_HEADING)}\s*$(.*?)(?:^## |\Z)", md, re.S | re.M)
+    """「Star 增加最多」段落表格的前 n 個 repo；找不到段落時回傳空清單。"""
+    headings = "|".join(re.escape(h) for h in GAINERS_HEADINGS)
+    section = re.search(rf"^## (?:{headings})\s*$(.*?)(?:^## |\Z)", md, re.S | re.M)
     if not section:
         return []
     return re.findall(
