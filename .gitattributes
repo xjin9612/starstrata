@@ -1,2 +1,5 @@
+# 文字檔一律以 LF checkout，不受各環境的 core.autocrlf 影響。
+* text=auto eol=lf
+
 # 測試用的真實 Trending 頁面，不計入 GitHub 的語言統計。
 tests/fixtures/*.html linguist-vendored
