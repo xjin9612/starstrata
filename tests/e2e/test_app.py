@@ -69,7 +69,9 @@ def _with_run(**run: Any) -> Any:
 
 def test_trending_rank_changes(page: Page, base_url: str) -> None:
     page.goto(base_url)
-    expect(page.locator(".view-head p")).to_have_text("全部語言・今日・共 4 筆")
+    expect(page.locator(".view-head p")).to_have_text(
+        "全部語言・今日・共 4 筆・依 GitHub Trending 的名次排序"
+    )
     assert _cards(page) == ["o/steady", "hot/rocket", "late/single", "o/typed"]
     expect(_card(page, "o/steady").locator(".rk-chg")).to_have_count(0)
     entered = _card(page, "hot/rocket").locator(".rk-chg.in")
@@ -104,7 +106,9 @@ def test_trending_empty_filter(page: Page, base_url: str) -> None:
     page.goto(f"{base_url}#/trending?lang=rust")
     expect(page.get_by_text("Rust 目前沒有上榜的 repo")).to_be_visible()
     page.get_by_role("button", name="顯示全部語言").click()
-    expect(page.locator(".view-head p")).to_have_text("全部語言・今日・共 4 筆")
+    expect(page.locator(".view-head p")).to_have_text(
+        "全部語言・今日・共 4 筆・依 GitHub Trending 的名次排序"
+    )
 
 
 def test_trending_missing_board(page: Page, base_url: str, patch_json: Patch) -> None:

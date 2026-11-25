@@ -370,7 +370,7 @@ async function viewTrending(route, meta) {
         `<button type="button" class="btn" data-lang="all">${t('empty.showAll')}</button>`);
   return filtersHtml(route, langs, periods) + `
     <div class="view-head compact"><h2 class="sr" tabindex="-1">${t('route.trending')}</h2>
-      <p>${esc(t('summary', { lang: lname, period: t('period.' + route.period), n: list.length }))}${route.sort === 'stars' ? esc(t('summary.byStars')) : ''}</p></div>
+      <p>${esc(t('summary', { lang: lname, period: t('period.' + route.period), n: list.length }))}${esc(t(route.sort === 'stars' ? 'summary.byStars' : 'summary.byRank'))}</p></div>
     ${body}`;
 }
 
