@@ -5,6 +5,7 @@
 {"key":"03ce3308114d809b","lang":"zh-TW","text":"給 AI agent 用的電腦操作 CLI。"}
 {"key":"03d519e20881158c","lang":"zh-TW","text":"TradingAgents：多 Agent LLM 金融交易框架"}
 {"key":"04958d5aee458f8a","lang":"zh-TW","text":"給文件、知識庫、會議紀錄等資料用的迷你命令列搜尋引擎，追蹤目前最先進的做法，且全部在本機執行。"}
+{"key":"04a8c354079700b6","lang":"zh-TW","text":"DeepSeek Harness 自媒體工作台外掛：一句話記靈感，一鍵生成腳本、封面、配圖與分鏡"}
 {"key":"04ff48c93442bd3d","lang":"zh-TW","text":"Jan 是 ChatGPT 的開源替代方案，可在你的電腦上 100% 離線執行。"}
 {"key":"054e166cb6b8c198","lang":"zh-TW","text":"只留在你電腦上的私人 AI 會議筆記。不需要會議機器人，免費開源，支援 Mac、Windows 與 Linux，是 Granola、Otter 與 Fireflies 的替代方案。"}
 {"key":"057b9bda2ddc59e3","lang":"zh-TW","text":"Blender 的 AI 助理與 MCP server：視覺化聊天、場景工具、多 agent 工作流程。支援 ChatGPT/GPT、Claude、Gemini、Ollama、OpenCode。Blender AI 外掛、3D 的 copilot、bpy Python 腳本與 MCP 整合。"}
@@ -48,6 +49,7 @@
 {"key":"22bff492dbd082ae","lang":"zh-TW","text":"Agent Substrate：核心系統。"}
 {"key":"22e69fb1bd503dcc","lang":"zh-TW","text":"給 AI agent（Codex、Claude Code）的證據優先族譜研究 skill：涵蓋前蘇聯地區的教會紀錄、民事、軍事、流放與政治迫害檔案，並以你的語言回覆。"}
 {"key":"238f3c111a4617fc","lang":"zh-TW","text":"用 Univer Office SDK 打造自己的 AI 辦公室，把編輯、計算、協作與檔案處理帶進你的產品，供人與 AI agent 使用。建構在可擴充的開源核心上。"}
+{"key":"2434a9b5136d3da6","lang":"zh-TW","text":"🔥 官方推薦 🔥 RuoYi-Vue 全新 Pro 版本，優化重構所有功能。基於 Spring Boot + MyBatis Plus + Vue & Element 實現的後台管理系統 + 微信小程式，支援 RBAC 動態權限、資料權限、SaaS 多租戶、Flowable 工作流、第三方登入、支付、簡訊、商城、CRM、ERP、MES、IM、AI 大模型、IoT 物聯網等功能。你的 ⭐️ Star ⭐️，是作者持續創作的動力！"}
 {"key":"24620c9fde2981a9","lang":"zh-TW","text":"muse.ai 註冊與邀請碼兌換協定研究（純 HTTP 的 Python 實作）。"}
 {"key":"253f931d2f014baa","lang":"zh-TW","text":"打造並執行你看得見、理解得了且信得過的 agent。"}
 {"key":"255e355cfff40843","lang":"zh-TW","text":"📚 一個指令就把 skill、agent、MCP、外掛同步到所有 AI CLI 工具，簡化團隊分享。"}
@@ -61,14 +63,17 @@
 {"key":"2948c35a9fd047d8","lang":"zh-TW","text":"在 Android 裝置上執行的 AI agent，會操作 App 與網頁幫你把事情做完。"}
 {"key":"2b37f3f895973307","lang":"zh-TW","text":"GTA VI 可以在 PC 上跑了嗎？追蹤社群重新編譯與模擬進度的即時狀態，每日更新。"}
 {"key":"2c2e669d8ff4cb7b","lang":"zh-TW","text":"適用於 Windows 的 Xbox Series 相容層 - 可原生執行主機遊戲程式碼、重新實作主機系統函式庫，並將 RDNA2 著色器重新編譯為 DXIL"}
+{"key":"2da7b8aea8828f4e","lang":"zh-TW","text":"適用於 AWS Trainium 的開放原始碼 LLM 推論引擎：具備 NKI megakernels、1M-token context、OpenAI 相容的 API。由 RunAnywhere 開發。"}
 {"key":"2e9758321ce57821","lang":"zh-TW","text":"Claude Code 與 Codex 的 AI 影片 skill：用 Remotion 製作電影感、可編輯的產品宣傳片，含 124 張鏡頭配方卡、150 個動態預覽、節拍同步、音效設計、Motion Workbench 與剪映（CapCut 中國版）匯出。"}
 {"key":"2ee5d5809daddc03","lang":"zh-TW","text":"提升 CI/CD 可靠性的開源 agent。"}
 {"key":"2f1029892f0df443","lang":"zh-TW","text":"在 Kubernetes 上執行 Apache Kafka®。"}
 {"key":"2feb01854de370c8","lang":"zh-TW","text":"以 PyTorch 原生打造的生成式 AI 模型訓練平台。"}
+{"key":"302c922cc0adfba3","lang":"zh-TW","text":"輕量級 Web 2.5D 角色播放器，支援對嘴與視訊鏡頭人臉追蹤。"}
 {"key":"30ad0ee0ba6523d4","lang":"zh-TW","text":"讓 AI agent 執行瀏覽器自動化最快的瀏覽器，可把你已登入的瀏覽器狀態分享給 Codex、Claude Code 等 AI agent，而且不打擾你。零成本、零設定。"}
 {"key":"3174c7ebe5d65dd7","lang":"zh-TW","text":"用於漏洞獵捕與外部紅隊作業的 Claude Code skill 套件：82 個 skill、15 個斜線指令、681 個已揭露報告模式，涵蓋 24 種核心漏洞類別，另附企業身分與基礎設施攻擊矩陣。"}
 {"key":"31c7fb6d717ca206","lang":"zh-TW","text":"一個精美且可自行架設的監控工具"}
 {"key":"320a35ec8b34937e","lang":"zh-TW","text":"Claude Code 的通用 SEO skill：26 個子 skill 加 19 個子 agent，涵蓋技術 SEO、E-E-A-T、schema、GEO/AEO、agent 就緒度（Lighthouse Agentic Browsing、WebMCP、llms.txt）、反向連結、在地 SEO、電子商務、國際 SEO、Google API 與 PDF/Excel 報表，另有 9 個可選擴充提供即時 SEO 資料。"}
+{"key":"32cec2af858621ef","lang":"zh-TW","text":"高效能、低延遲的遠端桌面 QUIC 傳輸 · 硬體編解碼 · 最高 120 fps 支援 Windows、macOS、Linux、Android、iOS 與瀏覽器"}
 {"key":"3315b3e4dd0b3853","lang":"zh-TW","text":"Leonida 的延續，適用於 GTA VI 的 Xbox 轉 PC 連接埠介面"}
 {"key":"3355601b4b735c44","lang":"zh-TW","text":"Rust 套件管理工具。"}
 {"key":"33828c934cd4cce2","lang":"zh-TW","text":"Odoo：協助企業成長的開源應用程式。"}
@@ -121,8 +126,10 @@
 {"key":"52b096492bb28ba1","lang":"zh-TW","text":"逐格逆向分析任何動畫，再證明複製版的動態完全一致的 Claude Code skill。"}
 {"key":"52c68c26abc11fad","lang":"zh-TW","text":"LSPosed 框架。"}
 {"key":"531be86dec629ea8","lang":"zh-TW","text":"以 Rust 撰寫、速度極快的 Python linter 與程式碼格式化工具。"}
+{"key":"5406cf700ea858e5","lang":"zh-TW","text":"具備專屬電腦的開源個人 AI 助理。它能幫你追討發票、準備通話資料、在真實網站上取消試用訂閱，且在執行動作前一定會先詢問你。可在你的電腦上執行，並支援你選擇的模型。由 n8n 開發。"}
 {"key":"540d7923ce4c8803","lang":"zh-TW","text":"Apache Iceberg。"}
 {"key":"5449d3ae5b7a7503","lang":"zh-TW","text":"隨處編排一切。跨資料、基礎設施、業務流程與 AI agent 的開源工作流程控制平面：宣告式 YAML、事件驅動、支援任何語言、以 Git 版本控管，可擴展到數百萬次執行。"}
+{"key":"555806490fba469f","lang":"zh-TW","text":"這個 repository 用來開發雨滴產生器，實際上它是利用白雜訊來模擬風，並內建雷雨模擬器。"}
 {"key":"560508a3b267f786","lang":"zh-TW","text":"NATS.io 的高效能伺服器，NATS 是雲端與邊緣原生的訊息系統。"}
 {"key":"562e666a06c93090","lang":"zh-TW","text":"嘗試在 PC 上執行 GTA VI"}
 {"key":"56a3a613fa45e321","lang":"zh-TW","text":"JDK 主線開發。https://openjdk.org/projects/jdk"}
@@ -147,6 +154,7 @@
 {"key":"6620276e4d5381fd","lang":"zh-TW","text":"TradingAgents: 邁向智慧化金融研究"}
 {"key":"6635ceec2971313b","lang":"zh-TW","text":"開源的 Grok Bot 替代方案，可自選模型與沙箱。"}
 {"key":"66f707055e2863cd","lang":"zh-TW","text":"聊天示範。"}
+{"key":"6745f251f834f267","lang":"zh-TW","text":"Allo 是你親切的鄰家字型，免費且開源"}
 {"key":"67c2074e3c3a3019","lang":"zh-TW","text":"使用網頁前端打造更小、更快、更安全的桌面與行動應用程式。"}
 {"key":"6832124debf8ca8b","lang":"zh-TW","text":"多引擎 Android VPN：Xray、WARP、Psiphon、Tor、Geph、OpenVPN、MASQUE/AmneziaWG，以及依每個 App 各自的最佳路徑分流的 MLM Adaptive Engine；另有 Cloudflare 面板、Config Studio 與遊戲加速。以 Kotlin + Jetpack Compose 打造。"}
 {"key":"69543395bd442a7b","lang":"zh-TW","text":"免費的 Claude skill：讓 Claude 打造得獎等級、電影感的登陸頁。由 MotionSites 製作。"}
@@ -245,6 +253,7 @@
 {"key":"ae0a6377166d1ccc","lang":"zh-TW","text":"給 AI 程式開發 agent 的 skill。"}
 {"key":"ae2bb53ceb06e4fd","lang":"zh-TW","text":"輕量的沙箱工具，在作業系統層級對任意程序強制套用檔案系統與網路限制，不需要容器。"}
 {"key":"aed593b091190736","lang":"zh-TW","text":"1407 張 AI 女裝參考圖集與虛擬試穿網站，支援中英文檢索，可使用 OpenAI Images、Gemini、豆包，或自訂 Base URL、API Key 與模型。https://github.com/paipiange/nvzhuang"}
+{"key":"af9f309270e16e1e","lang":"zh-TW","text":"為 LuaLaTeX 提供以程序生成的台夫特藍（Delft-blue）頁面邊界，包含從基因體取樣的植物、訪客、貝殼與哥德式花窗紋樣，並附帶一個可在 pdfLaTeX 下使用純 TikZ 繪製的 TikZ 函式庫。"}
 {"key":"afefa27b107d18a5","lang":"zh-TW","text":"DaVinci Resolve Studio 的 MCP 伺服器整合"}
 {"key":"b0252816f5f70ee6","lang":"zh-TW","text":"Cage：為 Claude 特化的輕量虛擬機，徹底杜絕網路洩漏。支援多平台、多帳號管理、遠端部署與行動裝置操控。"}
 {"key":"b127bc945e6fd3a2","lang":"zh-TW","text":"在 Minecraft 中以高細節重現真實世界的任何地點。"}
@@ -291,10 +300,13 @@
 {"key":"cfdb133c8bc76978","lang":"zh-TW","text":"邁向更自主的 Agent 系統。"}
 {"key":"d064d09b038e0062","lang":"zh-TW","text":"知了 Cicada：為任何會議與直播提供即時字幕、同步口譯與 AI 會議紀錄，支援 Mac、Windows、Linux 與 Android，免費開源。"}
 {"key":"d0fe768de4852cf2","lang":"zh-TW","text":"freehire：給求職者的開源搜尋引擎。"}
+{"key":"d1410760eed0a5a5","lang":"zh-TW","text":"江山時序 · 中國歷史互動地圖時間軸 (403 BCE – Present) | Interactive Historical Atlas of China across 18 dynasties, 200+ territory snapshots, ancient-to-modern place genealogy & classical poetry routes"}
 {"key":"d154454314df59d3","lang":"zh-TW","text":"移除文字中 AI 生成痕跡的 Agent skill"}
 {"key":"d18b73363fa7650e","lang":"zh-TW","text":"Mastra 是打造 AI 應用程式與 agent 的現代 TypeScript 框架。"}
 {"key":"d1926a3706c5f5b1","lang":"zh-TW","text":"免訓練的語言模型修改：移除審查、壓抑罐頭內容、減少諂媚等。"}
+{"key":"d22b21fab5b46e89","lang":"zh-TW","text":"開源的 CapCut 替代方案。"}
 {"key":"d2cd66dc5c0a3b4e","lang":"zh-TW","text":"Telegram X 的主要 repository：官方推出的 Android 版 Telegram 替代用戶端。"}
+{"key":"d30e1eee1b558866","lang":"zh-TW","text":"真正的 Linux 核心，已編譯為 WebAssembly。能在不到一秒的時間內開機並進入 shell。"}
 {"key":"d3bea48abd243765","lang":"zh-TW","text":"Agent skill 集。"}
 {"key":"d472acc9f183d625","lang":"zh-TW","text":"Apex Compute 推出的 Apex Neural Rendering（ANR）。"}
 {"key":"d514651ff71def03","lang":"zh-TW","text":"244 種像素藝術特效，每一種都是一小段程式碼，另附可自製特效的 Claude Code skill。"}
@@ -325,6 +337,7 @@
 {"key":"df7dbfe3781c368d","lang":"zh-TW","text":"RuiC-PoseAtlas｜姿勢與服裝雙圖鑑：288 組人體姿勢 × 5 個視角 × 1,439 張人台線稿，加上 1,407 套無人物服裝 × 8 個分類 × 86 個三語標籤。支援中英日切換、搜尋篩選、鍵盤瀏覽與原圖下載，純靜態、零相依。"}
 {"key":"dfa4450df641f307","lang":"zh-TW","text":"所有 agent 的模型，集中在一處：從選單列讓 Codex 跑在 DeepSeek 上、Claude Code 跑在 Kimi 上。"}
 {"key":"dfdfb8ddcc7ebb7e","lang":"zh-TW","text":"VictoriaMetrics：快速、高性價比的監控方案與時間序列資料庫。"}
+{"key":"e011bb4b0fa3c099","lang":"zh-TW","text":"避免常見的 App Store 與 Google Play 審核遭拒。內含 124 種記錄在案的拒絕模式與修復方法的實戰手冊與送審前防護、隱私清單與資料安全檢查、114 個追蹤中的截止期限（歐盟人工智慧法案、DSA、COPPA、年齡法規），以及專為 AI 編碼代理程式設計的技能。"}
 {"key":"e0da9f5ac838a6ef","lang":"zh-TW","text":"Ghidra 是一個軟體逆向工程（SRE）框架"}
 {"key":"e255dadb09191736","lang":"zh-TW","text":"Moby 專案：協作打造容器生態系，用來組裝以容器為基礎的系統。"}
 {"key":"e4aaf5e588f3edd7","lang":"zh-TW","text":"透過使用者名稱在各大社群網路搜尋社群媒體帳號"}
