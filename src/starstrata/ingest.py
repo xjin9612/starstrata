@@ -22,9 +22,11 @@ from starstrata.db import (
     create_schema,
     derivation_fingerprint,
     get_meta,
+    set_meta,
 )
 from starstrata.github.star_history import Week, expand
 from starstrata.snapshots import (
+    ALERTS_FILE,
     REPOS_FILE,
     SEARCH_FILE,
     TRENDING_FILE,
@@ -33,9 +35,13 @@ from starstrata.snapshots import (
     list_snapshot_days,
     node_id_from_stem,
     read_jsonl,
+    write_jsonl,
 )
 
 log = logging.getLogger(__name__)
+
+# meta 的鍵：警示已處理到哪一天（含）。中斷後從這一天重新處理。
+ALERTS_THROUGH = "alerts_through"
 
 
 @dataclass
@@ -64,7 +70,7 @@ def sync(db_path: Path, cfg: Config, data_root: Path, *, force_rebuild: bool = F
             for d in days:
                 _ingest_day(conn, cfg, data_root, d, hashes[d])
             _sync_backfill(conn, data_root)
-            _detect_alerts(conn, cfg, days)
+            _settle_alerts(conn, cfg, data_root, days)
         finally:
             conn.close()
         os.replace(tmp, db_path)
@@ -77,9 +83,14 @@ def sync(db_path: Path, cfg: Config, data_root: Path, *, force_rebuild: bool = F
         for d in pending:
             _ingest_day(conn, cfg, data_root, d, hashes[d])
         _sync_backfill(conn, data_root)
-        # 沒有新日期時重新判定最新一天，讓後來匯入的回補資料用在當天的基準。
-        latest = [date.fromisoformat(max(done))] if done else []
-        _detect_alerts(conn, cfg, pending or latest)
+        through = get_meta(conn, ALERTS_THROUGH)
+        ingested = sorted(date.fromisoformat(d) for d in _ingested(conn))
+        _settle_alerts(
+            conn,
+            cfg,
+            data_root,
+            [d for d in ingested if through is None or d.isoformat() >= through],
+        )
     finally:
         conn.close()
     return SyncResult(ingested=pending)
@@ -118,13 +129,55 @@ def _sync_backfill(conn: sqlite3.Connection, data_root: Path) -> None:
             )
 
 
-def _detect_alerts(conn: sqlite3.Connection, cfg: Config, days: list[date]) -> None:
-    """依序判定 days 的警示。要在回補資料匯入之後執行，基準才用得到回補資料。"""
+def _settle_alerts(
+    conn: sqlite3.Connection, cfg: Config, data_root: Path, days: list[date]
+) -> None:
+    """依序處理 days 的警示：已凍結的日子讀 alerts.jsonl，其他日子重新判定。
+
+    days 的最後一天是最新資料日，判定後不凍結，之後匯入的回補資料還能用在它的基準；
+    其餘日子判定後凍結。要在回補資料匯入之後執行。
+    """
     # 基準期間開頭缺快照時，往前再找 baseline_days 天內最近的快照。
     window = 2 * cfg.alerts.baseline_days + 1
-    for day in days:
+    for i, day in enumerate(days):
+        path = day_dir(data_root, day) / ALERTS_FILE
         with conn:
-            alerts.detect(conn, cfg.alerts, day, _recent_stars(conn, day, window))
+            if path.is_file():
+                _load_alerts(conn, day, read_jsonl(path))
+            else:
+                alerts.detect(conn, cfg.alerts, day, _recent_stars(conn, day, window))
+                if i < len(days) - 1:
+                    freeze_alerts(conn, data_root, day)
+    if days:
+        with conn:
+            set_meta(conn, ALERTS_THROUGH, days[-1].isoformat())
+
+
+def _load_alerts(conn: sqlite3.Connection, day: date, rows: list[dict[str, object]]) -> None:
+    d = day.isoformat()
+    conn.execute("DELETE FROM alerts WHERE date = ?", (d,))
+    conn.executemany(
+        "INSERT INTO alerts (node_id, date, daily_stars, baseline) VALUES (?, ?, ?, ?)",
+        ((r["node_id"], d, r["daily_stars"], r["baseline"]) for r in rows),
+    )
+
+
+def freeze_alerts(conn: sqlite3.Connection, data_root: Path, day: date) -> None:
+    """把 DB 中 day 的警示寫成 alerts.jsonl；檔案已存在或 day 尚未匯入時不做事。
+
+    凍結後匯入與重建都讀這個檔，不再重新判定，已發出的通知與 dashboard、報告保持一致。
+    呼叫端負責 commit。
+    """
+    folder = day_dir(data_root, day)
+    path = folder / ALERTS_FILE
+    d = day.isoformat()
+    if path.is_file() or d not in _ingested(conn):
+        return
+    rows = conn.execute(
+        "SELECT node_id, daily_stars, baseline FROM alerts WHERE date = ? ORDER BY node_id", (d,)
+    )
+    write_jsonl(path, [dict(r) for r in rows])
+    conn.execute("UPDATE ingested_dates SET files_hash = ? WHERE date = ?", (day_hash(folder), d))
 
 
 def _ingested(conn: sqlite3.Connection) -> dict[str, str]:

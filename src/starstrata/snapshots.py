@@ -15,6 +15,8 @@ TRENDING_FILE = "trending.jsonl"
 SEARCH_FILE = "search.jsonl"
 REPOS_FILE = "repos.jsonl"
 RUN_FILE = "run.json"
+# 凍結後的當天警示，見 ingest.freeze_alerts。
+ALERTS_FILE = "alerts.jsonl"
 
 
 @dataclass(frozen=True)
@@ -154,9 +156,9 @@ def list_snapshot_days(data_root: Path) -> list[date]:
 
 
 def day_hash(folder: Path) -> str:
-    """當天快照檔內容的雜湊，不含 run.json。用來偵測已匯入的日期是否被改寫。"""
+    """當天快照檔與凍結警示的雜湊，不含 run.json。用來偵測已匯入的日期是否被改寫。"""
     digest = hashlib.sha256()
-    for name in SNAPSHOT_SOURCE_FILES:
+    for name in (*SNAPSHOT_SOURCE_FILES, ALERTS_FILE):
         path = folder / name
         if path.is_file():
             digest.update(name.encode())

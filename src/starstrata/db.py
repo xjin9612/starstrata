@@ -12,7 +12,7 @@ from starstrata.config import Config
 from starstrata.snapshots import RepoMeta
 
 # schema 或匯入邏輯改變時遞增；版本不符的 DB 會被重建。
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 ACTIVE = "active"
 DORMANT = "dormant"

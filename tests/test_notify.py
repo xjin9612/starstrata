@@ -119,6 +119,8 @@ def test_summary_and_alert_are_sent_once(world: tuple[Any, Path]) -> None:
 
     log = json.loads((data / "2026/11/04/notified.json").read_text(encoding="utf-8"))
     assert log == {"summary": True, "alerts": ["R_a"]}
+    frozen = (data / "2026/11/04/alerts.jsonl").read_text(encoding="utf-8")
+    assert frozen == '{"baseline":10.0,"daily_stars":400,"node_id":"R_a"}\n'
     again: Sent = []
     result2 = notify(conn, NOTIFY, day(4), data, again.append, messages=ZH_TW)
     assert again == [] and not result2.summary_sent and result2.alerts_sent == []

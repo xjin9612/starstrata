@@ -52,6 +52,11 @@ def test_gap_in_baseline_is_spread_evenly() -> None:
     assert alerts.evaluate(CFG, DAY, series) is None
 
 
+def test_baseline_starts_from_latest_snapshot_at_period_start() -> None:
+    # 期間開頭（DAY-4）有快照時從它算起，不用更早的 DAY-5。
+    assert alerts.evaluate(CFG, DAY, _series(100, 10, 10, 10, 170)) == (170, 10.0)
+
+
 def test_gap_at_baseline_start_uses_earlier_snapshot() -> None:
     series = _series(30, 10, 10, 10, 100)
     del series[DAY - timedelta(days=4)]
@@ -70,8 +75,10 @@ def test_backfill_fills_days_before_first_snapshot() -> None:
         first - timedelta(days=1): 1000,
         first - timedelta(days=2): 20,
         first - timedelta(days=3): 30,
+        first - timedelta(days=4): 1000,
     }
-    # 快照 1 天（40）＋首筆快照前 2、3 天的回補（20、30）；前 1 天可能還沒結束，不用。
+    # 快照 1 天（40）＋首筆快照前 2、3 天的回補（20、30）。
+    # 前 1 天可能還沒結束，前 4 天超出期間，都不用。
     got = alerts.evaluate(CFG, DAY, series, _history(first, backfill))
     assert got == (100, 30.0)
 

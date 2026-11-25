@@ -27,7 +27,7 @@ def _rows(db_path: Path, sql: str) -> list[tuple[object, ...]]:
         conn.close()
 
 
-@pytest.mark.parametrize("version", ["v1"])
+@pytest.mark.parametrize("version", ["v1", "v2"])
 def test_snapshot_version_still_imports(version: str, tmp_path: Path) -> None:
     data = tmp_path / "data"
     shutil.copytree(FIXTURES / version, data)
@@ -54,3 +54,22 @@ def test_snapshot_version_still_imports(version: str, tmp_path: Path) -> None:
         ("R_gamma", "2026-11-02", 320),
     ]
     assert _rows(db_path, "SELECT * FROM star_backfill") == [("R_alpha", "2026-10-31", 5)]
+
+
+@pytest.mark.parametrize(
+    ("version", "expected"),
+    [
+        # v1 沒有 alerts.jsonl，依快照判定。回補檔在首筆快照前 2 天以前沒有新增，基準為 0。
+        ("v1", [("R_alpha", "2026-11-02", 400, 0.0)]),
+        # v2 新增 alerts.jsonl：凍結的警示照檔案匯入，空檔案表示沒有警示。
+        ("v2", [("R_alpha", "2026-11-01", 250, None)]),
+    ],
+)
+def test_snapshot_version_alerts(
+    version: str, expected: list[tuple[object, ...]], tmp_path: Path
+) -> None:
+    data = tmp_path / "data"
+    shutil.copytree(FIXTURES / version, data)
+    db_path = tmp_path / "db.sqlite"
+    sync(db_path, load_config(ROOT.parent / "config.toml"), data)
+    assert _rows(db_path, "SELECT node_id, date, daily_stars, baseline FROM alerts") == expected

@@ -9,7 +9,8 @@ import pytest
 
 from starstrata import db, tracking
 from starstrata.config import AlertsConfig, Config, TrackingConfig, load_config
-from starstrata.ingest import sync
+from starstrata.ingest import ALERTS_THROUGH, freeze_alerts, sync
+from starstrata.snapshots import ALERTS_FILE, day_dir, read_jsonl, write_jsonl
 from tests.snapshot_builder import gone, meta, repo, search, trending, write_day
 
 D1 = date(2026, 11, 1)
@@ -231,6 +232,111 @@ def test_alert_is_redetected_after_backfill_arrives(cfg: Config, paths: tuple[Pa
     )
     sync(db_path, cfg, data)
     assert _query(db_path, "SELECT date, baseline FROM alerts") == []
+
+
+@pytest.mark.parametrize(("first", "expected"), [(2, 10.0), (1, None)])
+def test_alert_window_reaches_baseline_days_before_period(
+    cfg: Config, paths: tuple[Path, Path], first: int, expected: float | None
+) -> None:
+    data, db_path = paths
+    # baseline_days=2：day(7) 的期間開頭是 day(4)。缺快照時往前最多找到 day(2)，day(1) 超出範圍。
+    write_day(data, day(first), repos=[repo("R_a", 100)], search_rows=[search("R_a", "o/r_a")])
+    write_day(data, day(6), repos=[repo("R_a", 140)], search_rows=[search("R_a", "o/r_a")])
+    write_day(data, day(7), repos=[repo("R_a", 400)])
+    sync(db_path, cfg, data)
+    assert _query(db_path, "SELECT date, daily_stars, baseline FROM alerts") == [
+        ("2026-11-07", 260, expected)
+    ]
+
+
+def test_earlier_days_are_frozen_and_latest_is_not(cfg: Config, paths: tuple[Path, Path]) -> None:
+    data, db_path = paths
+    write_day(data, day(1), repos=[repo("R_a", 100)], search_rows=[search("R_a", "o/r_a")])
+    write_day(data, day(2), repos=[repo("R_a", 400)])
+    write_day(data, day(3), repos=[repo("R_a", 401)])
+    result = sync(db_path, cfg, data)
+    assert read_jsonl(day_dir(data, day(2)) / ALERTS_FILE) == [
+        {"node_id": "R_a", "daily_stars": 300, "baseline": None}
+    ]
+    assert read_jsonl(day_dir(data, day(1)) / ALERTS_FILE) == []
+    assert not (day_dir(data, day(3)) / ALERTS_FILE).exists()
+    assert _query(db_path, "SELECT value FROM meta WHERE key = ?", ALERTS_THROUGH) == [
+        ("2026-11-03",)
+    ]
+    # 凍結後更新了雜湊，下次同步不會因為新檔案而重建。
+    assert not sync(db_path, cfg, data).rebuilt and result.rebuilt
+
+
+def test_frozen_alerts_are_read_not_recomputed(cfg: Config, paths: tuple[Path, Path]) -> None:
+    data, db_path = paths
+    write_day(data, day(1), repos=[repo("R_a", 100)], search_rows=[search("R_a", "o/r_a")])
+    write_day(data, day(2), repos=[repo("R_a", 101)])
+    write_jsonl(
+        day_dir(data, day(2)) / ALERTS_FILE, [{"node_id": "R_a", "daily_stars": 7, "baseline": 1.5}]
+    )
+    write_day(data, day(3), repos=[repo("R_a", 102)])
+    sync(db_path, cfg, data)
+    assert _query(db_path, "SELECT date, daily_stars, baseline FROM alerts") == [
+        ("2026-11-02", 7, 1.5)
+    ]
+
+
+def test_editing_frozen_alerts_triggers_rebuild(cfg: Config, paths: tuple[Path, Path]) -> None:
+    data, db_path = paths
+    write_day(data, day(1), repos=[repo("R_a", 100)], search_rows=[search("R_a", "o/r_a")])
+    write_day(data, day(2), repos=[repo("R_a", 101)])
+    sync(db_path, cfg, data)
+    assert read_jsonl(day_dir(data, day(1)) / ALERTS_FILE) == []
+    write_jsonl(
+        day_dir(data, day(1)) / ALERTS_FILE,
+        [{"node_id": "R_a", "daily_stars": 5, "baseline": None}],
+    )
+    result = sync(db_path, cfg, data)
+    assert result.rebuilt and result.rebuild_reason == "2026-11-01 的快照已改變"
+    assert _query(db_path, "SELECT date FROM alerts") == [("2026-11-01",)]
+
+
+def test_interrupted_detection_resumes(
+    cfg: Config, paths: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from starstrata import ingest
+
+    data, db_path = paths
+    write_day(data, day(1), repos=[repo("R_a", 100)], search_rows=[search("R_a", "o/r_a")])
+    sync(db_path, cfg, data)
+    write_day(data, day(2), repos=[repo("R_a", 600)])
+    write_day(data, day(3), repos=[repo("R_a", 601)])
+
+    def interrupted(*args: object) -> None:
+        raise RuntimeError("中斷")
+
+    with monkeypatch.context() as m:
+        m.setattr(ingest, "_sync_backfill", interrupted)
+        with pytest.raises(RuntimeError):
+            sync(db_path, cfg, data)
+    result = sync(db_path, cfg, data)
+    assert not result.rebuilt and result.ingested == []
+    assert _query(db_path, "SELECT date, daily_stars FROM alerts") == [("2026-11-02", 500)]
+
+
+def test_freeze_alerts_skips_unknown_or_frozen_days(cfg: Config, paths: tuple[Path, Path]) -> None:
+    data, db_path = paths
+    write_day(data, day(1), repos=[repo("R_a", 100)], search_rows=[search("R_a", "o/r_a")])
+    write_day(data, day(2), repos=[repo("R_a", 400)])
+    sync(db_path, cfg, data)
+    conn = db.connect(db_path)
+    try:
+        with conn:
+            freeze_alerts(conn, data, day(5))
+            freeze_alerts(conn, data, day(2))
+            conn.execute("DELETE FROM alerts")
+            freeze_alerts(conn, data, day(2))
+    finally:
+        conn.close()
+    assert not day_dir(data, day(5)).exists()
+    assert read_jsonl(day_dir(data, day(2)) / ALERTS_FILE) == [
+        {"node_id": "R_a", "daily_stars": 300, "baseline": None}
+    ]
 
 
 def test_due_ids(cfg: Config, paths: tuple[Path, Path]) -> None:
@@ -455,10 +561,14 @@ def _random_history(data: Path, seed: int) -> int:
             trending_rows=trending_rows,
             search_rows=search_rows,
         )
-    for node_id in rng.sample(ids, 2):
+    # 回補涵蓋首筆快照前幾週，日增夠大才會影響警示基準。
+    for node_id in rng.sample(ids, 3):
         write_jsonl(
             backfill_path(data, node_id),
-            [{"week": "2026-10-04", "days": [rng.randint(0, 5) for _ in range(7)]}],
+            [
+                {"week": week, "days": [rng.choice([0, 40, 300]) for _ in range(7)]}
+                for week in ("2026-10-18", "2026-10-25")
+            ],
         )
     return days
 
@@ -467,19 +577,27 @@ def _random_history(data: Path, seed: int) -> int:
 def test_random_histories_incremental_equals_rebuild(
     cfg: Config, tmp_path: Path, seed: int
 ) -> None:
+    import random
     import shutil
 
     data = tmp_path / "data"
     _random_history(data, seed)
     visible = tmp_path / "visible"
     incremental = tmp_path / "incremental.sqlite"
-    shutil.copytree(data / "backfill", visible / "backfill")
-    for folder in sorted(p for p in data.glob("[0-9]*/*/*") if p.is_dir()):
+    folders = sorted(p for p in data.glob("[0-9]*/*/*") if p.is_dir())
+    # 回補檔在隨機的一天才出現，模擬回補比快照晚完成。
+    backfill_at = random.Random(seed).randrange(len(folders) + 1)
+    for i, folder in enumerate(folders):
+        if i == backfill_at:
+            shutil.copytree(data / "backfill", visible / "backfill")
         shutil.copytree(folder, visible / folder.relative_to(data))
         result = sync(incremental, cfg, visible)
         assert not result.rebuilt or result.rebuild_reason == "DB 不存在"
+    if backfill_at == len(folders):
+        shutil.copytree(data / "backfill", visible / "backfill")
+        sync(incremental, cfg, visible)
     rebuilt = tmp_path / "rebuilt.sqlite"
-    sync(rebuilt, cfg, data, force_rebuild=True)
+    sync(rebuilt, cfg, visible, force_rebuild=True)
     assert _dump(rebuilt) == _dump(incremental)
 
 

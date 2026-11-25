@@ -12,6 +12,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from starstrata.config import NotifyConfig
+from starstrata.ingest import freeze_alerts
 from starstrata.messages import Messages
 from starstrata.queries import (
     AlertLine,
@@ -220,6 +221,7 @@ def notify(
 ) -> NotifyResult:
     """發送 day 的摘要與每則警示。
 
+    發送前先凍結當天的警示（ingest.freeze_alerts），之後重跑或重建都不會改變已發出的警示。
     已發送的項目記在當天快照目錄的 notified.json，同一天重跑不會重複發送。
     每發送成功一則就更新紀錄，中途失敗時已發送的項目不會再發。
     當天尚未匯入快照時發送的提醒不記錄，補上快照後重跑會發送正式摘要。
@@ -231,6 +233,8 @@ def notify(
     def save() -> None:
         write_json(log_path, {"summary": summary_sent, "alerts": sent_alerts})
 
+    with conn:
+        freeze_alerts(conn, data_root, day)
     alerts = day_alerts(conn, day)
     if not summary_sent:
         ingested = is_ingested(conn, day)
