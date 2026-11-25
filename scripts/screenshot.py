@@ -3,7 +3,7 @@
 用 data/ 的快照建置網站，在本機起 HTTP server，以 Playwright 截取 Trending 頁面。
 瀏覽器時鐘固定在資料收集完成後 2 小時，截圖不會出現資料過期的提示條。
 
-    .venv/bin/python scripts/screenshot.py [--data data] [--out docs/screenshots/trending.png]
+    uv run python scripts/screenshot.py [--data data] [--out docs/screenshots/trending.png]
 """
 
 from __future__ import annotations
