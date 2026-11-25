@@ -47,7 +47,7 @@ starstrata 每天收集 GitHub 趨勢，累積成長期歷史，讓你看出什�
 4. 在 Settings → Pages → Build and deployment，把 Source 設為 **GitHub Actions**。
 5. 第一次收集：在 Actions → `Daily` → Run workflow 手動執行，或執行 `gh workflow run daily.yml -R <owner>/<repo>`。
 
-之後 `Daily` workflow 每天 UTC 23:30（`Asia/Taipei` 07:30）執行；GitHub 負載高時會延後排程。每次執行會：
+之後 `Daily` workflow 每天 UTC 21:17（`Asia/Taipei` 05:17）執行；GitHub 負載高時會延後排程。每次執行會：
 
 - 把當天快照 commit 到 `data/`，報告 commit 到 `reports/`；
 - 把 SQLite 上傳到 tag 為 `db` 的 Release；

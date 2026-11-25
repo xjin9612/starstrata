@@ -2,8 +2,8 @@ name: Daily
 
 on:
   schedule:
-    # 每天 UTC 23:30（台灣時間 07:30）。負載高時 GitHub 會延後排程的執行。
-    - cron: "30 23 * * *"
+    # 每天 UTC 21:17（台灣時間 05:17）。負載高時 GitHub 會延後排程的執行，每小時開頭負載最高。
+    - cron: "17 21 * * *"
   workflow_dispatch:
 
 permissions:
