@@ -492,15 +492,12 @@ def test_notes_are_matched_case_insensitively(
 
 def test_tracked_lists_active_repos_by_todays_gain(cfg: Config, tmp_path: Path) -> None:
     data = tmp_path / "data"
+    day1 = [("R_a", 10), ("R_b", 500), ("R_c", 30), ("R_e", 40), ("R_f", 60), ("R_g", 100)]
     write_day(
         data,
         date(2026, 11, 1),
-        repos=[
-            repo("R_a", 10, full_name="o/a", meta=meta()),
-            repo("R_b", 500, full_name="o/b", meta=meta()),
-            repo("R_c", 30, full_name="o/c", meta=meta()),
-        ],
-        search_rows=[search("R_a", "o/a"), search("R_b", "o/b", rank=2), search("R_c", "o/c", 3)],
+        repos=[repo(n, s, full_name=f"o/{n[-1]}", meta=meta()) for n, s in day1],
+        search_rows=[search(n, f"o/{n[-1]}", rank=i) for i, (n, _) in enumerate(day1, 1)],
     )
     write_day(
         data,
@@ -510,19 +507,25 @@ def test_tracked_lists_active_repos_by_todays_gain(cfg: Config, tmp_path: Path) 
             repo("R_b", 520, full_name="o/b"),
             gone("R_c"),
             repo("R_d", 900, full_name="o/d", meta=meta()),
+            repo("R_e", 40, full_name="o/e"),
+            repo("R_f", 57, full_name="o/f"),
+            repo("R_g", 105, full_name="o/g"),
         ],
         search_rows=[search("R_d", "o/d")],
     )
     out, _ = _build(cfg, tmp_path, data)
     tracked = _read(out / "data" / "tracked.json")["items"]
-    # gone 的 o/c 不列；今日新增未知的 o/d 排最後。
+    # gone 的 o/c 不列。今日新增相同時總 star 多的在前；0 與負數排在未知（o/d）之前。
     assert [
         (i["rank"], i["full_name"], i["period_stars"], i["stargazers"], i["first_seen"])
         for i in tracked
     ] == [
         (1, "o/b", 20, 520, "2026-11-01"),
-        (2, "o/a", 5, 15, "2026-11-01"),
-        (3, "o/d", None, 900, "2026-11-02"),
+        (2, "o/g", 5, 105, "2026-11-01"),
+        (3, "o/a", 5, 15, "2026-11-01"),
+        (4, "o/e", 0, 40, "2026-11-01"),
+        (5, "o/f", -3, 57, "2026-11-01"),
+        (6, "o/d", None, 900, "2026-11-02"),
     ]
     assert _read(out / "data" / "meta.json")["tracked_count"] == len(tracked)
     assert tracked[0]["spark"][-1] == 20 and "description_tr" in tracked[0]

@@ -56,6 +56,8 @@ const ROUTES = ['trending', 'new', 'daily', 'alerts', 'reports'];
 const REPORT_KINDS = ['weekly', 'monthly'];
 const TRACKED_SORTS = ['gain', 'total', 'recent'];
 const langName = key => (key === 'all' ? t('filter.all') : LANG_NAMES[key] || key);
+// Trending 的語言鍵是網址代號（python、jupyter-notebook），repo 的語言是 GitHub 名稱（Python、Jupyter Notebook）
+const langSlug = name => name.toLowerCase().replace(/ /g, '-');
 // 「期間・語言」榜名，例如「本週・Rust」「本月・全部語言」；language 為 null 表示總榜
 const boardName = m => t('board', { period: t('period.' + m.period), lang: m.language == null ? t('summary.allLangs') : langName(m.language) });
 const isMissing = (meta, period, lang) => (meta.run?.trending_missing || []).some(m => m.period === period && (m.language ?? 'all') === lang);
@@ -308,7 +310,7 @@ function cardHtml(it, opts = {}) {
     ${opts.firstSeen && it.first_seen ? `<div class="created">${esc(t('card.firstSeen', { date: it.first_seen }))}</div>` : ''}
     <div class="nums">${it.period_stars == null
       ? (opts.nullLabel ? `<span class="per src">${opts.nullLabel}</span>` : `<span class="delta">—</span><span class="per">${opts.unit}</span>`)
-      : `<span class="delta">+${fmt(it.period_stars)}</span><span class="per">${opts.unit}</span>`}${sparkHtml(it.spark)}</div>
+      : `<span class="delta">${it.period_stars > 0 ? '+' : ''}${fmt(it.period_stars)}</span><span class="per">${opts.unit}</span>`}${sparkHtml(it.spark)}</div>
     ${desc}${ai}
   </article></li>`;
 }
@@ -411,12 +413,12 @@ const TRACKED_ORDER = {
 };
 async function viewTracked(route, meta) {
   const [all, trending] = await Promise.all([getData('tracked').then(d => d.items), getData('trending')]);
-  // 語言選項是 Trending 的網址代號（python），repo 的語言是 GitHub 名稱（Python），所以不分大小寫比對
   const langs = ['all', ...Object.keys(trending[PERIOD_ORDER.find(p => trending[p])] || {}).filter(k => k !== 'all')];
   if (!langs.includes(route.lang)) route.lang = 'all';
-  if (trackedHash(route) !== location.hash) history.replaceState(history.state, '', trackedHash(route));
-  const want = route.lang === 'all' ? null : langName(route.lang).toLowerCase();
-  const list = all.filter(it => !want || (it.language || '').toLowerCase() === want)
+  // 載入期間已換到別的網址時不改寫，否則會蓋掉新的網址
+  if (location.hash === route.hash && trackedHash(route) !== route.hash) history.replaceState(history.state, '', trackedHash(route));
+  const want = route.lang === 'all' ? null : langSlug(langName(route.lang));
+  const list = all.filter(it => !want || langSlug(it.language || '') === want)
     .sort((a, b) => TRACKED_ORDER[route.sort](a, b) || (b.stargazers ?? -1) - (a.stargazers ?? -1) || a.full_name.localeCompare(b.full_name))
     .map((it, i) => ({ ...it, rank: i + 1 }));
   const lname = route.lang === 'all' ? t('summary.allLangs') : langName(route.lang);

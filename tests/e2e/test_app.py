@@ -358,6 +358,56 @@ def test_tracked_back_restores_sort_and_shown(page: Page, base_url: str) -> None
     expect(page.locator(".card")).to_have_count(36)
 
 
+def test_tracked_url_is_kept_when_leaving_during_load(page: Page, base_url: str) -> None:
+    held: list[Route] = []
+
+    def hold(route: Route) -> None:
+        held.append(route)
+
+    page.route("**/data/tracked.json", hold)
+    with page.expect_request("**/data/tracked.json"):
+        page.goto(f"{base_url}#/tracked?sort=bogus")
+    page.goto(f"{base_url}#/new")
+    expect(page.locator("#view h2")).to_have_text("今日新上榜")
+    with page.expect_response("**/data/tracked.json"):
+        held[0].fallback()
+    page.wait_for_load_state("networkidle")
+    expect(page).to_have_url(f"{base_url}#/new")
+
+
+def test_tracked_shows_zero_and_negative_gains(
+    page: Page, base_url: str, patch_json: Patch
+) -> None:
+    def change(body: Any) -> Any:
+        body["items"][0]["period_stars"] = -2
+        body["items"][1]["period_stars"] = 0
+        return body
+
+    patch_json("tracked", change)
+    page.goto(f"{base_url}#/tracked")
+    # 今日新增 0 與負數排在正數之後、未知之前。
+    assert _cards(page)[:5] == ["o/steady", "o/typed", "late/burst", "hot/rocket", "s/new-00"]
+    deltas = page.locator(".card .delta")
+    expect(deltas.nth(0)).to_have_text("+5")
+    expect(deltas.nth(2)).to_have_text("0")
+    expect(deltas.nth(3)).to_have_text("-2")
+
+
+def test_tracked_matches_multi_word_language(page: Page, base_url: str, patch_json: Patch) -> None:
+    def add_board(body: Any) -> Any:
+        body["daily"]["jupyter-notebook"] = []
+        return body
+
+    def set_language(body: Any) -> Any:
+        body["items"][0]["language"] = "Jupyter Notebook"
+        return body
+
+    patch_json("trending", add_board)
+    patch_json("tracked", set_language)
+    page.goto(f"{base_url}#/tracked?lang=jupyter-notebook")
+    assert _cards(page) == ["hot/rocket"]
+
+
 def test_back_restores_filter(page: Page, base_url: str) -> None:
     page.goto(f"{base_url}#/trending?lang=python")
     page.locator(".card .name a", has_text="o/steady").click()
