@@ -38,14 +38,18 @@ jobs:
           ref: ${{ github.ref_name }}
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.14"
+          python-version-file: .python-version
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.13.10"
       # 失敗通知依 i18n.locale 選用語言；讀不到時用繁中。
       - name: 讀取語言
         id: locale
         continue-on-error: true
         run: python -c 'import tomllib; print("locale=" + tomllib.load(open("config.toml", "rb"))["i18n"]["locale"])' >> "$GITHUB_OUTPUT"
-      - name: 安裝相依套件（驗證 hash）
-        run: python -m pip install --require-hashes -r requirements.txt
+      # 只裝執行需要的相依套件，不裝 dev 群組，也不建置 starstrata 本身（以 PYTHONPATH=src 執行）。
+      - name: 安裝相依套件（依 uv.lock 驗證 hash）
+        run: uv sync --locked --no-dev --no-install-project
 
       - name: 下載 DB
         env:
@@ -64,12 +68,12 @@ jobs:
         timeout-minutes: 30
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
-        run: python -m starstrata collect
+        run: uv run --no-sync python -m starstrata collect
 
       - name: 匯入
         id: ingest
         continue-on-error: true
-        run: python -m starstrata ingest
+        run: uv run --no-sync python -m starstrata ingest
 
       # 翻譯失敗時各處顯示原文，下次執行再補，所以不列入下方的各步驟結果。
       - name: 翻譯說明
@@ -80,7 +84,7 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: python -m starstrata translate
+        run: uv run --no-sync python -m starstrata translate
 
       - name: 回補歷史
         id: backfill
@@ -89,7 +93,7 @@ jobs:
         timeout-minutes: 10
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
-        run: python -m starstrata backfill
+        run: uv run --no-sync python -m starstrata backfill
 
       - name: 定期報告
         id: report
@@ -100,7 +104,7 @@ jobs:
           GH_PAT: ${{ secrets.GH_PAT }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: python -m starstrata report due
+        run: uv run --no-sync python -m starstrata report due
 
       - name: 通知
         id: notify
@@ -110,7 +114,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TELEGRAM_THREAD_ID: ${{ vars.TELEGRAM_THREAD_ID }}
-        run: python -m starstrata notify
+        run: uv run --no-sync python -m starstrata notify
 
       # 前面任何步驟失敗、甚至 job 被取消，都要嘗試保住當天已收集的快照，Trending 無法事後補抓。
       - name: commit 並 push 資料
@@ -153,7 +157,7 @@ jobs:
       - name: 產生 dashboard
         id: build_site
         if: ${{ !cancelled() && steps.ingest.outcome == 'success' }}
-        run: python -m starstrata site --out _site
+        run: uv run --no-sync python -m starstrata site --out _site
 
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         if: ${{ !cancelled() && steps.build_site.outcome == 'success' }}
