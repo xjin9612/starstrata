@@ -198,11 +198,11 @@ jobs:
             text="starstrata daily workflow 失敗或逾時：$RUN_URL"
           fi
           args=(--data-urlencode "chat_id=$TELEGRAM_CHAT_ID" --data-urlencode "text=$text")
-          # 去掉前後空白後，空值與 General（1）不帶主題，同 cli.thread_id；其他值照帶，不合法時由 Telegram 拒絕。
+          # 去掉前後空白後，空值不帶主題，同 cli.thread_id；其他值照帶，不合法時由 Telegram 拒絕。
           thread="$TELEGRAM_THREAD_ID"
           thread="${thread#"${thread%%[![:space:]]*}"}"
           thread="${thread%"${thread##*[![:space:]]}"}"
-          if [ -n "$thread" ] && ! [[ "$thread" =~ ^0*1$ ]]; then
+          if [ -n "$thread" ]; then
             args+=(--data-urlencode "message_thread_id=$thread")
           fi
           curl -sS --fail -o /dev/null "${args[@]}" \
@@ -242,11 +242,11 @@ jobs:
             text="starstrata dashboard 部署失敗：$RUN_URL"
           fi
           args=(--data-urlencode "chat_id=$TELEGRAM_CHAT_ID" --data-urlencode "text=$text")
-          # 去掉前後空白後，空值與 General（1）不帶主題，同 cli.thread_id；其他值照帶，不合法時由 Telegram 拒絕。
+          # 去掉前後空白後，空值不帶主題，同 cli.thread_id；其他值照帶，不合法時由 Telegram 拒絕。
           thread="$TELEGRAM_THREAD_ID"
           thread="${thread#"${thread%%[![:space:]]*}"}"
           thread="${thread%"${thread##*[![:space:]]}"}"
-          if [ -n "$thread" ] && ! [[ "$thread" =~ ^0*1$ ]]; then
+          if [ -n "$thread" ]; then
             args+=(--data-urlencode "message_thread_id=$thread")
           fi
           curl -sS --fail -o /dev/null "${args[@]}" \

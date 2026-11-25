@@ -76,7 +76,7 @@ starstrata 每天收集 GitHub 趨勢，累積成長期歷史，讓你看出什�
 2. 在目標主題裡傳 `/start@<bot 帳號>`。
 3. 在上面 `getUpdates` 的回應中，這則訊息的 `message.message_thread_id` 就是主題 ID，存成 repository variable `TELEGRAM_THREAD_ID`。
 
-沒有設定 `TELEGRAM_THREAD_ID` 或設為 `1` 時，訊息發到 General。值不是正整數時，`notify` 不發送任何訊息，結束碼為 `2`。
+沒有設定 `TELEGRAM_THREAD_ID` 時，訊息發到 General。值不是正整數時，`notify` 不發送任何訊息，結束碼為 `2`。
 
 每日摘要靜音發送；爆紅警示會發出通知音，並附 GitHub 與 dashboard 按鈕。群組之後升級為超級群組時 chat ID 會改變（[`migrate_to_chat_id`](https://core.telegram.org/bots/api#message)），要更新 `TELEGRAM_CHAT_ID`。
 

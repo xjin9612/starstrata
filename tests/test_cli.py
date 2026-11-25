@@ -70,7 +70,7 @@ def test_collect_runs_even_when_ingest_fails(
 
 @pytest.mark.parametrize(
     ("value", "expected"),
-    [("", None), ("  ", None), ("1", None), ("01", None), ("42", 42), (" 42 ", 42)],
+    [("", None), ("  ", None), ("1", 1), ("01", 1), ("42", 42), (" 42 ", 42)],
 )
 def test_thread_id(value: str, expected: int | None) -> None:
     assert thread_id(value) == expected

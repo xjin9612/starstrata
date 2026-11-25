@@ -528,10 +528,9 @@ updated = 2026-11-24
 - `sendMessage` 不是冪等操作：Telegram 已收下但回應失敗時，重試會重複發送。
 - bot token 在請求網址裡。httpx 的 log 等級設為 WARNING，例外訊息也不帶網址。
 - `TELEGRAM_THREAD_ID` 決定發到群組的哪個主題，由 `cli.thread_id` 解析：
-  - 沒有設定、只有空白，或值為 `1`（General）：不帶 `message_thread_id`，請求與沒有這個功能時相同。
-  - 去掉前後空白後只有 ASCII 數字、且大於 1：每則訊息與每個分段都帶 `message_thread_id`。
+  - 沒有設定或只有空白：不帶 `message_thread_id`，請求與沒有這個功能時相同。群組開啟 Topics 時發到 General。
+  - 去掉前後空白後只有 ASCII 數字、且大於 0：每則訊息與每個分段都帶 `message_thread_id`。
   - 其他值：`notify` 結束碼 `2`，不同步 DB、不發送。不退回 General，避免訊息發錯主題卻沒人發現。
-- General 帶 `message_thread_id=1` 會回 `message thread not found`。這點只見於第三方文件，尚未實測。
 - workflow 的失敗通知用同樣的規則決定要不要帶 `message_thread_id`。不合法的值照帶，由 Telegram 拒絕。
 
 每日摘要的內容：

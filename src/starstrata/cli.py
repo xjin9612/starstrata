@@ -46,20 +46,16 @@ def _token(name: str) -> str:
 
 
 _THREAD_ID = re.compile(r"[0-9]+")
-# General 主題的 ID 是 1，但帶 message_thread_id=1 發送會回 "message thread not found"，
-# 發到 General 要不帶這個參數。這點只見於第三方文件，官方文件沒有說明，尚未實測。
-GENERAL_THREAD_ID = 1
 
 
 def thread_id(value: str) -> int | None:
-    """解析 TELEGRAM_THREAD_ID：空白或 General（1）回傳 None，不是正整數時丟出 UsageError。"""
+    """解析 TELEGRAM_THREAD_ID：空白回傳 None，不是正整數時丟出 UsageError。"""
     value = value.strip()
     if not value:
         return None
     if not _THREAD_ID.fullmatch(value) or int(value) < 1:
         raise UsageError(f"TELEGRAM_THREAD_ID 必須是正整數：{value!r}")
-    number = int(value)
-    return None if number == GENERAL_THREAD_ID else number
+    return int(value)
 
 
 def _report_sync(result: SyncResult) -> None:

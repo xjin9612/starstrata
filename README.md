@@ -76,7 +76,7 @@ To send messages to one topic of a group with Topics enabled:
 2. Send `/start@<bot username>` in the target topic.
 3. In the `getUpdates` response above, `message.message_thread_id` of that message is the topic ID. Save it as the repository variable `TELEGRAM_THREAD_ID`.
 
-Without `TELEGRAM_THREAD_ID`, or with `1`, messages go to General. Any value that is not a positive integer makes `notify` exit with code `2` without sending anything.
+Without `TELEGRAM_THREAD_ID`, messages go to General. Any value that is not a positive integer makes `notify` exit with code `2` without sending anything.
 
 The daily summary is sent silently. Breakout alerts notify with sound and include GitHub and dashboard buttons. If the group is later upgraded to a supergroup, its chat ID changes ([`migrate_to_chat_id`](https://core.telegram.org/bots/api#message)); update `TELEGRAM_CHAT_ID`.
 
