@@ -103,15 +103,15 @@ The run time is the `cron` line in `.github/workflows/daily.yml`.
 
 ## Running locally
 
-Set up the environment as described in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) (Traditional Chinese), then:
+Install [uv](https://docs.astral.sh/uv/) and run `uv sync`; details are in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) (Traditional Chinese). Then:
 
 ```sh
-GH_PAT=<token> .venv/bin/starstrata collect    # fetch today's snapshots
-.venv/bin/starstrata ingest                    # import snapshots into SQLite
-GEMINI_API_KEY=<key> .venv/bin/starstrata translate
-GH_PAT=<token> .venv/bin/starstrata backfill   # star history backfill
-.venv/bin/starstrata report due                # weekly / monthly reports that are due
-.venv/bin/starstrata site                      # build the dashboard into _site/
+GH_PAT=<token> uv run starstrata collect    # fetch today's snapshots
+uv run starstrata ingest                    # import snapshots into SQLite
+GEMINI_API_KEY=<key> uv run starstrata translate
+GH_PAT=<token> uv run starstrata backfill   # star history backfill
+uv run starstrata report due                # weekly / monthly reports that are due
+uv run starstrata site                      # build the dashboard into _site/
 ```
 
 `notify` sends the Telegram messages and needs `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`; `TELEGRAM_THREAD_ID` is optional. `rebuild` recreates SQLite from all snapshots.

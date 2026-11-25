@@ -103,15 +103,15 @@ starstrata 每天收集 GitHub 趨勢，累積成長期歷史，讓你看出什�
 
 ## 本機執行
 
-照 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) 建立開發環境，再執行：
+安裝 [uv](https://docs.astral.sh/uv/) 後執行 `uv sync`，細節見 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)。之後：
 
 ```sh
-GH_PAT=<token> .venv/bin/starstrata collect    # 抓取當天快照
-.venv/bin/starstrata ingest                    # 把快照匯入 SQLite
-GEMINI_API_KEY=<key> .venv/bin/starstrata translate
-GH_PAT=<token> .venv/bin/starstrata backfill   # 回補 star 歷史
-.venv/bin/starstrata report due                # 產生該產生的週報、月報
-.venv/bin/starstrata site                      # 產生 dashboard 到 _site/
+GH_PAT=<token> uv run starstrata collect    # 抓取當天快照
+uv run starstrata ingest                    # 把快照匯入 SQLite
+GEMINI_API_KEY=<key> uv run starstrata translate
+GH_PAT=<token> uv run starstrata backfill   # 回補 star 歷史
+uv run starstrata report due                # 產生該產生的週報、月報
+uv run starstrata site                      # 產生 dashboard 到 _site/
 ```
 
 `notify` 發送 Telegram 訊息，需要 `TELEGRAM_BOT_TOKEN` 與 `TELEGRAM_CHAT_ID`；`TELEGRAM_THREAD_ID` 可不設定。`rebuild` 從全部快照重建 SQLite。

@@ -4,43 +4,45 @@
 
 ## 開發環境
 
-需要 Python 3.14 以上，以及 Node.js（CI 使用 24 版）。`tests/test_calc.py` 用 `node` 執行前端的計算函式，不需要 npm 套件。
+需要 [uv](https://docs.astral.sh/uv/)、Python 3.14（版本寫在 `.python-version`），以及 Node.js（CI 使用 24 版）。`tests/test_calc.py` 用 `node` 執行前端的計算函式，不需要 npm 套件。
 
 ```sh
-python3 -m venv .venv
-.venv/bin/python -m pip install --require-hashes -r requirements-dev.txt
-.venv/bin/python -m pip install --no-deps -e .
+uv sync
 ```
+
+`uv sync` 依 `uv.lock` 建立 `.venv`，安裝執行與開發用的相依套件，以及 starstrata 本身。
 
 提交前四項檢查都要通過，與 CI 相同：
 
 ```sh
-.venv/bin/ruff check .
-.venv/bin/ruff format --check .
-.venv/bin/mypy
-.venv/bin/pytest
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy
+uv run pytest
 ```
 
 改了 `web/` 或 `site.py` 時，另外跑瀏覽器測試。第一次執行前先下載 Chromium：
 
 ```sh
-.venv/bin/playwright install chromium
-.venv/bin/pytest -m e2e
+uv run playwright install chromium
+uv run pytest -m e2e
 ```
 
 README 的截圖 `docs/screenshots/trending.png` 由 `scripts/screenshot.py` 產生：用 `data/` 建置網站，瀏覽器時鐘固定在收集完成後 2 小時再截圖。需要先下載 Chromium。
 
 ```sh
-.venv/bin/python scripts/screenshot.py
+uv run python scripts/screenshot.py
 ```
 
-預覽 dashboard：先執行 `.venv/bin/starstrata site`，再執行 `python3 -m http.server -d _site 8000`，開啟 `http://localhost:8000`。
+預覽 dashboard：先執行 `uv run starstrata site`，再執行 `python3 -m http.server -d _site 8000`，開啟 `http://localhost:8000`。
 
 ## 相依套件
 
-- 直接相依寫在 `pyproject.toml`；`requirements*.txt` 由它產生，不手動編輯。
-- 修改後重新產生兩個檔案，指令寫在各檔案開頭。`pip-compile` 需要先在 `.venv` 安裝 `pip-tools`。
-- Dependabot 每週檢查 pip 套件與 GitHub Actions 的更新，見「GitHub Actions」。
+- 直接相依寫在 `pyproject.toml`：執行需要的在 `[project] dependencies`，開發用的在 `[dependency-groups] dev`。
+- 解析結果與每個檔案的 hash 記在 `uv.lock`，由 uv 產生，不手動編輯。
+- 新增套件：`uv add <套件>`，開發用的加上 `--dev`。升級單一套件：`uv lock --upgrade-package <套件>`，再執行 `uv sync`。
+- CI 與 daily 用 `uv sync --locked` 安裝：`uv.lock` 與 `pyproject.toml` 不一致時直接失敗，不會改寫 `uv.lock`。安裝時依 `uv.lock` 驗證 hash，竄改過的 wheel 會被拒絕（實測）。
+- Dependabot 每週檢查 uv 套件與 GitHub Actions 的更新，見「GitHub Actions」。
 
 ## 資料規則
 
@@ -563,7 +565,7 @@ updated = 2026-11-24
 
 - 只在 `main` 執行；從其他分支手動執行時整個 job 略過，資料與 DB release 只屬於 `main`。
 - checkout 取分支最新的 commit，重跑或排隊的執行也看得到先前已 push 的當天資料。
-- 以 `PYTHONPATH=src` 執行 `python -m starstrata`，不建置套件；安裝的相依套件都經過 hash 驗證。
+- 以 `uv sync --locked --no-dev --no-install-project` 只安裝執行需要的相依套件，不裝 `dev` 群組，也不建置 starstrata 本身；再以 `PYTHONPATH=src` 執行 `uv run --no-sync python -m starstrata`。
 - 設定 `concurrency`，同時只允許一個執行，後到的排隊等待。
 - 下載的 DB 解壓失敗時刪除，由 `ingest` 從快照重建。
 
@@ -584,6 +586,8 @@ updated = 2026-11-24
 其他：
 
 - 第三方 action 一律固定到 commit SHA。
+- repo 設定只允許 GitHub 官方的 action 與 `astral-sh/setup-uv`，並要求固定到完整的 commit SHA。新增其他 action 前要先調整 Settings → Actions 的允許清單。
+- Python 由 `actions/setup-python` 依 `.python-version` 安裝；相依套件由 `astral-sh/setup-uv` 安裝的 uv 管理，uv 版本固定在 workflow 的 `version`。setup-uv 的快取用預設值：GitHub 代管的 runner 上啟用。
 - runner 固定為 `ubuntu-26.04`，不用 `ubuntu-latest`。
-- Dependabot 每週檢查 pip 套件與 GitHub Actions 的更新（`.github/dependabot.yml`）。官方文件說明支援 `.txt` 與 PEP 621 的 `pyproject.toml`；能否依 `pyproject.toml` 重新產生含雜湊的 `requirements.txt`，文件沒有說明，尚未驗證。
+- Dependabot 每週檢查 uv 套件（`package-ecosystem: uv`）與 GitHub Actions 的更新（`.github/dependabot.yml`）。
 - `GITHUB_TOKEN` 權限：`daily` job 為 `contents: write`，`deploy` job 為 `pages: write`、`id-token: write`。
