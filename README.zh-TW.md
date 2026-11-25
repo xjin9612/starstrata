@@ -41,9 +41,10 @@ starstrata 每天收集 GitHub 趨勢，累積成長期歷史，讓你看出什�
    | `GH_PAT` | 是 | fine-grained personal access token，不需授予任何權限；預設就能讀取公開 repo（[說明](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)） |
    | `TELEGRAM_BOT_TOKEN` | 否 | Telegram bot token；未設定時不發送訊息 |
    | `TELEGRAM_CHAT_ID` | 否 | 接收訊息的對話；見 [Telegram](#telegram) |
-   | `TELEGRAM_THREAD_ID` | 否 | 群組主題 ID；不設定則發到 General；見 [Telegram](#telegram) |
    | `GEMINI_API_KEY` | 否 | 說明翻譯與報告解讀（預設供應商），在 [Google AI Studio](https://aistudio.google.com) 免費建立。未設定時顯示原文，報告不含解讀 |
    | `ANTHROPIC_API_KEY` | 否 | `reports.provider` 設為 `anthropic` 時改用 Claude |
+
+   要發到群組的某個主題時，另外在同一頁的 Variables 分頁建立 repository variable `TELEGRAM_THREAD_ID`，見 [Telegram](#telegram)。它是 variable 而不是 secret：GitHub 會把 secret 的值從 log 遮掉，`3` 這種短數字會讓 log 裡相同的數字都被遮掉。
 
 4. 在 Settings → Pages → Build and deployment，把 Source 設為 **GitHub Actions**。
 5. 第一次收集：在 Actions → `Daily` → Run workflow 手動執行，或執行 `gh workflow run daily.yml -R <owner>/<repo>`。
@@ -73,7 +74,7 @@ starstrata 每天收集 GitHub 趨勢，累積成長期歷史，讓你看出什�
 
 1. 在群組設定開啟 Topics。有主題的群組是超級群組（[`is_forum`](https://core.telegram.org/bots/api#chat)），一般群組會升級為超級群組，chat ID 跟著改變，要更新 `TELEGRAM_CHAT_ID`。
 2. 在目標主題裡傳 `/start@<bot 帳號>`。
-3. 在上面 `getUpdates` 的回應中，這則訊息的 `message.message_thread_id` 就是主題 ID，存成 secret `TELEGRAM_THREAD_ID`。
+3. 在上面 `getUpdates` 的回應中，這則訊息的 `message.message_thread_id` 就是主題 ID，存成 repository variable `TELEGRAM_THREAD_ID`。
 
 沒有設定 `TELEGRAM_THREAD_ID` 或設為 `1` 時，訊息發到 General。值不是正整數時，`notify` 不發送任何訊息，結束碼為 `2`。
 

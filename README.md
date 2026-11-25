@@ -41,9 +41,10 @@ starstrata collects GitHub trends every day and keeps them as a long-term histor
    | `GH_PAT` | Yes | Fine-grained personal access token with no extra permissions; it can read public repos ([docs](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)) |
    | `TELEGRAM_BOT_TOKEN` | No | Telegram bot token; without it no messages are sent |
    | `TELEGRAM_CHAT_ID` | No | Chat that receives the messages; see [Telegram](#telegram) |
-   | `TELEGRAM_THREAD_ID` | No | Group topic ID; without it messages go to General; see [Telegram](#telegram) |
    | `GEMINI_API_KEY` | No | Description translation and report summaries (default provider). Create one for free in [Google AI Studio](https://aistudio.google.com). Without it, original descriptions are shown and reports have no summaries |
    | `ANTHROPIC_API_KEY` | No | Used instead of Gemini when `reports.provider` is `anthropic` |
+
+   To send to one topic of a group, also create the repository variable `TELEGRAM_THREAD_ID` on the Variables tab of the same page; see [Telegram](#telegram). It is a variable, not a secret: GitHub hides secret values in logs, and a short number like `3` would hide every matching number in the logs.
 
 4. In Settings → Pages → Build and deployment, set Source to **GitHub Actions**.
 5. Run the first collection in Actions → `Daily` → Run workflow, or with `gh workflow run daily.yml -R <owner>/<repo>`.
@@ -73,7 +74,7 @@ To send messages to one topic of a group with Topics enabled:
 
 1. Turn on Topics in the group settings. A group with topics is a supergroup ([`is_forum`](https://core.telegram.org/bots/api#chat)), so a basic group becomes a supergroup and its chat ID changes. Update `TELEGRAM_CHAT_ID`.
 2. Send `/start@<bot username>` in the target topic.
-3. In the `getUpdates` response above, `message.message_thread_id` of that message is the topic ID. Save it as the `TELEGRAM_THREAD_ID` secret.
+3. In the `getUpdates` response above, `message.message_thread_id` of that message is the topic ID. Save it as the repository variable `TELEGRAM_THREAD_ID`.
 
 Without `TELEGRAM_THREAD_ID`, or with `1`, messages go to General. Any value that is not a positive integer makes `notify` exit with code `2` without sending anything.
 

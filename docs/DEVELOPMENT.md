@@ -60,7 +60,8 @@ README 的截圖 `docs/screenshots/trending.png` 由 `scripts/screenshot.py` 產
   - 流程：用 `tests/snapshot_builder.py` 寫 fixture 快照，執行 `starstrata site`，在本機起 HTTP server，再用 Playwright 開啟。
   - 每個測試結束時檢查：沒有 JS 錯誤、沒有失敗的請求、沒有連到本機以外的網址。預期會 404 的測試要自己檢查並清空 `failed_requests`。
   - 用 Playwright 的等待條件，不用固定秒數的等待。
-- token 只從環境變數讀取：`GH_PAT`、`TELEGRAM_BOT_TOKEN`、`TELEGRAM_CHAT_ID`、`TELEGRAM_THREAD_ID`、`GEMINI_API_KEY`、`ANTHROPIC_API_KEY`。錯誤訊息與 log 不得輸出 token；`TELEGRAM_THREAD_ID` 不是祕密，可以寫進 log。
+- token 只從環境變數讀取：`GH_PAT`、`TELEGRAM_BOT_TOKEN`、`TELEGRAM_CHAT_ID`、`GEMINI_API_KEY`、`ANTHROPIC_API_KEY`。錯誤訊息與 log 不得輸出 token。
+- `TELEGRAM_THREAD_ID` 也從環境變數讀取，在 workflow 裡取自 repository variable。它不是祕密，可以寫進 log；存成 secret 時，GitHub 會把 log 裡相同的數字都遮掉。
 
 ## 模組
 
