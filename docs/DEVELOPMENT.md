@@ -587,7 +587,10 @@ updated = 2026-11-24
 
 - 第三方 action 一律固定到 commit SHA。
 - repo 設定只允許 GitHub 官方的 action 與 `astral-sh/setup-uv`，並要求固定到完整的 commit SHA。新增其他 action 前要先調整 Settings → Actions 的允許清單。
-- Python 由 `actions/setup-python` 依 `.python-version` 安裝；相依套件由 `astral-sh/setup-uv` 安裝的 uv 管理，uv 版本固定在 workflow 的 `version`。setup-uv 的快取用預設值：GitHub 代管的 runner 上啟用。
+- Python 由 `actions/setup-python` 依 `.python-version` 安裝；相依套件由 `astral-sh/setup-uv` 安裝的 uv 管理。
+- uv 版本固定在 workflow 的 `version`（三處）。setup-uv 用自己內建的 checksum 驗證下載的 uv，所以版本要在固定 SHA 的 setup-uv 內建清單中（`src/download/checksum/known-checksums.json`）。Dependabot 只更新 `uses:`，不會更新 `version`，升級 uv 時手動修改。
+- setup-uv 的快取：CI 用預設值（GitHub 代管的 runner 上啟用）；daily 關閉，因為快取 key 與 CI 相同但不含 `dev` 群組。
+- CI 的 `uv sync --locked` 會安裝 starstrata 本身，建置用的 setuptools 由 uv 另外下載，不在 `uv.lock` 的 hash 驗證範圍內。daily 不建置 starstrata，沒有這個步驟。
 - runner 固定為 `ubuntu-26.04`，不用 `ubuntu-latest`。
-- Dependabot 每週檢查 uv 套件（`package-ecosystem: uv`）與 GitHub Actions 的更新（`.github/dependabot.yml`）。
+- Dependabot 每週檢查 uv 套件（[`package-ecosystem: uv`](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference)）與 GitHub Actions 的更新（`.github/dependabot.yml`）。它對 `[dependency-groups]` 與 `uv.lock` 的實際更新方式尚未驗證。
 - `GITHUB_TOKEN` 權限：`daily` job 為 `contents: write`，`deploy` job 為 `pages: write`、`id-token: write`。
