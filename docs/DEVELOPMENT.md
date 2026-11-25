@@ -4,7 +4,7 @@
 
 ## 開發環境
 
-需要 Python 3.12 以上，以及 Node.js（CI 使用 24 版）。`tests/test_calc.py` 用 `node` 執行前端的計算函式，不需要 npm 套件。
+需要 Python 3.14 以上，以及 Node.js（CI 使用 24 版）。`tests/test_calc.py` 用 `node` 執行前端的計算函式，不需要 npm 套件。
 
 ```sh
 python3 -m venv .venv

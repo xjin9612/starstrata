@@ -122,7 +122,7 @@ def _error_detail(response: httpx.Response, api_key: str) -> str:
     """Google 錯誤回應的 status 與 message。先遮掉 api_key 再截斷到 200 字元。"""
     try:
         error = response.json()["error"]
-    except (ValueError, KeyError, TypeError):
+    except ValueError, KeyError, TypeError:
         return ""
     if not isinstance(error, dict):
         return ""

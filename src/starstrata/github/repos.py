@@ -81,7 +81,7 @@ def _parse(node: dict[str, Any]) -> RepoSnapshot:
 def _try_parse(node: dict[str, Any]) -> RepoSnapshot | None:
     try:
         return _parse(node)
-    except (KeyError, TypeError):
+    except KeyError, TypeError:
         return None
 
 

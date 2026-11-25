@@ -53,7 +53,7 @@ def detect_repo(environ: Mapping[str, str], cwd: Path) -> str | None:
             check=True,
             timeout=10,
         ).stdout.strip()
-    except (OSError, subprocess.SubprocessError):
+    except OSError, subprocess.SubprocessError:
         return None
     match = _REMOTE.search(remote)
     return match.group(1) if match else None

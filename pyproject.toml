@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "每日收集 GitHub 趨勢資料，保存成長期時間序列"
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 dependencies = [
   "anthropic>=2.12",
   "beautifulsoup4>=4.15",
@@ -36,7 +36,7 @@ markers = ["e2e: 瀏覽器測試（tests/e2e），預設不執行，用 pytest -
 
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py314"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
