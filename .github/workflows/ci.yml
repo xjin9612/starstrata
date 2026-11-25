@@ -19,12 +19,14 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version-file: .python-version
+      # uv 的 checksum 內建在固定 SHA 的 setup-uv 裡，版本要在它的內建清單內；Dependabot 不會更新 version。
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          version: "0.13.10"
+          version: "0.13.6"
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"
+      # 建置 starstrata 本身用的 setuptools 由 uv 另外下載，不在 uv.lock 的 hash 驗證範圍內。
       - name: 安裝相依套件（依 uv.lock 驗證 hash）
         run: uv sync --locked
       - name: ruff
@@ -46,9 +48,11 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version-file: .python-version
+      # uv 的 checksum 內建在固定 SHA 的 setup-uv 裡，版本要在它的內建清單內；Dependabot 不會更新 version。
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          version: "0.13.10"
+          version: "0.13.6"
+      # 建置 starstrata 本身用的 setuptools 由 uv 另外下載，不在 uv.lock 的 hash 驗證範圍內。
       - name: 安裝相依套件（依 uv.lock 驗證 hash）
         run: uv sync --locked
       # 瀏覽器由 Playwright 自己下載，不在 uv.lock 的 hash 驗證範圍內。
