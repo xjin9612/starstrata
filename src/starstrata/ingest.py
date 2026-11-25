@@ -14,7 +14,7 @@ from pathlib import Path
 
 from starstrata import alerts, tracking
 from starstrata.backfill import BACKFILL_DIR
-from starstrata.config import Config
+from starstrata.config import Config, ConfigError
 from starstrata.db import (
     OVERALL,
     SCHEMA_VERSION,
@@ -42,6 +42,11 @@ log = logging.getLogger(__name__)
 
 # meta 的鍵：警示已處理到哪一天（含）。中斷後從這一天重新處理。
 ALERTS_THROUGH = "alerts_through"
+_ALERT_KEYS = {"node_id", "daily_stars", "baseline"}
+
+
+class AlertsFileError(ConfigError):
+    """alerts.jsonl 的內容不合格式，通常是手動修改造成的。"""
 
 
 @dataclass
@@ -143,7 +148,7 @@ def _settle_alerts(
         path = day_dir(data_root, day) / ALERTS_FILE
         with conn:
             if path.is_file():
-                _load_alerts(conn, day, read_jsonl(path))
+                _load_alerts(conn, day, path)
             else:
                 alerts.detect(conn, cfg.alerts, day, _recent_stars(conn, day, window))
                 if i < len(days) - 1:
@@ -153,12 +158,30 @@ def _settle_alerts(
             set_meta(conn, ALERTS_THROUGH, days[-1].isoformat())
 
 
-def _load_alerts(conn: sqlite3.Connection, day: date, rows: list[dict[str, object]]) -> None:
+def _load_alerts(conn: sqlite3.Connection, day: date, path: Path) -> None:
+    """匯入凍結的警示。格式不符時丟出 AlertsFileError；不在 repos 表的 repo 記警告後略過。"""
     d = day.isoformat()
+    rows: list[tuple[str, int, float | None]] = []
+    for n, row in enumerate(read_jsonl(path), start=1):
+        node_id, stars, baseline = row.get("node_id"), row.get("daily_stars"), row.get("baseline")
+        if (
+            set(row) != _ALERT_KEYS
+            or not isinstance(node_id, str)
+            or type(stars) is not int
+            or not (baseline is None or type(baseline) in (int, float))
+        ):
+            raise AlertsFileError(f"{path} 第 {n} 行格式不符：{row}")
+        if any(r[0] == node_id for r in rows):
+            raise AlertsFileError(f"{path} 第 {n} 行重複的 node_id：{node_id}")
+        rows.append((node_id, stars, baseline))
+    known = {r[0] for r in conn.execute("SELECT node_id FROM repos")}
+    for node_id, *_ in rows:
+        if node_id not in known:
+            log.warning("%s 的 %s 不在追蹤的 repo 中，略過", path, node_id)
     conn.execute("DELETE FROM alerts WHERE date = ?", (d,))
     conn.executemany(
         "INSERT INTO alerts (node_id, date, daily_stars, baseline) VALUES (?, ?, ?, ?)",
-        ((r["node_id"], d, r["daily_stars"], r["baseline"]) for r in rows),
+        ((node_id, d, stars, baseline) for node_id, stars, baseline in rows if node_id in known),
     )
 
 

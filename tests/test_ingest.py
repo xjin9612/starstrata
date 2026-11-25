@@ -9,7 +9,7 @@ import pytest
 
 from starstrata import db, tracking
 from starstrata.config import AlertsConfig, Config, TrackingConfig, load_config
-from starstrata.ingest import ALERTS_THROUGH, freeze_alerts, sync
+from starstrata.ingest import ALERTS_THROUGH, AlertsFileError, freeze_alerts, sync
 from starstrata.snapshots import ALERTS_FILE, day_dir, read_jsonl, write_jsonl
 from tests.snapshot_builder import gone, meta, repo, search, trending, write_day
 
@@ -267,6 +267,23 @@ def test_earlier_days_are_frozen_and_latest_is_not(cfg: Config, paths: tuple[Pat
     assert not sync(db_path, cfg, data).rebuilt and result.rebuilt
 
 
+def test_latest_day_frozen_with_alerts_then_synced(cfg: Config, paths: tuple[Path, Path]) -> None:
+    data, db_path = paths
+    write_day(data, day(1), repos=[repo("R_a", 100)], search_rows=[search("R_a", "o/r_a")])
+    write_day(data, day(2), repos=[repo("R_a", 400)])
+    sync(db_path, cfg, data)
+    conn = db.connect(db_path)
+    try:
+        with conn:
+            freeze_alerts(conn, data, day(2))
+    finally:
+        conn.close()
+    write_day(data, day(3), repos=[repo("R_a", 401)])
+    result = sync(db_path, cfg, data)
+    assert not result.rebuilt
+    assert _query(db_path, "SELECT date, daily_stars FROM alerts") == [("2026-11-02", 300)]
+
+
 def test_frozen_alerts_are_read_not_recomputed(cfg: Config, paths: tuple[Path, Path]) -> None:
     data, db_path = paths
     write_day(data, day(1), repos=[repo("R_a", 100)], search_rows=[search("R_a", "o/r_a")])
@@ -279,6 +296,49 @@ def test_frozen_alerts_are_read_not_recomputed(cfg: Config, paths: tuple[Path, P
     assert _query(db_path, "SELECT date, daily_stars, baseline FROM alerts") == [
         ("2026-11-02", 7, 1.5)
     ]
+
+
+@pytest.mark.parametrize(
+    ("rows", "message"),
+    [
+        ([{"node_id": "R_a", "daily_stars": 5}], "第 1 行格式不符"),
+        ([{"node_id": "R_a", "daily_stars": "5", "baseline": None}], "第 1 行格式不符"),
+        (
+            [
+                {"node_id": "R_a", "daily_stars": 5, "baseline": None},
+                {"node_id": "R_a", "daily_stars": 6, "baseline": 1.0},
+            ],
+            "第 2 行重複的 node_id",
+        ),
+    ],
+)
+def test_malformed_frozen_alerts_are_rejected(
+    cfg: Config, paths: tuple[Path, Path], rows: list[dict[str, object]], message: str
+) -> None:
+    data, db_path = paths
+    write_day(data, day(1), repos=[repo("R_a", 100)], search_rows=[search("R_a", "o/r_a")])
+    write_jsonl(day_dir(data, day(1)) / ALERTS_FILE, rows)
+    write_day(data, day(2), repos=[repo("R_a", 101)])
+    with pytest.raises(AlertsFileError, match=message):
+        sync(db_path, cfg, data)
+
+
+def test_frozen_alerts_of_unknown_repos_are_skipped(
+    cfg: Config, paths: tuple[Path, Path], caplog: pytest.LogCaptureFixture
+) -> None:
+    data, db_path = paths
+    write_day(data, day(1), repos=[repo("R_a", 100)], search_rows=[search("R_a", "o/r_a")])
+    write_jsonl(
+        day_dir(data, day(1)) / ALERTS_FILE,
+        [
+            {"node_id": "R_a", "daily_stars": 5, "baseline": None},
+            {"node_id": "R_x", "daily_stars": 9, "baseline": 2},
+        ],
+    )
+    write_day(data, day(2), repos=[repo("R_a", 101)])
+    sync(db_path, cfg, data)
+    assert _query(db_path, "SELECT node_id, date FROM alerts") == [("R_a", "2026-11-01")]
+    assert "R_x 不在追蹤的 repo 中" in caplog.text
 
 
 def test_editing_frozen_alerts_triggers_rebuild(cfg: Config, paths: tuple[Path, Path]) -> None:
