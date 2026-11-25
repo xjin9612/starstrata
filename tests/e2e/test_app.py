@@ -158,7 +158,7 @@ def test_alerts_rule_and_rows(page: Page, base_url: str) -> None:
     page.goto(f"{base_url}#/alerts")
     expect(page.locator(".rule")).to_have_text(
         "規則：日增 ≥ 近 7 日平均 × 3，且 ≥ 200 star；同一 repo 7 天內只警示一次；"
-        "近 7 日資料不足時只看 200。"
+        "近 7 日資料（含歷史回補）不足時只看 200。"
     )
     rows = page.locator("table tbody tr")
     expect(rows).to_have_count(2)

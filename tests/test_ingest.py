@@ -215,6 +215,24 @@ def test_alert_is_detected_during_ingest(cfg: Config, paths: tuple[Path, Path]) 
     ]
 
 
+def test_alert_is_redetected_after_backfill_arrives(cfg: Config, paths: tuple[Path, Path]) -> None:
+    from starstrata.backfill import backfill_path
+    from starstrata.snapshots import write_jsonl
+
+    data, db_path = paths
+    write_day(data, day(10), repos=[repo("R_a", 100)], search_rows=[search("R_a", "o/r_a")])
+    write_day(data, day(11), repos=[repo("R_a", 400)])
+    sync(db_path, cfg, data)
+    assert _query(db_path, "SELECT date, baseline FROM alerts") == [("2026-11-11", None)]
+    # 首筆快照前 2、3 天各 +200，基準 200；日增 300 未達 3 倍。
+    write_jsonl(
+        backfill_path(data, "R_a"),
+        [{"week": "2026-11-02", "days": [200, 200, 200, 200, 200, 200, 200]}],
+    )
+    sync(db_path, cfg, data)
+    assert _query(db_path, "SELECT date, baseline FROM alerts") == []
+
+
 def test_due_ids(cfg: Config, paths: tuple[Path, Path]) -> None:
     data, db_path = paths
     _make_dormant(data)

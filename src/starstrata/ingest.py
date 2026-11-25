@@ -64,6 +64,7 @@ def sync(db_path: Path, cfg: Config, data_root: Path, *, force_rebuild: bool = F
             for d in days:
                 _ingest_day(conn, cfg, data_root, d, hashes[d])
             _sync_backfill(conn, data_root)
+            _detect_alerts(conn, cfg, days)
         finally:
             conn.close()
         os.replace(tmp, db_path)
@@ -76,6 +77,9 @@ def sync(db_path: Path, cfg: Config, data_root: Path, *, force_rebuild: bool = F
         for d in pending:
             _ingest_day(conn, cfg, data_root, d, hashes[d])
         _sync_backfill(conn, data_root)
+        # 沒有新日期時重新判定最新一天，讓後來匯入的回補資料用在當天的基準。
+        latest = [date.fromisoformat(max(done))] if done else []
+        _detect_alerts(conn, cfg, pending or latest)
     finally:
         conn.close()
     return SyncResult(ingested=pending)
@@ -112,6 +116,15 @@ def _sync_backfill(conn: sqlite3.Connection, data_root: Path) -> None:
                 "INSERT OR REPLACE INTO backfilled (node_id, file_hash) VALUES (?, ?)",
                 (node_id, digest),
             )
+
+
+def _detect_alerts(conn: sqlite3.Connection, cfg: Config, days: list[date]) -> None:
+    """依序判定 days 的警示。要在回補資料匯入之後執行，基準才用得到回補資料。"""
+    # 基準期間開頭缺快照時，往前再找 baseline_days 天內最近的快照。
+    window = 2 * cfg.alerts.baseline_days + 1
+    for day in days:
+        with conn:
+            alerts.detect(conn, cfg.alerts, day, _recent_stars(conn, day, window))
 
 
 def _ingested(conn: sqlite3.Connection) -> dict[str, str]:
@@ -193,10 +206,8 @@ def _ingest_day(
         tracking.mark_gone(conn, day, gone)
         tracking.appear(conn, day, appeared)
 
-        window = max(cfg.tracking.dormant_after_days, cfg.alerts.baseline_days + 1)
-        stars = _recent_stars(conn, day, window)
+        stars = _recent_stars(conn, day, cfg.tracking.dormant_after_days)
         tracking.apply_transitions(conn, cfg.tracking, day, stars, appeared)
-        alerts.detect(conn, cfg.alerts, day, stars)
 
         conn.execute(
             "INSERT OR REPLACE INTO ingested_dates (date, files_hash) VALUES (?, ?)",

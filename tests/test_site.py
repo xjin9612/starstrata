@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -10,7 +11,7 @@ import pytest
 from starstrata import db
 from starstrata.backfill import backfill_path
 from starstrata.cli import main
-from starstrata.config import Config, load_config
+from starstrata.config import AlertsConfig, Config, load_config
 from starstrata.ingest import sync
 from starstrata.notes import parse_notes
 from starstrata.reports import GAINERS_HEADING
@@ -218,21 +219,26 @@ def test_empty_database_builds_placeholder(cfg: Config, tmp_path: Path) -> None:
 
 
 def test_alerts_use_rounded_baseline(cfg: Config, tmp_path: Path) -> None:
+    cfg = replace(
+        cfg,
+        alerts=AlertsConfig(baseline_days=7, multiplier=3.0, min_daily_stars=200, cooldown_days=7),
+    )
     data = tmp_path / "data"
-    write_day(data, date(2026, 11, 1), repos=[repo("R_a", 1, full_name="o/a", meta=meta())])
-    write_day(data, date(2026, 11, 2), repos=[repo("R_a", 2, full_name="o/a")])
+    stars = 1
+    write_day(data, date(2026, 11, 1), repos=[repo("R_a", stars, full_name="o/a", meta=meta())])
+    # 前 7 天共 +74，基準 10.571…；第 9 天 +500。
+    for n, delta in enumerate([10, 10, 10, 11, 11, 11, 11, 500], start=2):
+        stars += delta
+        write_day(data, date(2026, 11, n), repos=[repo("R_a", stars, full_name="o/a")])
     db_path = tmp_path / "db.sqlite"
     sync(db_path, cfg, data)
     conn = db.connect(db_path)
-    conn.executemany(
-        "INSERT INTO alerts (node_id, date, daily_stars, baseline) VALUES (?, ?, ?, ?)",
-        [("R_a", "2026-11-02", 500, 10.6), ("R_a", "2026-10-01", 300, None)],
-    )
+    conn.execute("INSERT INTO alerts VALUES ('R_a', '2026-10-01', 300, NULL)")
     conn.commit()
     conn.close()
     out, _ = _build(cfg, tmp_path, data)
     assert _read(out / "data" / "alerts.json") == {
-        "items": [{"date": "2026-11-02", "full_name": "o/a", "added": 500, "baseline": 10.6}]
+        "items": [{"date": "2026-11-09", "full_name": "o/a", "added": 500, "baseline": 10.6}]
     }
     assert _read(out / "data" / "meta.json")["hot_count"] == 1
     assert _read(out / "data" / "daily.json")["items"][0]["is_hot"] is True

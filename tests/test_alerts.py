@@ -43,10 +43,54 @@ def test_insufficient_baseline_uses_minimum_only() -> None:
     assert alerts.evaluate(CFG, DAY, _series(500, 100)) == (100, None)
 
 
-def test_gap_in_baseline_uses_minimum_only() -> None:
+def test_gap_in_baseline_is_spread_evenly() -> None:
+    series = _series(10, 10, 10, 100)
+    del series[DAY - timedelta(days=2)]
+    assert alerts.evaluate(CFG, DAY, series) == (100, 10.0)
     series = _series(500, 500, 500, 150)
     del series[DAY - timedelta(days=2)]
-    assert alerts.evaluate(CFG, DAY, series) == (150, None)
+    assert alerts.evaluate(CFG, DAY, series) is None
+
+
+def test_gap_at_baseline_start_uses_earlier_snapshot() -> None:
+    series = _series(30, 10, 10, 10, 100)
+    del series[DAY - timedelta(days=4)]
+    # 期間開頭（DAY-4）沒有快照，改從 DAY-5 算起：(10 + 30 + 10 + 10) / 4。
+    assert alerts.evaluate(CFG, DAY, series) == (100, 15.0)
+
+
+def _history(first: date, backfill: dict[date, int] | None) -> alerts.History:
+    return alerts.History(first_snapshot=first, backfill=backfill)
+
+
+def test_backfill_fills_days_before_first_snapshot() -> None:
+    series = _series(40, 100)
+    first = DAY - timedelta(days=2)
+    backfill = {
+        first - timedelta(days=1): 1000,
+        first - timedelta(days=2): 20,
+        first - timedelta(days=3): 30,
+    }
+    # 快照 1 天（40）＋首筆快照前 2、3 天的回補（20、30）；前 1 天可能還沒結束，不用。
+    got = alerts.evaluate(CFG, DAY, series, _history(first, backfill))
+    assert got == (100, 30.0)
+
+
+def test_backfill_days_without_rows_count_as_zero() -> None:
+    first = DAY - timedelta(days=1)
+    series = {first: 1000, DAY: 1100}
+    assert alerts.evaluate(CFG, DAY, series, _history(first, {})) == (100, 0.0)
+
+
+def test_without_backfill_baseline_is_unknown() -> None:
+    first = DAY - timedelta(days=2)
+    assert alerts.evaluate(CFG, DAY, _series(40, 100), _history(first, None)) == (100, None)
+
+
+def test_backfill_not_used_when_series_misses_first_snapshot() -> None:
+    first = DAY - timedelta(days=30)
+    got = alerts.evaluate(CFG, DAY, _series(40, 100), _history(first, {first: 0}))
+    assert got == (100, None)
 
 
 def test_missing_previous_day_gives_no_alert() -> None:
@@ -77,6 +121,24 @@ def test_zero_cooldown_allows_consecutive_alerts(conn: sqlite3.Connection) -> No
         "INSERT INTO alerts VALUES ('R_a', ?, 500, NULL)", ((DAY - timedelta(days=1)).isoformat(),)
     )
     assert alerts.detect(conn, cfg, DAY, {"R_a": _series(10, 10, 10, 500)})
+
+
+def test_detect_replaces_alerts_of_the_day(conn: sqlite3.Connection) -> None:
+    conn.execute("INSERT INTO alerts VALUES ('R_old', ?, 500, NULL)", (DAY.isoformat(),))
+    alerts.detect(conn, CFG, DAY, {"R_a": _series(10, 10, 10, 500)})
+    assert [r["node_id"] for r in conn.execute("SELECT node_id FROM alerts")] == ["R_a"]
+
+
+def test_detect_reads_backfill_from_db(conn: sqlite3.Connection) -> None:
+    first = DAY - timedelta(days=1)
+    conn.execute("INSERT INTO repo_daily VALUES ('R_a', ?, 1000, 0, 0, 0)", (first.isoformat(),))
+    conn.execute("INSERT INTO backfilled VALUES ('R_a', 'h')")
+    for k in range(2, 5):
+        conn.execute(
+            "INSERT INTO star_backfill VALUES ('R_a', ?, 100)",
+            ((first - timedelta(days=k)).isoformat(),),
+        )
+    assert alerts.detect(conn, CFG, DAY, {"R_a": {first: 1000, DAY: 1150}}) == []
 
 
 def test_detect_records_alert(conn: sqlite3.Connection) -> None:
