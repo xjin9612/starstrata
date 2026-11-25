@@ -26,7 +26,7 @@ from starstrata.queries import (
     top_gainers,
     trending_top,
 )
-from starstrata.snapshots import day_dir, write_json
+from starstrata.snapshots import RUN_FILE, day_dir, write_json
 from starstrata.telegram import Button
 from starstrata.translate import lookup
 
@@ -201,6 +201,15 @@ def format_alert(
     return "\n".join(lines)
 
 
+def _repos_complete(data_root: Path, day: date) -> bool:
+    """當天 run.json 合併後沒有缺少快照的 repo；沒有 run.json 或沒有 merged 時視為不完整。"""
+    path = day_dir(data_root, day) / RUN_FILE
+    if not path.is_file():
+        return False
+    merged = json.loads(path.read_text(encoding="utf-8")).get("merged")
+    return isinstance(merged, dict) and merged.get("repos_missing") == []
+
+
 def _load_log(path: Path) -> tuple[bool, list[str]]:
     """回傳 (摘要是否已發送, 已發送警示的 node_id)。"""
     if not path.is_file():
@@ -221,7 +230,8 @@ def notify(
 ) -> NotifyResult:
     """發送 day 的摘要與每則警示。
 
-    發送前先凍結當天的警示（ingest.freeze_alerts），之後重跑或重建都不會改變已發出的警示。
+    當天的 repos 收集完整時，發送前先凍結當天的警示（ingest.freeze_alerts），之後重跑或重建都不會
+    改變已發出的警示。不完整時不凍結，重跑補齊資料後重新判定，新的警示照常發送。
     已發送的項目記在當天快照目錄的 notified.json，同一天重跑不會重複發送。
     每發送成功一則就更新紀錄，中途失敗時已發送的項目不會再發。
     當天尚未匯入快照時發送的提醒不記錄，補上快照後重跑會發送正式摘要。
@@ -233,8 +243,9 @@ def notify(
     def save() -> None:
         write_json(log_path, {"summary": summary_sent, "alerts": sent_alerts})
 
-    with conn:
-        freeze_alerts(conn, data_root, day)
+    if _repos_complete(data_root, day):
+        with conn:
+            freeze_alerts(conn, data_root, day)
     alerts = day_alerts(conn, day)
     if not summary_sent:
         ingested = is_ingested(conn, day)

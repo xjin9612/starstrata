@@ -24,6 +24,7 @@ from starstrata.notify import (
     summary_message,
 )
 from starstrata.queries import AlertLine, RepoLine
+from starstrata.snapshots import RUN_FILE, day_dir, write_json
 from starstrata.telegram import Button
 from starstrata.translate import text_key
 from tests.snapshot_builder import meta, repo, search, trending, write_day
@@ -85,8 +86,19 @@ def world(cfg: Config, tmp_path: Path) -> Iterator[tuple[Any, Path]]:
 Sent = list[Message]
 
 
+def _discard(message: Message) -> None:
+    pass
+
+
+def _complete(data: Path, d: date) -> None:
+    """當天 run.json 記錄 repos 收集完整。"""
+    merged = {"trending_missing": [], "search_ok": True, "repos_missing": []}
+    write_json(day_dir(data, d) / RUN_FILE, {"date": d.isoformat(), "merged": merged})
+
+
 def test_summary_and_alert_are_sent_once(world: tuple[Any, Path]) -> None:
     conn, data = world
+    _complete(data, day(4))
     sent: Sent = []
     result = notify(conn, NOTIFY, day(4), data, sent.append, messages=ZH_TW)
     assert result.summary_sent and result.alerts_sent == ["R_a"]
@@ -209,6 +221,45 @@ def test_first_day_has_no_new_marks_or_counts(world: tuple[Any, Path]) -> None:
     assert "🆕" not in text and "新上榜 " not in text
     assert "日增最多" not in text and "今日新增最多" not in text
     assert text.endswith("\n\n爆紅 0")
+
+
+def test_frozen_day_is_not_rebuilt_on_next_sync(
+    world: tuple[Any, Path], cfg: Config, tmp_path: Path
+) -> None:
+    conn, data = world
+    _complete(data, day(4))
+    notify(conn, NOTIFY, day(4), data, _discard, messages=ZH_TW)
+    assert (day_dir(data, day(4)) / "alerts.jsonl").is_file()
+    assert not sync(tmp_path / "db.sqlite", cfg, data).rebuilt
+
+
+def test_incomplete_day_is_not_frozen_and_rerun_sends_new_alert(
+    cfg: Config, tmp_path: Path
+) -> None:
+    data, db_path = tmp_path / "data", tmp_path / "db.sqlite"
+    write_day(data, day(1), repos=[repo("R_a", 100, full_name="o/a", meta=meta())])
+    # 第一次收集 repos 來源失敗：當天只有 Search，run.json 記錄 R_a 缺快照。
+    write_day(data, day(2), search_rows=[search("R_a", "o/a")])
+    merged = {"trending_missing": [], "search_ok": True, "repos_missing": ["R_a"]}
+    write_json(day_dir(data, day(2)) / RUN_FILE, {"date": "2026-11-02", "merged": merged})
+    sync(db_path, cfg, data)
+    conn = db.connect(db_path)
+    try:
+        notify(conn, NOTIFY, day(2), data, _discard, messages=ZH_TW)
+    finally:
+        conn.close()
+    assert not (day_dir(data, day(2)) / "alerts.jsonl").exists()
+
+    write_day(data, day(2), repos=[repo("R_a", 5100, full_name="o/a")])
+    _complete(data, day(2))
+    sync(db_path, cfg, data)
+    sent: Sent = []
+    conn = db.connect(db_path)
+    try:
+        result = notify(conn, NOTIFY, day(2), data, sent.append, messages=ZH_TW)
+    finally:
+        conn.close()
+    assert result.alerts_sent == ["R_a"] and not result.summary_sent
 
 
 def test_english_summary_and_alert(world: tuple[Any, Path]) -> None:
