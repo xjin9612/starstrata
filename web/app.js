@@ -11,7 +11,7 @@ const SKELETON_DELAY = 150;    // 載入超過這個毫秒數才顯示骨架，�
 const STALE_HOURS = 36;        // collected_at（收集完成時間）距今超過這個時數就提示資料過期；GitHub 排程常延後數小時（實測 7.5 小時），提示條只表示流程停擺
 const SEEN_MAX = 5000;         // 「上次造訪後新出現」最多記住的 repo 數
 
-// 語言由 site_page.py 依 site.locale 寫入的 <html lang> 決定
+// 語言由 site_page.py 依 i18n.locale 寫入的 <html lang> 決定
 const LOCALE = document.documentElement.lang.toLowerCase().startsWith('en') ? 'en' : 'zh-TW';
 const DICT = window.I18N[LOCALE];
 document.documentElement.lang = DICT['html.lang'];

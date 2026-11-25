@@ -186,7 +186,7 @@ stateDiagram-v2
 - 執行日期的時區
 - 報告解讀與說明翻譯的模型供應商與模型名稱
 - 說明翻譯的目標語言與每次執行最多翻譯的則數
-- dashboard 介面文字的語言
+- dashboard、Telegram 訊息與週報月報的語言
 
 祕密存在 GitHub Actions secrets：
 

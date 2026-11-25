@@ -71,7 +71,7 @@ starstrata 每天收集 GitHub 趨勢，累積成長期歷史，讓你看出什�
 
 要把訊息發到開啟 Topics 的群組裡的某個主題：
 
-1. 在群組設定開啟 Topics。主題只存在於超級群組（[`message_thread_id`](https://core.telegram.org/bots/api#sendmessage)），一般群組會升級為超級群組，chat ID 跟著改變，要更新 `TELEGRAM_CHAT_ID`。
+1. 在群組設定開啟 Topics。有主題的群組是超級群組（[`is_forum`](https://core.telegram.org/bots/api#chat)），一般群組會升級為超級群組，chat ID 跟著改變，要更新 `TELEGRAM_CHAT_ID`。
 2. 在目標主題裡傳 `/start@<bot 帳號>`。
 3. 在上面 `getUpdates` 的回應中，這則訊息的 `message.message_thread_id` 就是主題 ID，存成 secret `TELEGRAM_THREAD_ID`。
 

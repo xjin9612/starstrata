@@ -71,7 +71,7 @@ The first day only sets the baseline. New entries, daily gainers and alerts appe
 
 To send messages to one topic of a group with Topics enabled:
 
-1. Turn on Topics in the group settings. Topics only exist in supergroups ([`message_thread_id`](https://core.telegram.org/bots/api#sendmessage)), so a basic group becomes a supergroup and its chat ID changes. Update `TELEGRAM_CHAT_ID`.
+1. Turn on Topics in the group settings. A group with topics is a supergroup ([`is_forum`](https://core.telegram.org/bots/api#chat)), so a basic group becomes a supergroup and its chat ID changes. Update `TELEGRAM_CHAT_ID`.
 2. Send `/start@<bot username>` in the target topic.
 3. In the `getUpdates` response above, `message.message_thread_id` of that message is the topic ID. Save it as the `TELEGRAM_THREAD_ID` secret.
 
