@@ -62,6 +62,34 @@ def test_send_posts_html_message() -> None:
     }
 
 
+def test_default_request_is_unchanged() -> None:
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, json={"ok": True})
+
+    _sender(httpx.MockTransport(handler)).send("<b>hi</b>")
+    assert seen[0].content == (
+        b'{"chat_id":"42","text":"<b>hi</b>","parse_mode":"HTML",'
+        b'"link_preview_options":{"is_disabled":true},"disable_notification":false}'
+    )
+
+
+def test_thread_id_is_sent_with_every_chunk() -> None:
+    seen: list[dict[str, Any]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(json.loads(request.content))
+        return httpx.Response(200, json={"ok": True})
+
+    sender = TelegramSender(TOKEN, "42", thread_id=7, transport=httpx.MockTransport(handler))
+    sender.send("\n".join(["a" * 3000, "b" * 3000]))
+    assert len(seen) == 2
+    assert all(type(body["message_thread_id"]) is int for body in seen)
+    assert [body["message_thread_id"] for body in seen] == [7, 7]
+
+
 def test_silent_send_disables_notification() -> None:
     seen: list[httpx.Request] = []
 

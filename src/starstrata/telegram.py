@@ -63,11 +63,14 @@ class TelegramSender:
         token: str,
         chat_id: str,
         *,
+        thread_id: int | None = None,
         transport: httpx.BaseTransport | None = None,
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
+        """thread_id 是群組主題（forum topic）的 ID；None 表示不指定主題。"""
         self._path = f"/bot{token}/sendMessage"
         self._chat_id = chat_id
+        self._thread_id = thread_id
         self._client = httpx.Client(base_url=API_BASE, timeout=30.0, transport=transport)
         self._sleep = sleep
 
@@ -97,6 +100,8 @@ class TelegramSender:
             "link_preview_options": {"is_disabled": True},
             "disable_notification": silent,
         }
+        if self._thread_id is not None:
+            payload["message_thread_id"] = self._thread_id
         if buttons:
             payload["reply_markup"] = {
                 "inline_keyboard": [[{"text": b.text, "url": b.url} for b in buttons]]

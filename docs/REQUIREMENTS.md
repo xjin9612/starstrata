@@ -195,6 +195,7 @@ stateDiagram-v2
 | `GH_PAT` | 呼叫 GitHub API 收集資料，額度每小時 5,000 次 |
 | `TELEGRAM_BOT_TOKEN` | Telegram Bot |
 | `TELEGRAM_CHAT_ID` | 推播對象 |
+| `TELEGRAM_THREAD_ID` | 推播的群組主題（選用） |
 | `GEMINI_API_KEY` | 說明翻譯與報告解讀（預設供應商） |
 | `ANTHROPIC_API_KEY` | 說明翻譯與報告解讀（改用 Claude 時） |
 

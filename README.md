@@ -41,6 +41,7 @@ starstrata collects GitHub trends every day and keeps them as a long-term histor
    | `GH_PAT` | Yes | Fine-grained personal access token with no extra permissions; it can read public repos ([docs](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)) |
    | `TELEGRAM_BOT_TOKEN` | No | Telegram bot token; without it no messages are sent |
    | `TELEGRAM_CHAT_ID` | No | Chat that receives the messages; see [Telegram](#telegram) |
+   | `TELEGRAM_THREAD_ID` | No | Group topic ID; without it messages go to General; see [Telegram](#telegram) |
    | `GEMINI_API_KEY` | No | Description translation and report summaries (default provider). Create one for free in [Google AI Studio](https://aistudio.google.com). Without it, original descriptions are shown and reports have no summaries |
    | `ANTHROPIC_API_KEY` | No | Used instead of Gemini when `reports.provider` is `anthropic` |
 
@@ -67,6 +68,14 @@ The first day only sets the baseline. New entries, daily gainers and alerts appe
    ```
 
 4. Save `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` as secrets.
+
+To send messages to one topic of a group with Topics enabled:
+
+1. Turn on Topics in the group settings. Topics only exist in supergroups ([`message_thread_id`](https://core.telegram.org/bots/api#sendmessage)), so a basic group becomes a supergroup and its chat ID changes. Update `TELEGRAM_CHAT_ID`.
+2. Send `/start@<bot username>` in the target topic.
+3. In the `getUpdates` response above, `message.message_thread_id` of that message is the topic ID. Save it as the `TELEGRAM_THREAD_ID` secret.
+
+Without `TELEGRAM_THREAD_ID`, or with `1`, messages go to General. Any value that is not a positive integer makes `notify` exit with code `2` without sending anything.
 
 The daily summary is sent silently. Breakout alerts notify with sound and include GitHub and dashboard buttons. If the group is later upgraded to a supergroup, its chat ID changes ([`migrate_to_chat_id`](https://core.telegram.org/bots/api#message)); update `TELEGRAM_CHAT_ID`.
 
@@ -104,7 +113,7 @@ GH_PAT=<token> .venv/bin/starstrata backfill   # star history backfill
 .venv/bin/starstrata site                      # build the dashboard into _site/
 ```
 
-`notify` sends the Telegram messages and needs `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`. `rebuild` recreates SQLite from all snapshots.
+`notify` sends the Telegram messages and needs `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`; `TELEGRAM_THREAD_ID` is optional. `rebuild` recreates SQLite from all snapshots.
 
 | Exit code | Meaning |
 |---|---|

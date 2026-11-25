@@ -41,6 +41,7 @@ starstrata 每天收集 GitHub 趨勢，累積成長期歷史，讓你看出什�
    | `GH_PAT` | 是 | fine-grained personal access token，不需授予任何權限；預設就能讀取公開 repo（[說明](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)） |
    | `TELEGRAM_BOT_TOKEN` | 否 | Telegram bot token；未設定時不發送訊息 |
    | `TELEGRAM_CHAT_ID` | 否 | 接收訊息的對話；見 [Telegram](#telegram) |
+   | `TELEGRAM_THREAD_ID` | 否 | 群組主題 ID；不設定則發到 General；見 [Telegram](#telegram) |
    | `GEMINI_API_KEY` | 否 | 說明翻譯與報告解讀（預設供應商），在 [Google AI Studio](https://aistudio.google.com) 免費建立。未設定時顯示原文，報告不含解讀 |
    | `ANTHROPIC_API_KEY` | 否 | `reports.provider` 設為 `anthropic` 時改用 Claude |
 
@@ -67,6 +68,14 @@ starstrata 每天收集 GitHub 趨勢，累積成長期歷史，讓你看出什�
    ```
 
 4. 把 `TELEGRAM_BOT_TOKEN` 與 `TELEGRAM_CHAT_ID` 存成 secrets。
+
+要把訊息發到開啟 Topics 的群組裡的某個主題：
+
+1. 在群組設定開啟 Topics。主題只存在於超級群組（[`message_thread_id`](https://core.telegram.org/bots/api#sendmessage)），一般群組會升級為超級群組，chat ID 跟著改變，要更新 `TELEGRAM_CHAT_ID`。
+2. 在目標主題裡傳 `/start@<bot 帳號>`。
+3. 在上面 `getUpdates` 的回應中，這則訊息的 `message.message_thread_id` 就是主題 ID，存成 secret `TELEGRAM_THREAD_ID`。
+
+沒有設定 `TELEGRAM_THREAD_ID` 或設為 `1` 時，訊息發到 General。值不是正整數時，`notify` 不發送任何訊息，結束碼為 `2`。
 
 每日摘要靜音發送；爆紅警示會發出通知音，並附 GitHub 與 dashboard 按鈕。群組之後升級為超級群組時 chat ID 會改變（[`migrate_to_chat_id`](https://core.telegram.org/bots/api#message)），要更新 `TELEGRAM_CHAT_ID`。
 
@@ -104,7 +113,7 @@ GH_PAT=<token> .venv/bin/starstrata backfill   # 回補 star 歷史
 .venv/bin/starstrata site                      # 產生 dashboard 到 _site/
 ```
 
-`notify` 發送 Telegram 訊息，需要 `TELEGRAM_BOT_TOKEN` 與 `TELEGRAM_CHAT_ID`。`rebuild` 從全部快照重建 SQLite。
+`notify` 發送 Telegram 訊息，需要 `TELEGRAM_BOT_TOKEN` 與 `TELEGRAM_CHAT_ID`；`TELEGRAM_THREAD_ID` 可不設定。`rebuild` 從全部快照重建 SQLite。
 
 | 結束碼 | 意義 |
 |---|---|

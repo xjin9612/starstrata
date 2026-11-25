@@ -60,7 +60,7 @@ README 的截圖 `docs/screenshots/trending.png` 由 `scripts/screenshot.py` 產
   - 流程：用 `tests/snapshot_builder.py` 寫 fixture 快照，執行 `starstrata site`，在本機起 HTTP server，再用 Playwright 開啟。
   - 每個測試結束時檢查：沒有 JS 錯誤、沒有失敗的請求、沒有連到本機以外的網址。預期會 404 的測試要自己檢查並清空 `failed_requests`。
   - 用 Playwright 的等待條件，不用固定秒數的等待。
-- token 只從環境變數讀取：`GH_PAT`、`TELEGRAM_BOT_TOKEN`、`TELEGRAM_CHAT_ID`、`GEMINI_API_KEY`、`ANTHROPIC_API_KEY`。錯誤訊息與 log 不得輸出 token。
+- token 只從環境變數讀取：`GH_PAT`、`TELEGRAM_BOT_TOKEN`、`TELEGRAM_CHAT_ID`、`TELEGRAM_THREAD_ID`、`GEMINI_API_KEY`、`ANTHROPIC_API_KEY`。錯誤訊息與 log 不得輸出 token；`TELEGRAM_THREAD_ID` 不是祕密，可以寫進 log。
 
 ## 模組
 
@@ -515,6 +515,12 @@ updated = 2026-11-24
 - 每則訊息最多嘗試 3 次：連線錯誤與 5xx 間隔 1、2 秒重試；429 且 `retry_after` 不超過 60 秒時等待後重試。
 - `sendMessage` 不是冪等操作：Telegram 已收下但回應失敗時，重試會重複發送。
 - bot token 在請求網址裡。httpx 的 log 等級設為 WARNING，例外訊息也不帶網址。
+- `TELEGRAM_THREAD_ID` 決定發到群組的哪個主題，由 `cli.thread_id` 解析：
+  - 沒有設定、只有空白，或值為 `1`（General）：不帶 `message_thread_id`，請求與沒有這個功能時相同。
+  - 去掉前後空白後只有 ASCII 數字、且大於 1：每則訊息與每個分段都帶 `message_thread_id`。
+  - 其他值：`notify` 結束碼 `2`，不同步 DB、不發送。不退回 General，避免訊息發錯主題卻沒人發現。
+- General 帶 `message_thread_id=1` 會回 `message thread not found`。這點只見於第三方文件，尚未實測。
+- workflow 的失敗通知用同樣的規則決定要不要帶 `message_thread_id`。不合法的值照帶，由 Telegram 拒絕。
 
 每日摘要的內容：
 

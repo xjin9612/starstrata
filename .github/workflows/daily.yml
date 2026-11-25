@@ -109,6 +109,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_THREAD_ID: ${{ secrets.TELEGRAM_THREAD_ID }}
         run: python -m starstrata notify
 
       # 前面任何步驟失敗、甚至 job 被取消，都要嘗試保住當天已收集的快照，Trending 無法事後補抓。
@@ -184,6 +185,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_THREAD_ID: ${{ secrets.TELEGRAM_THREAD_ID }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           LOCALE: ${{ steps.locale.outputs.locale }}
         run: |
@@ -195,9 +197,13 @@ jobs:
           else
             text="starstrata daily workflow 失敗或逾時：$RUN_URL"
           fi
-          curl -sS --fail -o /dev/null \
-            --data-urlencode "chat_id=$TELEGRAM_CHAT_ID" \
-            --data-urlencode "text=$text" \
+          args=(--data-urlencode "chat_id=$TELEGRAM_CHAT_ID" --data-urlencode "text=$text")
+          # 與 cli.thread_id 相同：去掉前後空白，空值與 General（1）不帶主題；其他值照帶，不合法時由 Telegram 拒絕。
+          read -r thread <<< "$TELEGRAM_THREAD_ID" || true
+          if [ -n "$thread" ] && ! [[ "$thread" =~ ^0*1$ ]]; then
+            args+=(--data-urlencode "message_thread_id=$thread")
+          fi
+          curl -sS --fail -o /dev/null "${args[@]}" \
             "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
 
   deploy:
@@ -221,6 +227,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_THREAD_ID: ${{ secrets.TELEGRAM_THREAD_ID }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           LOCALE: ${{ needs.daily.outputs.locale }}
         run: |
@@ -232,7 +239,11 @@ jobs:
           else
             text="starstrata dashboard 部署失敗：$RUN_URL"
           fi
-          curl -sS --fail -o /dev/null \
-            --data-urlencode "chat_id=$TELEGRAM_CHAT_ID" \
-            --data-urlencode "text=$text" \
+          args=(--data-urlencode "chat_id=$TELEGRAM_CHAT_ID" --data-urlencode "text=$text")
+          # 與 cli.thread_id 相同：去掉前後空白，空值與 General（1）不帶主題；其他值照帶，不合法時由 Telegram 拒絕。
+          read -r thread <<< "$TELEGRAM_THREAD_ID" || true
+          if [ -n "$thread" ] && ! [[ "$thread" =~ ^0*1$ ]]; then
+            args+=(--data-urlencode "message_thread_id=$thread")
+          fi
+          curl -sS --fail -o /dev/null "${args[@]}" \
             "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
