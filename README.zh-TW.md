@@ -16,7 +16,7 @@ starstrata 每天收集 GitHub 趨勢，累積成長期歷史，讓你看出什�
 **線上 dashboard：<https://xjin9612.github.io/starstrata/>**
 
 - 每日快照：GitHub Trending（總榜加六種語言；今日、本週、本月）、Search API 找到的新建 repo，以及所有追蹤中 repo 的 star 數。
-- dashboard：Trending 卡片（名次變化、7 日走勢線、依新增 star 排序）、新上榜、日增排行、爆紅警示、週報與月報，以及每個 repo 的 star 歷史與作者短評。介面、Telegram 訊息與報告可選繁體中文或英文。
+- dashboard：Trending 卡片（名次變化、7 日走勢線、依新增 star 排序）、新上榜、日增排行、爆紅警示、追蹤中的 repo 清單、週報與月報，以及每個 repo 的 star 歷史與作者短評。介面、Telegram 訊息與報告可選繁體中文或英文。
 - Telegram 每日摘要與爆紅警示；週報、月報附 AI 解讀。
 - repo 說明翻成 `translation.target` 設定的語言（本 repo 為繁體中文）。全部在 GitHub Actions 上執行，不需要伺服器或資料庫主機。
 

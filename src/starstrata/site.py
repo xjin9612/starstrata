@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from starstrata.config import Config
-from starstrata.db import OVERALL
+from starstrata.db import ACTIVE, OVERALL
 from starstrata.messages import HTML_LANG, MESSAGES
 from starstrata.notes import Note
 from starstrata.queries import active_count, is_first_day, top_gainers
@@ -179,6 +179,30 @@ class _Context:
             "article_url": note.article_url,
             "updated": note.updated.isoformat(),
         }
+
+
+def _tracked(ctx: _Context) -> list[dict[str, Any]]:
+    """state 為 active 的 repo，依今日新增 star 由多到少，沒有今日新增的排最後。
+
+    period_stars 是最新資料日的日增 star；rank 是這個順序的名次，前端換排序時重新編號。
+    """
+    items = []
+    for r in ctx.repos.values():
+        if r.state != ACTIVE:
+            continue
+        item = ctx.item(0, r.full_name, r.node_id, None) | {"first_seen": r.first_seen}
+        spark = item["spark"]
+        item["period_stars"] = spark[-1] if spark else None
+        items.append(item)
+    items.sort(
+        key=lambda i: (
+            i["period_stars"] is None,
+            -(i["period_stars"] or 0),
+            -(i["stargazers"] or 0),
+            i["full_name"].lower(),
+        )
+    )
+    return [item | {"rank": n} for n, item in enumerate(items, start=1)]
 
 
 def _run_status(data_root: Path | None, latest: date | None) -> dict[str, Any]:
@@ -489,6 +513,7 @@ def build_site(
     trending: dict[str, Any] = {p: {} for p in cfg.trending.periods}
     new: list[dict[str, Any]] = []
     daily: list[dict[str, Any]] = []
+    tracked: list[dict[str, Any]] = []
     alerts: list[dict[str, Any]] = []
     prev_date = _trending_prev_date(conn, latest) if latest else None
     meta["trending_prev_date"] = prev_date
@@ -500,6 +525,7 @@ def build_site(
             for i, r in enumerate(top_gainers(conn, latest, GAINERS_LIMIT), start=1)
         ]
         alerts = _alerts(conn, ctx, latest)
+        tracked = _tracked(ctx)
     reports = _reports(reports_root, data, github_repo, cfg.i18n.locale) if reports_root else []
     _write(data / "reports" / "index.json", {"items": [item for _, item in reports]})
     meta["reports_new"] = (
@@ -512,6 +538,7 @@ def build_site(
     _write(data / "new.json", {"items": new})
     _write(data / "daily.json", {"items": daily})
     _write(data / "alerts.json", {"items": alerts})
+    _write(data / "tracked.json", {"items": tracked})
     _write(data / "search-index.json", _search_index(ctx))
     _write(data / "search-full.json", _search_full(ctx))
 

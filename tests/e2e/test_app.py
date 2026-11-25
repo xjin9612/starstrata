@@ -34,6 +34,7 @@ _CJK = re.compile(r"[㐀-鿿＀-￯　-〿぀-ヿ]")
 
 ROUTES = [
     "#/trending",
+    "#/tracked",
     "#/new",
     "#/daily",
     "#/alerts",
@@ -313,6 +314,48 @@ def test_search_without_results(page: Page, base_url: str) -> None:
     page.goto(base_url)
     page.locator("#q").fill("zzz-none")
     expect(page.locator("#qPanel")).to_contain_text("找不到符合「zzz-none」的 repo")
+
+
+def test_tracked_list_from_kpi(page: Page, base_url: str) -> None:
+    page.goto(f"{base_url}#/trending")
+    page.locator(".kpi-link").click()
+    expect(page).to_have_url(f"{base_url}#/tracked")
+    expect(page.locator("#view h2")).to_have_text("追蹤中的 repo")
+    expect(page.locator(".view-head.compact p")).to_have_text("全部語言・共 36 個・依今日新增排序")
+    assert _cards(page)[:4] == ["hot/rocket", "late/burst", "o/steady", "o/typed"]
+    expect(page.locator(".card")).to_have_count(24)
+    page.locator("#moreTracked").click()
+    expect(page.locator(".card")).to_have_count(36)
+    expect(page.locator(".all-shown")).to_have_text("已顯示全部 36 筆")
+
+
+def test_tracked_sort_and_filter(page: Page, base_url: str) -> None:
+    page.goto(f"{base_url}#/tracked")
+    page.locator('#filters [data-sort="total"]').click()
+    expect(page).to_have_url(f"{base_url}#/tracked?sort=total")
+    expect(page.locator(".view-head.compact p")).to_have_text("全部語言・共 36 個・依總 star 排序")
+    assert _cards(page)[:2] == ["hot/rocket", "s/new-00"]
+    page.locator('#filters [data-sort="recent"]').click()
+    expect(page).to_have_url(f"{base_url}#/tracked?sort=recent")
+    expect(page.locator(".card").first.locator(".created")).to_have_text("首次出現 2026-11-24")
+    page.locator('#filters [data-lang="typescript"]').click()
+    expect(page).to_have_url(f"{base_url}#/tracked?lang=typescript&sort=recent")
+    assert _cards(page) == ["o/typed"]
+    page.locator('#filters [data-lang="rust"]').click()
+    expect(page.get_by_text("沒有 Rust 的追蹤中 repo")).to_be_visible()
+    page.locator('#view .btn[data-lang="all"]').click()
+    expect(page).to_have_url(f"{base_url}#/tracked?sort=recent")
+
+
+def test_tracked_back_restores_sort_and_shown(page: Page, base_url: str) -> None:
+    page.goto(f"{base_url}#/tracked?sort=total")
+    page.locator("#moreTracked").click()
+    expect(page.locator(".card")).to_have_count(36)
+    page.locator(".card .name a", has_text="late/single").click()
+    expect(page.locator("h2")).to_contain_text("late/single")
+    page.locator("[data-back]").click()
+    expect(page).to_have_url(f"{base_url}#/tracked?sort=total")
+    expect(page.locator(".card")).to_have_count(36)
 
 
 def test_back_restores_filter(page: Page, base_url: str) -> None:

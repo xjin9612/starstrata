@@ -16,7 +16,7 @@ starstrata collects GitHub trends every day and keeps them as a long-term histor
 **Live dashboard: <https://xjin9612.github.io/starstrata/>** (interface in Traditional Chinese)
 
 - Daily snapshots of GitHub Trending (overall plus six languages; daily, weekly and monthly), newly created repos from the Search API, and star counts of every tracked repo.
-- A dashboard with trending cards (rank changes, 7-day sparklines, sort by stars gained), new entries, daily gainers, breakout alerts, weekly and monthly reports, and per-repo star history with optional author notes. The interface, Telegram messages and reports are available in Traditional Chinese or English.
+- A dashboard with trending cards (rank changes, 7-day sparklines, sort by stars gained), new entries, daily gainers, breakout alerts, the list of tracked repos, weekly and monthly reports, and per-repo star history with optional author notes. The interface, Telegram messages and reports are available in Traditional Chinese or English.
 - A Telegram daily summary and breakout alerts; weekly and monthly reports with AI summaries.
 - Repo descriptions translated into the language set in `translation.target` (Traditional Chinese here). Runs entirely on GitHub Actions: no server and no database host.
 

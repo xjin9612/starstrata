@@ -6,7 +6,7 @@
  * 設定與語言
  * ===================================================================== */
 const DATA_BASE = 'data/';
-const PAGE_SIZE = 24;          // 新上榜每次多顯示的筆數
+const PAGE_SIZE = 24;          // 新上榜與追蹤清單每次多顯示的筆數
 const SKELETON_DELAY = 150;    // 載入超過這個毫秒數才顯示骨架，避免閃爍
 const STALE_HOURS = 36;        // collected_at（收集完成時間）距今超過這個時數就提示資料過期；GitHub 排程常延後數小時（實測 7.5 小時），提示條只表示流程停擺
 const SEEN_MAX = 5000;         // 「上次造訪後新出現」最多記住的 repo 數
@@ -54,6 +54,7 @@ const LANG_COLORS = { Python: 'var(--lang-python)', TypeScript: 'var(--lang-type
 const PERIOD_ORDER = ['daily', 'weekly', 'monthly'];
 const ROUTES = ['trending', 'new', 'daily', 'alerts', 'reports'];
 const REPORT_KINDS = ['weekly', 'monthly'];
+const TRACKED_SORTS = ['gain', 'total', 'recent'];
 const langName = key => (key === 'all' ? t('filter.all') : LANG_NAMES[key] || key);
 // 「期間・語言」榜名，例如「本週・Rust」「本月・全部語言」；language 為 null 表示總榜
 const boardName = m => t('board', { period: t('period.' + m.period), lang: m.language == null ? t('summary.allLangs') : langName(m.language) });
@@ -117,6 +118,8 @@ function parseRoute(hash = location.hash) {
   const rm = /^reports\/(weekly|monthly)\/([0-9A-Za-z-]+)$/.exec(path);
   if (rm) return { name: 'report', kind: rm[1], period: rm[2], hash };
   if (path === 'reports') return { name: 'reports', kind: REPORT_KINDS.includes(q.get('kind')) ? q.get('kind') : 'all', hash };
+  // 追蹤清單：#/tracked?lang=python&sort=total（預設值不寫）
+  if (path === 'tracked') return { name: 'tracked', lang: q.get('lang') || 'all', sort: TRACKED_SORTS.includes(q.get('sort')) ? q.get('sort') : 'gain', hash };
   return {
     name: ROUTES.includes(path) ? path : 'trending',
     lang: q.get('lang') || 'all',
@@ -133,10 +136,23 @@ function trendingHash(r) {
   const s = q.toString();
   return '#/trending' + (s ? '?' + s : '');
 }
+function trackedHash(r) {
+  const q = new URLSearchParams();
+  if (r.lang !== 'all') q.set('lang', r.lang);
+  if (r.sort !== 'gain') q.set('sort', r.sort);
+  const s = q.toString();
+  return '#/tracked' + (s ? '?' + s : '');
+}
 function routeLabel(r) {
   if (r.name === 'repo') return r.full;
   if (r.name === 'report') return t('reports.title.' + r.kind, { period: r.period });
   if (r.name === 'reports' && r.kind !== 'all') return LOCALE === 'en' ? `${t('route.reports')} (${t('reports.kind.' + r.kind)})` : `${t('route.reports')}（${t('reports.kind.' + r.kind)}）`;
+  if (r.name === 'tracked') {
+    const parts = [];
+    if (r.lang !== 'all') parts.push(langName(r.lang));
+    if (r.sort !== 'gain') parts.push(t('sort.' + r.sort));
+    if (parts.length) return LOCALE === 'en' ? `${t('route.tracked')} (${parts.join(' · ')})` : `${t('route.tracked')}（${parts.join('・')}）`;
+  }
   if (r.name === 'trending') {
     const parts = [];
     if (r.lang !== 'all' || r.period !== 'daily') parts.push(r.lang === 'all' ? t('summary.allLangs') : langName(r.lang), t('period.' + r.period));
@@ -205,7 +221,7 @@ function renderKpis(meta) {
   const fd = `<dd class="none">${t('kpi.firstDay')}</dd>`;
   $('#kpis').innerHTML = `
     <div class="kpi"><dt>${t('kpi.date')}</dt><dd class="mono">${esc(meta.data_date || '—')}${meta.collected_at ? `<small class="kpi-upd">${esc(t('kpi.updated', { time: fmtTime(meta.collected_at, meta.timezone || 'Asia/Taipei') }))}</small>` : ''}</dd></div>
-    <div class="kpi"><dt>${t('kpi.tracked')}</dt><dd>${fmt(meta.tracked_count)}</dd></div>
+    <div class="kpi"><dt>${t('kpi.tracked')}</dt><dd><a class="kpi-link" href="#/tracked">${fmt(meta.tracked_count)}<span class="sr">${t('kpi.trackedLink')}</span></a></dd></div>
     <div class="kpi"><dt>${t('kpi.new')}</dt>${first ? fd : `<dd class="acc">${fmt(meta.new_count)}</dd>`}</div>
     <div class="kpi"><dt>${t('kpi.hot')}</dt>${first ? fd : `<dd class="${hot ? 'hot' : ''}">${hot ? '▲ ' : ''}${fmt(hot)}</dd>`}</div>`;
 }
@@ -289,6 +305,7 @@ function cardHtml(it, opts = {}) {
       ${it.has_note ? `<span title="${t('card.note')}">${ICON.note}</span><span class="sr">${t('card.note')}</span>` : ''}
     </div>
     ${opts.created && it.created_at ? `<div class="created">${esc(t('card.created', { date: it.created_at }))}</div>` : ''}
+    ${opts.firstSeen && it.first_seen ? `<div class="created">${esc(t('card.firstSeen', { date: it.first_seen }))}</div>` : ''}
     <div class="nums">${it.period_stars == null
       ? (opts.nullLabel ? `<span class="per src">${opts.nullLabel}</span>` : `<span class="delta">—</span><span class="per">${opts.unit}</span>`)
       : `<span class="delta">+${fmt(it.period_stars)}</span><span class="per">${opts.unit}</span>`}${sparkHtml(it.spark)}</div>
@@ -336,15 +353,16 @@ function skeletonHtml(route) {
 /* =====================================================================
  * 頁面
  * ===================================================================== */
-function filtersHtml(route, langs, periods) {
+// periods 為 null 時不顯示期間切換（追蹤清單）
+function filtersHtml(route, langs, periods, sorts = ['rank', 'stars']) {
   const chips = langs.map(l =>
     `<button type="button" class="chip" data-lang="${esc(l)}" aria-pressed="${route.lang === l}">${l !== 'all' && LANG_COLORS[langName(l)] ? `<i class="dot" style="--c:${LANG_COLORS[langName(l)]}"></i>` : ''}${esc(langName(l))}</button>`).join('');
-  const per = periods.map(k => `<button type="button" data-period="${k}" aria-pressed="${route.period === k}">${t('period.' + k)}</button>`).join('');
-  const sort = ['rank', 'stars'].map(k => `<button type="button" data-sort="${k}" aria-pressed="${route.sort === k}">${t('sort.' + k)}</button>`).join('');
+  const per = periods ? `<div class="seg" role="group" aria-label="${t('filter.period')}">${periods.map(k => `<button type="button" data-period="${k}" aria-pressed="${route.period === k}">${t('period.' + k)}</button>`).join('')}</div>` : '';
+  const sort = sorts.map(k => `<button type="button" data-sort="${k}" aria-pressed="${route.sort === k}">${t('sort.' + k)}</button>`).join('');
   return `<div class="filters" id="filters">
       <div class="chips" role="group" aria-label="${t('filter.lang')}">${chips}</div>
       <div class="f-right">
-        <div class="seg" role="group" aria-label="${t('filter.period')}">${per}</div>
+        ${per}
         <div class="seg" role="group" aria-label="${t('filter.sort')}">${sort}</div>
       </div>
     </div>`;
@@ -384,6 +402,33 @@ async function viewNew(route, meta) {
   const rest = all.length - shown.length;
   return head + `<ol class="grid" aria-label="${t('new.list')}">${shown.map(it => cardHtml(it, { unit: t('unit.daily'), created: true, showNew: false, markSeen: true, nullLabel: it.from_search ? t('card.fromSearch') : '' })).join('')}</ol>
     ${rest > 0 ? `<div class="more"><button type="button" class="btn" id="moreNew">${esc(t('new.more', { n: fmt(rest) }))}</button></div>` : `<p class="all-shown">${esc(t('new.allShown', { n: fmt(all.length) }))}</p>`}`;
+}
+
+const TRACKED_ORDER = {
+  gain: (a, b) => (b.period_stars ?? -Infinity) - (a.period_stars ?? -Infinity),
+  total: (a, b) => (b.stargazers ?? -1) - (a.stargazers ?? -1),
+  recent: (a, b) => b.first_seen.localeCompare(a.first_seen)
+};
+async function viewTracked(route, meta) {
+  const [all, trending] = await Promise.all([getData('tracked').then(d => d.items), getData('trending')]);
+  // 語言選項是 Trending 的網址代號（python），repo 的語言是 GitHub 名稱（Python），所以不分大小寫比對
+  const langs = ['all', ...Object.keys(trending[PERIOD_ORDER.find(p => trending[p])] || {}).filter(k => k !== 'all')];
+  if (!langs.includes(route.lang)) route.lang = 'all';
+  if (trackedHash(route) !== location.hash) history.replaceState(history.state, '', trackedHash(route));
+  const want = route.lang === 'all' ? null : langName(route.lang).toLowerCase();
+  const list = all.filter(it => !want || (it.language || '').toLowerCase() === want)
+    .sort((a, b) => TRACKED_ORDER[route.sort](a, b) || (b.stargazers ?? -1) - (a.stargazers ?? -1) || a.full_name.localeCompare(b.full_name))
+    .map((it, i) => ({ ...it, rank: i + 1 }));
+  const lname = route.lang === 'all' ? t('summary.allLangs') : langName(route.lang);
+  const head = `<div class="view-head"><h2 tabindex="-1">${t('tracked.title')}</h2><p>${t('tracked.desc')}</p></div>`
+    + filtersHtml(route, langs, null, TRACKED_SORTS)
+    + `<div class="view-head compact"><p>${esc(t('tracked.summary', { lang: lname, n: fmt(list.length) }) + t('tracked.by.' + route.sort))}</p></div>`;
+  if (!list.length) return head + emptyHtml('filter', esc(t('tracked.none', { lang: lname })), esc(t('tracked.noneText')), route.lang === 'all' ? '' : `<button type="button" class="btn" data-lang="all">${t('empty.showAll')}</button>`);
+  const shown = list.slice(0, entry().trackedShown || PAGE_SIZE);
+  recordSeenLater(route, shown, meta);
+  const rest = list.length - shown.length;
+  return head + `<ol class="grid" aria-label="${t('tracked.list')}">${shown.map(it => cardHtml(it, { unit: t('unit.daily'), firstSeen: route.sort === 'recent', markSeen: true })).join('')}</ol>
+    ${rest > 0 ? `<div class="more"><button type="button" class="btn" id="moreTracked">${esc(t('new.more', { n: fmt(rest) }))}</button></div>` : `<p class="all-shown">${esc(t('new.allShown', { n: fmt(list.length) }))}</p>`}`;
 }
 
 async function viewDaily(route, meta) {
@@ -788,7 +833,7 @@ async function render(mode = 'update') {
     const meta = await getData('meta');
     if (token !== renderToken) return;
     META = meta; // 卡片的名次變化等需要 meta，先存起來再組頁面
-    const viewFn = { trending: viewTrending, new: viewNew, daily: viewDaily, alerts: viewAlerts, reports: viewReports, report: viewReport, repo: viewRepo }[route.name];
+    const viewFn = { trending: viewTrending, tracked: viewTracked, new: viewNew, daily: viewDaily, alerts: viewAlerts, reports: viewReports, report: viewReport, repo: viewRepo }[route.name];
     const html = await viewFn(route, meta);
     if (token !== renderToken) return;
     clearTimeout(skTimer);
@@ -893,11 +938,13 @@ document.addEventListener('click', e => {
   if (!b) return;
   if (b.dataset.lang || b.dataset.period || b.dataset.sort) {
     // 篩選寫進網址但不新增歷史紀錄，返回時直接回到上一個頁面
-    const r = currentRoute.name === 'trending' ? { ...currentRoute } : parseRoute('#/trending');
+    const tracked = currentRoute.name === 'tracked';
+    const r = tracked || currentRoute.name === 'trending' ? { ...currentRoute } : parseRoute('#/trending');
     if (b.dataset.lang) r.lang = b.dataset.lang;
     if (b.dataset.period) r.period = b.dataset.period;
     if (b.dataset.sort) r.sort = b.dataset.sort;
-    history.replaceState(history.state, '', trendingHash(r));
+    if (tracked) entry().trackedShown = PAGE_SIZE;
+    history.replaceState(history.state, '', tracked ? trackedHash(r) : trendingHash(r));
     const sel = b.dataset.lang ? `[data-lang="${CSS.escape(r.lang)}"]` : b.dataset.period ? `[data-period="${r.period}"]` : `[data-sort="${r.sort}"]`;
     render('update').then(() => $('#filters ' + sel)?.focus({ preventScroll: true }));
   } else if (b.dataset.rkind) {
@@ -908,9 +955,10 @@ document.addEventListener('click', e => {
     entry().range = b.dataset.range;
     document.querySelectorAll('[data-range]').forEach(x => x.setAttribute('aria-pressed', x.dataset.range === b.dataset.range));
     drawCharts();
-  } else if (b.id === 'moreNew') {
+  } else if (b.id === 'moreNew' || b.id === 'moreTracked') {
     const before = document.querySelectorAll('#view .card').length;
-    entry().newShown = (entry().newShown || PAGE_SIZE) + PAGE_SIZE;
+    const key = b.id === 'moreNew' ? 'newShown' : 'trackedShown';
+    entry()[key] = (entry()[key] || PAGE_SIZE) + PAGE_SIZE;
     render('update').then(() => document.querySelectorAll('#view .card .name a')[before]?.focus());
   } else if (b.hasAttribute('data-back')) {
     history.back();
