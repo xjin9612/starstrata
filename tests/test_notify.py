@@ -14,6 +14,9 @@ from starstrata.config import AlertsConfig, Config, NotifyConfig, load_config
 from starstrata.ingest import sync
 from starstrata.messages import EN, ZH_TW
 from starstrata.notify import (
+    DESCRIPTION_LIMIT,
+    INDENT,
+    TOP_DESCRIPTION_LIMIT,
     Message,
     SummaryData,
     alert_message,
@@ -23,7 +26,7 @@ from starstrata.notify import (
     short_count,
     summary_message,
 )
-from starstrata.queries import AlertLine, RepoLine
+from starstrata.queries import AlertLine, RepoLine, TrendingLine
 from starstrata.snapshots import RUN_FILE, day_dir, write_json
 from starstrata.telegram import Button
 from starstrata.translate import text_key
@@ -391,3 +394,36 @@ def test_missing_day_reminder_does_not_block_real_summary(
     finally:
         conn3.close()
     assert third == []
+
+
+@pytest.mark.parametrize(
+    ("length", "expected"),
+    [
+        (TOP_DESCRIPTION_LIMIT, "a" * TOP_DESCRIPTION_LIMIT),
+        (TOP_DESCRIPTION_LIMIT + 1, "a" * (TOP_DESCRIPTION_LIMIT - 1) + "…"),
+    ],
+)
+def test_top_description_limit(length: int, expected: str) -> None:
+    line = TrendingLine(1, "o/a", "R", 10, 100, None, "a" * length)
+    data = SummaryData(
+        active=1,
+        first_day=False,
+        trending=[line],
+        gainers=[],
+        new_ids=frozenset(),
+        alert_ids=frozenset(),
+    )
+    assert f"\n{INDENT}{expected}\n" in format_summary(D1, data, ZH_TW)
+
+
+@pytest.mark.parametrize(
+    ("length", "expected"),
+    [
+        (DESCRIPTION_LIMIT, "a" * DESCRIPTION_LIMIT),
+        (DESCRIPTION_LIMIT + 1, "a" * (DESCRIPTION_LIMIT - 1) + "…"),
+    ],
+)
+def test_alert_description_limit(length: int, expected: str) -> None:
+    line = RepoLine("R", "o/a", "a" * length, None, 1)
+    text = format_alert(D1, AlertLine(line, 100, None), ZH_TW)
+    assert text.split("\n")[-1] == expected

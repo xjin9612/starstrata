@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Iterator
 from typing import Any
 
 import httpx
@@ -161,13 +162,26 @@ def test_non_object_error_body_raises_telegram_error(status: int, body: Any) -> 
     assert sleeps == []
 
 
-def test_cli_logging_hides_request_urls(caplog: pytest.LogCaptureFixture) -> None:
+@pytest.fixture
+def http_loggers() -> Iterator[list[logging.Logger]]:
+    loggers = [logging.getLogger(name) for name in ("httpx", "httpcore")]
+    saved = [logger.level for logger in loggers]
+    for logger in loggers:
+        logger.setLevel(logging.NOTSET)
+    yield loggers
+    for logger, level in zip(loggers, saved, strict=True):
+        logger.setLevel(level)
+
+
+def test_cli_logging_hides_request_urls(
+    caplog: pytest.LogCaptureFixture, http_loggers: list[logging.Logger]
+) -> None:
     main(["--config", "does-not-exist.toml", "ingest"])
+    assert [logger.level for logger in http_loggers] == [logging.WARNING, logging.WARNING]
     caplog.clear()
-    with caplog.at_level(logging.DEBUG, logger="starstrata"):
+    with caplog.at_level(logging.DEBUG):
         _sender(httpx.MockTransport(lambda r: httpx.Response(200, json={"ok": True}))).send("x")
     assert TOKEN not in caplog.text
-    assert logging.getLogger("httpx").getEffectiveLevel() >= logging.WARNING
 
 
 def test_transport_errors_are_retried() -> None:
@@ -184,17 +198,19 @@ def test_transport_errors_are_retried() -> None:
     assert len(attempts) == 3 and sleeps == [1, 2]
 
 
-def test_server_errors_are_retried_then_fail() -> None:
+@pytest.mark.parametrize("status", [500, 502])
+def test_server_errors_are_retried_then_fail(status: int) -> None:
     sleeps: list[float] = []
-    response = httpx.Response(502, json={"ok": False})
-    with pytest.raises(TelegramError, match="502"):
+    response = httpx.Response(status, json={"ok": False})
+    with pytest.raises(TelegramError, match=str(status)):
         _sender(httpx.MockTransport(lambda r: response), sleeps).send("x")
     assert sleeps == [1, 2]
 
 
-def test_client_error_is_not_retried() -> None:
+@pytest.mark.parametrize("status", [400, 499])
+def test_client_error_is_not_retried(status: int) -> None:
     sleeps: list[float] = []
-    bad = httpx.Response(400, json={"ok": False, "description": "Bad Request"})
+    bad = httpx.Response(status, json={"ok": False, "description": "Bad Request"})
     with pytest.raises(TelegramError):
         _sender(httpx.MockTransport(lambda r: bad), sleeps).send("x")
     assert sleeps == []

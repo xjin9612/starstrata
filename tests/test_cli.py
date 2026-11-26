@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from starstrata.cli import EXIT_USAGE, UsageError, main, thread_id
+from starstrata.telegram import TelegramError
 from tests.snapshot_builder import repo, search, write_day
 
 REPO_CONFIG = Path(__file__).resolve().parent.parent / "config.toml"
@@ -174,3 +175,41 @@ def test_report_uses_configured_locale(tmp_path: Path, monkeypatch: pytest.Monke
     assert main([*args, "--reports", str(tmp_path / "reports")]) == 0
     text = (tmp_path / "reports" / "weekly" / "2026-W47.md").read_text(encoding="utf-8")
     assert text.startswith("# starstrata weekly report 2026-W47 (2026-11-16 to 2026-11-22)\n")
+
+
+def test_site_with_invalid_notes_keeps_existing_output(tmp_path: Path) -> None:
+    write_day(tmp_path / "data", date(2026, 11, 1), repos=[repo("R_a", 1)])
+    out = tmp_path / "_site"
+    out.mkdir()
+    (out / "keep.txt").write_text("old", encoding="utf-8")
+    notes = tmp_path / "notes.toml"
+    notes.write_text('["o/a"]\nnote = ""\nupdated = 2026-11-24\n', encoding="utf-8")
+    args = _args(tmp_path, "site", "--out", str(out), "--notes", str(notes))
+    assert main([*args, "--reports", str(tmp_path / "reports")]) == EXIT_USAGE
+    assert [p.name for p in out.iterdir()] == ["keep.txt"]
+    assert (out / "keep.txt").read_text(encoding="utf-8") == "old"
+
+
+def test_notify_telegram_failure_is_partial(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from starstrata import cli
+
+    class FailingSender:
+        def __init__(self, token: str, chat_id: str, *, thread_id: int | None = None) -> None:
+            pass
+
+        def __enter__(self) -> FailingSender:
+            return self
+
+        def __exit__(self, *exc: object) -> None:
+            pass
+
+        def send(self, text: str, **kwargs: object) -> None:
+            raise TelegramError("回應 400：Bad Request")
+
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "token")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "-100")
+    monkeypatch.delenv("TELEGRAM_THREAD_ID", raising=False)
+    monkeypatch.setattr(cli, "TelegramSender", FailingSender)
+    assert main(_args(tmp_path, "notify", "--date", "2026-11-24")) == 1

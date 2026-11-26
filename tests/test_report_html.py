@@ -161,6 +161,7 @@ def test_escaped_pipe_stays_in_cell() -> None:
         ("[x](javascript:alert(1))", "<p>[x](javascript:alert(1))</p>"),
         ("[o/a](https://evil.example/o/a)", "<p>o/a</p>"),
         ("[o/b](https://github.com/o/a)", "<p>o/b</p>"),
+        ("[<b>x</b>](https://evil.example)", "<p>&lt;b&gt;x&lt;/b&gt;</p>"),
         ("<img src=x onerror=alert(1)>", "<p>&lt;img src=x onerror=alert(1)&gt;</p>"),
         ('`<b onclick="x">`', "<p><code>&lt;b onclick=&quot;x&quot;&gt;</code></p>"),
     ],

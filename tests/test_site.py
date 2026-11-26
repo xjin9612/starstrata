@@ -250,6 +250,8 @@ def test_alerts_use_rounded_baseline(cfg: Config, tmp_path: Path) -> None:
         ("o/a.b", Path("o") / "a.b.json"),
         ("o/.github", Path("o") / ".github.json"),
         ("o/..", None),
+        ("../x", None),
+        ("./x", None),
         ("o/a/b", None),
         ("o/a b", None),
         ("noslash", None),
@@ -297,8 +299,29 @@ def test_same_path_prefers_most_recent_snapshot(cfg: Config, tmp_path: Path) -> 
     assert _read(files[0])["description"] == "new"
 
 
+def test_same_path_prefers_live_repo_over_newer_gone(cfg: Config, tmp_path: Path) -> None:
+    data = tmp_path / "data"
+    write_day(
+        data,
+        date(2026, 11, 1),
+        repos=[repo("R_live", 1, full_name="o/x", meta=meta(description="live"))],
+    )
+    write_day(
+        data,
+        date(2026, 11, 3),
+        repos=[repo("R_dead", 5, full_name="O/X", meta=meta(description="dead"))],
+    )
+    write_day(data, date(2026, 11, 4), repos=[gone("R_dead")])
+    out, stats = _build(cfg, tmp_path, data)
+    files = list((out / "data" / "repos").rglob("*.json"))
+    assert len(files) == 1 and stats.repos == 1
+    assert _read(files[0])["description"] == "live"
+
+
 def test_cli_site_copies_web_and_icon(tmp_path: Path) -> None:
     out = tmp_path / "_site"
+    preview = tmp_path / "preview.png"
+    preview.write_bytes(b"png")
     code = main(
         [
             "--config",
@@ -314,6 +337,12 @@ def test_cli_site_copies_web_and_icon(tmp_path: Path) -> None:
             str(REPO_ROOT / "web"),
             "--icon",
             str(REPO_ROOT / "assets" / "icon.svg"),
+            "--notes",
+            str(tmp_path / "notes.toml"),
+            "--reports",
+            str(tmp_path / "reports"),
+            "--social-preview",
+            str(preview),
         ]
     )
     assert code == 0
@@ -322,8 +351,10 @@ def test_cli_site_copies_web_and_icon(tmp_path: Path) -> None:
         "app.js",
         "style.css",
         "icon.svg",
+        "social-preview.png",
         "data",
     }
+    assert (out / "social-preview.png").read_bytes() == b"png"
 
 
 def _site_sources(tmp_path: Path) -> tuple[list[str], list[Path]]:

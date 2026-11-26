@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 from dataclasses import replace
 from pathlib import Path
@@ -62,6 +63,20 @@ def test_site_url_without_trailing_slash(cfg: Config) -> None:
     assert 'content="https://u.github.io/s/social-preview.png"' in page
 
 
+def test_site_url_is_escaped(cfg: Config) -> None:
+    page = fill_index(PAGE, _with(cfg, site_url='https://u.github.io/s/"&/'), None)
+    assert '<meta property="og:url" content="https://u.github.io/s/&quot;&amp;/">' in page
+    assert 'content="https://u.github.io/s/&quot;&amp;/social-preview.png"' in page
+
+
+@pytest.fixture
+def clean_git_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """移除 GIT_DIR 等變數，git 指令只看測試建立的 repo。"""
+    for name in list(os.environ):
+        if name.startswith("GIT_"):
+            monkeypatch.delenv(name)
+
+
 def test_detect_repo_prefers_environment(tmp_path: Path) -> None:
     assert detect_repo({"GITHUB_REPOSITORY": "a/b"}, tmp_path) == "a/b"
 
@@ -75,11 +90,14 @@ def test_detect_repo_prefers_environment(tmp_path: Path) -> None:
         ("https://gitlab.com/a/b.git", None),
     ],
 )
+@pytest.mark.usefixtures("clean_git_env")
 def test_detect_repo_from_git_remote(tmp_path: Path, remote: str, expected: str | None) -> None:
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
     subprocess.run(["git", "-C", str(tmp_path), "remote", "add", "origin", remote], check=True)
     assert detect_repo({"GITHUB_REPOSITORY": "not a repo"}, tmp_path) == expected
 
 
-def test_detect_repo_without_git(tmp_path: Path) -> None:
+@pytest.mark.usefixtures("clean_git_env")
+def test_detect_repo_without_origin_remote(tmp_path: Path) -> None:
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
     assert detect_repo({}, tmp_path) is None

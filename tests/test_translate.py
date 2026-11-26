@@ -452,6 +452,7 @@ def test_cli_malformed_translations_is_usage_error(
 
 def test_cli_zero_limit_skips(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GEMINI_API_KEY", "key")
+    monkeypatch.setattr("starstrata.gemini.generate_json", _no_model_call)
     config = tmp_path / "config.toml"
     shutil.copyfile(REPO_CONFIG, config)
     text = re.sub(r"(?m)^max_per_run = \d+$", "max_per_run = 0", config.read_text(encoding="utf-8"))
@@ -462,6 +463,7 @@ def test_cli_zero_limit_skips(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
 
 def test_cli_skips_without_target(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GEMINI_API_KEY", "key")
+    monkeypatch.setattr("starstrata.gemini.generate_json", _no_model_call)
     config = tmp_path / "config.toml"
     config.write_text(
         REPO_CONFIG.read_text(encoding="utf-8").replace('target = "zh-TW"', 'target = ""'),
