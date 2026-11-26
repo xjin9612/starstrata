@@ -117,6 +117,14 @@ def test_trending_filters_and_sort_in_url(page: Page, base_url: str) -> None:
     expect(page.locator(".view-head p")).to_have_text("全部語言・本週・共 1 筆・依新增 star 排序")
 
 
+def test_trending_unknown_filters_are_removed_from_url(page: Page, base_url: str) -> None:
+    page.goto(f"{base_url}#/trending?lang=bogus&period=x")
+    expect(page.locator(".view-head p")).to_have_text(
+        "全部語言・今日・共 4 筆・依 GitHub Trending 的名次排序"
+    )
+    expect(page).to_have_url(f"{base_url}#/trending")
+
+
 def test_trending_empty_filter(page: Page, base_url: str) -> None:
     page.goto(f"{base_url}#/trending?lang=rust")
     expect(page.get_by_text("Rust 目前沒有上榜的 repo")).to_be_visible()
@@ -350,6 +358,17 @@ def test_search(page: Page, base_url: str, term: str, name: str, snippet: str | 
     expect(page).to_have_url(f"{base_url}#/repo/{name}")
 
 
+def test_search_ranks_name_prefix_before_owner_match(
+    page: Page, base_url: str, patch_json: Patch
+) -> None:
+    patch_json("search-index", lambda rows: [["rocketeer/tools", None, 99999], *rows])
+    page.goto(base_url)
+    _loaded(page)
+    page.locator("#q").fill("rocket")
+    names = page.locator("#qList .dd-item .dd-name")
+    expect(names).to_have_text(["hot/rocket", "rocketeer/tools"])
+
+
 def test_search_without_results(page: Page, base_url: str) -> None:
     page.goto(base_url)
     page.locator("#q").fill("zzz-none")
@@ -481,6 +500,30 @@ def test_back_restores_filter(page: Page, base_url: str) -> None:
     expect(page.locator('#filters [data-lang="python"]')).to_have_attribute("aria-pressed", "true")
 
 
+def test_back_and_forward_restore_scroll_focus_and_range(page: Page, base_url: str) -> None:
+    page.set_viewport_size({"width": 1440, "height": 500})
+    page.goto(f"{base_url}#/tracked")
+    link = page.locator(".card .name a", has_text="o/typed")
+    link.scroll_into_view_if_needed()
+    href = link.get_attribute("href")
+    scroll_y = page.evaluate("window.scrollY")
+    assert scroll_y > 0
+    link.click()
+    expect(page.locator("#view h2")).to_be_focused()
+    page.locator('[data-range="30"]').click()
+    expect(page.locator('[data-range="30"]')).to_have_attribute("aria-pressed", "true")
+
+    page.locator("[data-back]").click()
+    expect(page).to_have_url(f"{base_url}#/tracked")
+    page.wait_for_function("y => window.scrollY === y", arg=scroll_y)
+    expect(page.locator(f'#view .card .name a[href="{href}"]')).to_be_focused()
+
+    # 圖表期間屬於詳細頁那一筆歷史紀錄，前進時還原。
+    page.go_forward()
+    expect(page.locator('[data-range="30"]')).to_have_attribute("aria-pressed", "true")
+    expect(page.locator('[data-range="all"]')).to_have_attribute("aria-pressed", "false")
+
+
 def test_theme_persists_after_reload(page: Page, base_url: str) -> None:
     page.goto(base_url)
     html = page.locator("html")
@@ -560,6 +603,50 @@ def test_english_missing_board_name(page: Page, base_url_en: str, patch_json: Pa
     expect(page.locator("#notice")).to_contain_text("This week · Rust")
 
 
+HTML = "<img src=x onerror=window.__xss=1>\"&'"
+
+
+def test_data_is_escaped(page: Page, base_url: str, patch_json: Patch) -> None:
+    def item(it: dict[str, Any]) -> dict[str, Any]:
+        return it | {"description": HTML, "description_tr": HTML, "language": HTML}
+
+    def board(body: Any) -> Any:
+        body["daily"]["all"] = [item(it) for it in body["daily"]["all"]]
+        return body
+
+    def detail(body: Any) -> Any:
+        note = body["note"] | {"text": HTML}
+        return body | {"description": HTML, "description_tr": HTML, "topics": [HTML], "note": note}
+
+    patch_json("trending", board)
+    patch_json("tracked", lambda body: {"items": [item(it) for it in body["items"]]})
+    patch_json("repos/o/steady", detail)
+    patch_json("meta", _with_run(trending_missing=[{"period": "daily", "language": HTML}]))
+    patch_json("search-index", lambda rows: [["evil/x", HTML, 1], *rows])
+    injected = "#view img, #notice img, #qPanel img"
+
+    page.goto(base_url)
+    expect(_card(page, "hot/rocket").locator(".desc")).to_have_text(HTML)
+    expect(_card(page, "hot/rocket").locator(".lang")).to_have_text(HTML)
+    expect(page.locator("#notice")).to_contain_text(HTML)
+    page.locator("#q").fill("evil")
+    expect(page.locator("#qList .dd-item").first).to_contain_text(HTML)
+    page.locator("#q").press("Escape")
+    assert page.locator(injected).count() == 0
+
+    page.goto(f"{base_url}#/tracked")
+    expect(_card(page, "o/steady").locator(".desc")).to_have_text(HTML)
+    assert page.locator(injected).count() == 0
+
+    page.goto(f"{base_url}#/repo/o/steady")
+    expect(page.locator(".note-box p")).to_have_text(HTML)
+    expect(page.locator(".topics li")).to_have_text(HTML)
+    expect(page.locator(".d-desc .orig")).to_contain_text(HTML)
+    page.wait_for_load_state("networkidle")
+    assert page.locator(injected).count() == 0
+    assert page.evaluate("window.__xss") is None
+
+
 def test_late_repo_response_does_not_affect_next_page(page: Page, base_url: str) -> None:
     """repo 詳細檔晚到時，已換到的下一頁不能被它影響（例如找不到圖表元素而出錯）。"""
     held: dict[str, Route] = {}
@@ -573,6 +660,8 @@ def test_late_repo_response_does_not_affect_next_page(page: Page, base_url: str)
         held["repo"].continue_()
     # 等舊的 render 處理完晚到的詳細檔，再放行下一頁的資料。
     page.evaluate("new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
+    assert page.locator("#view .d-head").count() == 0
+    assert not page.title().startswith("hot/rocket")
     held["trending"].continue_()
     expect(page.locator(".card")).to_have_count(4)
     page.wait_for_load_state("networkidle")
