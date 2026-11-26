@@ -48,7 +48,7 @@ _ALERT_KEYS = {"node_id", "daily_stars", "baseline"}
 
 
 class AlertsFileError(ConfigError):
-    """alerts.jsonl 的內容不合格式，通常是手動修改造成的。"""
+    """alerts.jsonl 的內容不合格式。"""
 
 
 class BackfillFileError(ConfigError):

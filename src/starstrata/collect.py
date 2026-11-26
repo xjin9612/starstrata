@@ -271,14 +271,10 @@ def collect(
 ) -> CollectResult:
     """抓取所有資料來源並寫入 day 的快照目錄。
 
-    due_ids 是今天需要快照的追蹤中 repo；tracking_fresh 為 False 表示它不是由最新的 DB 算出
+    due_ids 是今天需要快照的 repo；tracking_fresh 為 False 表示 due_ids 不是由最新的 DB 算出
     （匯入失敗或 DB 無法讀取），記在 run.json，備援排程依此重新收集。
-    known_meta 是各 repo 最近一次記錄的 meta，
-    meta 與它不同或不在其中時才寫入 meta。
-    同一天重跑時，這次失敗的 Trending 頁面與沒查到的 repo 保留該日期既有檔案中的資料；
-    Search 失敗時保留既有的 search.jsonl。既有的列帶有 meta 時，新列也保留 meta，
-    因為重跑前的 ingest 已把當天的 meta 寫進 known_meta。
-    run.json 的 sources 只記這次執行；merged 記當天所有執行合併後還缺的資料。
+    known_meta 是各 repo 最近一次記錄的 meta；查到的 meta 與它不同或不在其中時才寫入 meta。
+    同一天重跑時與既有檔案合併，規則見 docs/DEVELOPMENT.md「快照格式」。
     """
     started_at = clock()
     out = day_dir(data_root, day)
@@ -297,7 +293,7 @@ def collect(
         if rows:
             write_jsonl(out / TRENDING_FILE, sorted(rows, key=_trending_order(cfg)))
 
-    # 先寫一次：之後查 repo 若被中斷，當天的 Trending 與 Search 已經落地。
+    # 查 repo 前先寫一次 Trending，查 repo 時被中斷也保留當天的 Trending。
     write_trending({})
     hits, search_status = _collect_search(client, cfg, day)
     if hits is not None:

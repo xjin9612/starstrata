@@ -76,7 +76,6 @@ def apply_transitions(
 
 
 def _should_go_dormant(cfg: TrackingConfig, day: date, series: Mapping[date, int]) -> bool:
-    """最近 dormant_after_days 個日增量都存在（快照逐日相鄰），且都低於門檻。"""
     for k in range(cfg.dormant_after_days):
         today, before = day - timedelta(days=k), day - timedelta(days=k + 1)
         if today not in series or before not in series:

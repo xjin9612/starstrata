@@ -470,7 +470,7 @@ def test_incremental_equals_rebuild(cfg: Config, paths: tuple[Path, Path], tmp_p
     data, db_path = paths
     _history(data)
     for n in range(1, 10):
-        # 每次只讓一天可見，模擬每日執行。
+        # 每次多一天可見，模擬每日執行。
         visible = tmp_path / "visible"
         for k in range(1, n + 1):
             src = data / f"{day(k):%Y/%m/%d}"

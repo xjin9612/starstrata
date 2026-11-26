@@ -14,7 +14,8 @@ WEB_BASE = "https://github.com"
 API_VERSION = "2026-03-10"
 USER_AGENT = "starstrata"
 
-# 5xx 與連線錯誤的重試次數；間隔依序為 1、2、4 秒。
+# 單一請求的重試次數上限，5xx、連線錯誤與 Retry-After 等待共用。
+# 5xx 與連線錯誤等待 2 的「已重試次數」次方秒（1、2、4 秒）。
 MAX_RETRIES = 3
 
 # secondary rate limit 的 Retry-After 不超過此秒數才等待重試，超過就停止該資料來源。
@@ -37,7 +38,7 @@ class RateLimitExceeded(GitHubError):
 
 
 class GraphQLError(GitHubError):
-    """GraphQL 回應含有 NOT_FOUND 以外的錯誤。"""
+    """GraphQL 回應沒有 data、含不帶 path 的錯誤，或結構與查詢不符。"""
 
 
 @dataclass(frozen=True)

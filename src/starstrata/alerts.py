@@ -43,7 +43,8 @@ def baseline(
 ) -> float | None:
     """day 前 baseline_days 天的平均日增 star；資料不足時為 None。
 
-    series 涵蓋到 day 往前 baseline_days + 1 天以前時，期間開頭缺快照也能往前找到快照。
+    series 的範圍由呼叫端決定，ingest 傳入 day 往前 2 × baseline_days + 1 天。
+    期間開頭缺快照時，取 series 中期間開頭以前最近的一筆。
     """
     last = day - timedelta(days=1)
     start = last - timedelta(days=cfg.baseline_days)

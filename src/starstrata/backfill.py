@@ -1,4 +1,4 @@
-"""回補追蹤中 repo 的歷史 star 曲線，寫入 data/backfill/<hex>.jsonl（檔名見 backfill_path）。"""
+"""回補不是 gone 的 repo 的歷史 star 曲線，寫入 data/backfill/（檔名見 backfill_path）。"""
 
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ def backfill_path(data_root: Path, node_id: str) -> Path:
 
 
 def candidates(conn: sqlite3.Connection) -> list[sqlite3.Row]:
-    """尚未回補的追蹤中 repo，依首次出現日期排序。"""
+    """不是 gone、尚未匯入回補檔的 repo，依首次出現日期排序。"""
     return list(
         conn.execute(
             "SELECT node_id, full_name, created_at FROM repos "
