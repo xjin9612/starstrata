@@ -323,6 +323,28 @@ def test_malformed_frozen_alerts_are_rejected(
         sync(db_path, cfg, data)
 
 
+@pytest.mark.parametrize(
+    ("lines", "message"),
+    [
+        (['{"node_id": "R_a"'], "第 1 行不是合法的 JSON"),
+        (["", '["R_a", 5, null]'], "第 2 行不是 JSON 物件"),
+        (['"R_a"'], "第 1 行不是 JSON 物件"),
+        (['{"node_id": "R_a", "daily_stars": true, "baseline": null}'], "第 1 行格式不符"),
+        (['{"node_id": "R_a", "daily_stars": 5, "baseline": "1.0"}'], "第 1 行格式不符"),
+    ],
+)
+def test_unparseable_frozen_alerts_are_rejected(
+    cfg: Config, paths: tuple[Path, Path], lines: list[str], message: str
+) -> None:
+    data, db_path = paths
+    write_day(data, day(1), repos=[repo("R_a", 100)], search_rows=[search("R_a", "o/r_a")])
+    path = day_dir(data, day(1)) / ALERTS_FILE
+    path.write_text("".join(f"{line}\n" for line in lines), encoding="utf-8")
+    write_day(data, day(2), repos=[repo("R_a", 101)])
+    with pytest.raises(AlertsFileError, match=f"{ALERTS_FILE} {message}"):
+        sync(db_path, cfg, data)
+
+
 def test_frozen_alerts_of_unknown_repos_are_skipped(
     cfg: Config, paths: tuple[Path, Path], caplog: pytest.LogCaptureFixture
 ) -> None:

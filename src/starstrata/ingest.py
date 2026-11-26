@@ -8,9 +8,11 @@ import logging
 import os
 import sqlite3
 from collections import defaultdict
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from pathlib import Path
+from typing import Any
 
 from starstrata import alerts, tracking
 from starstrata.backfill import BACKFILL_DIR
@@ -162,7 +164,7 @@ def _load_alerts(conn: sqlite3.Connection, day: date, path: Path) -> None:
     """匯入凍結的警示。格式不符時丟出 AlertsFileError；不在 repos 表的 repo 記警告後略過。"""
     d = day.isoformat()
     rows: list[tuple[str, int, float | None]] = []
-    for n, row in enumerate(read_jsonl(path), start=1):
+    for n, row in _read_objects(path, AlertsFileError):
         node_id, stars, baseline = row.get("node_id"), row.get("daily_stars"), row.get("baseline")
         if (
             set(row) != _ALERT_KEYS
@@ -183,6 +185,21 @@ def _load_alerts(conn: sqlite3.Connection, day: date, path: Path) -> None:
         "INSERT INTO alerts (node_id, date, daily_stars, baseline) VALUES (?, ?, ?, ?)",
         ((node_id, d, stars, baseline) for node_id, stars, baseline in rows if node_id in known),
     )
+
+
+def _read_objects(path: Path, error: type[ConfigError]) -> Iterator[tuple[int, dict[str, Any]]]:
+    """逐行讀取 JSONL，略過空行；行號從 1 起算，計入空行。行不是 JSON 物件時丟出 error。"""
+    with path.open(encoding="utf-8") as f:
+        for n, line in enumerate(f, start=1):
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError as e:
+                raise error(f"{path} 第 {n} 行不是合法的 JSON：{e.msg}") from e
+            if not isinstance(row, dict):
+                raise error(f"{path} 第 {n} 行不是 JSON 物件")
+            yield n, row
 
 
 def freeze_alerts(conn: sqlite3.Connection, data_root: Path, day: date) -> None:
