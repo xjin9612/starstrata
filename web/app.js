@@ -905,6 +905,9 @@ window.addEventListener('resize', measureSticky);
 /* =====================================================================
  * 導覽事件
  * ===================================================================== */
+// #main 不是路由，改網址會觸發 hashchange 而換頁；只移動焦點
+$('.skip').addEventListener('click', e => { e.preventDefault(); $('#main').focus(); });
+
 // 點連結前記下這一頁點的是哪個連結，返回時把焦點還給它
 document.addEventListener('click', e => {
   const a = e.target.closest('a[href^="#/"]');

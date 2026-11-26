@@ -513,3 +513,16 @@ def test_late_repo_response_does_not_affect_next_page(page: Page, base_url: str)
     expect(page.locator(".card")).to_have_count(4)
     page.wait_for_load_state("networkidle")
     expect(page.locator("#chartCum")).to_have_count(0)
+
+
+def test_skip_link_moves_focus_without_changing_route(page: Page, base_url: str) -> None:
+    page.goto(f"{base_url}#/repo/o/steady")
+    _loaded(page)
+    history_length = page.evaluate("history.length")
+    page.keyboard.press("Tab")
+    expect(page.locator(".skip")).to_be_focused()
+    page.keyboard.press("Enter")
+    expect(page.locator("#main")).to_be_focused()
+    expect(page).to_have_url(f"{base_url}#/repo/o/steady")
+    expect(page.locator("#view h2")).to_contain_text("o/steady")
+    assert page.evaluate("history.length") == history_length
