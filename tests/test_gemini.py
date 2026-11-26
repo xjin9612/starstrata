@@ -116,6 +116,16 @@ def test_transport_errors_are_retried() -> None:
         (httpx.Response(200, text="<html>"), "不是 JSON"),
         (httpx.Response(200, json=[]), "不是 JSON 物件"),
         (httpx.Response(200, json="text"), "不是 JSON 物件"),
+        (httpx.Response(200, json={"promptFeedback": "x"}), "結構不符"),
+        (httpx.Response(200, json={"candidates": "x"}), "結構不符"),
+        (httpx.Response(200, json={"candidates": ["x"]}), "結構不符"),
+        (
+            httpx.Response(200, json={"candidates": [{"finishReason": "STOP", "content": ["x"]}]}),
+            "結構不符",
+        ),
+        (_ok("", parts="x"), "結構不符"),  # type: ignore[arg-type]
+        (_ok("", parts=["x"]), "結構不符"),  # type: ignore[list-item]
+        (_ok("", parts=[{"text": 1}]), "結構不符"),
     ],
 )
 def test_failures_raise_without_key(response: httpx.Response, message: str) -> None:

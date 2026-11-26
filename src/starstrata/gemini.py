@@ -139,17 +139,31 @@ def _text(response: httpx.Response) -> str:
         raise GeminiError("Gemini 回應不是 JSON") from e
     if not isinstance(data, dict):
         raise GeminiError("Gemini 回應不是 JSON 物件")
-    block = (data.get("promptFeedback") or {}).get("blockReason")
+    feedback = data.get("promptFeedback") or {}
+    if not isinstance(feedback, dict):
+        raise GeminiError("Gemini 回應的結構不符")
+    block = feedback.get("blockReason")
     if block:
         raise GeminiError(f"prompt 被擋下：{block}")
     candidates = data.get("candidates") or []
+    if not isinstance(candidates, list):
+        raise GeminiError("Gemini 回應的結構不符")
     if not candidates:
         raise GeminiError("Gemini 沒有回傳結果")
     candidate = candidates[0]
+    if not isinstance(candidate, dict):
+        raise GeminiError("Gemini 回應的結構不符")
     finish = candidate.get("finishReason")
     if finish != "STOP":
         raise GeminiError(f"Gemini 回應中止：{finish}")
-    parts = (candidate.get("content") or {}).get("parts") or []
+    content = candidate.get("content") or {}
+    if not isinstance(content, dict):
+        raise GeminiError("Gemini 回應的結構不符")
+    parts = content.get("parts") or []
+    if not isinstance(parts, list) or not all(
+        isinstance(p, dict) and isinstance(p.get("text", ""), str) for p in parts
+    ):
+        raise GeminiError("Gemini 回應的結構不符")
     # thought 為 true 的 part 是模型的思考摘要，不是答案。
     text = "".join(p.get("text", "") for p in parts if not p.get("thought"))
     if not text:
