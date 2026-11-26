@@ -120,3 +120,14 @@ def test_unparseable_node_is_reported_not_gone(fake_github: FakeGitHub) -> None:
     [batch] = list(fetch_by_ids(fake_github.client(), ["R_a", "R_b"]))
     assert [s.node_id for s in batch.snapshots] == ["R_b"]
     assert batch.gone == [] and batch.node_errors == ["R_a: 無法解析"]
+
+
+@pytest.mark.parametrize("error_type", [None, "SERVICE_UNAVAILABLE", "INTERNAL"])
+def test_node_error_other_than_forbidden_is_retried(
+    fake_github: FakeGitHub, error_type: str | None
+) -> None:
+    fake_github.repos = [repo_node("R_a", "o/a")]
+    fake_github.node_error_types = {"R_a": error_type}
+    [batch] = list(fetch_by_ids(fake_github.client(), ["R_a"]))
+    assert batch.gone == [] and batch.unavailable == []
+    assert batch.node_errors == [f"R_a: {error_type}: failed"]

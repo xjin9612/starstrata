@@ -76,6 +76,8 @@ class FakeGitHub:
     subfield_error_ids: set[str] = field(default_factory=set)
     # 這些 node ID 為 null，但回應沒有任何錯誤。
     silent_null_ids: set[str] = field(default_factory=set)
+    # node ID → node 層級錯誤的 type；None 表示錯誤沒有 type。
+    node_error_types: dict[str, str | None] = field(default_factory=dict)
     # 第幾次（從 1 起算）GraphQL 呼叫 → 回應的 HTTP 狀態碼。
     graphql_status_on_call: dict[int, int] = field(default_factory=dict)
     # full_name → star history API 的週資料，由新到舊。
@@ -147,6 +149,12 @@ class FakeGitHub:
                 if node_id in self.forbidden_ids:
                     node = None
                     errors.append({"type": "FORBIDDEN", "path": ["nodes", i], "message": "dmca"})
+                elif node_id in self.node_error_types:
+                    node = None
+                    error: dict[str, Any] = {"path": ["nodes", i], "message": "failed"}
+                    if self.node_error_types[node_id] is not None:
+                        error["type"] = self.node_error_types[node_id]
+                    errors.append(error)
                 elif node_id in self.subfield_error_ids:
                     node = None
                     errors.append(

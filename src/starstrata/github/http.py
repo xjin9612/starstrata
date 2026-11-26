@@ -41,18 +41,28 @@ class GraphQLError(GitHubError):
 
 
 @dataclass(frozen=True)
+class FieldError:
+    # GraphQL 錯誤的 type，例如 FORBIDDEN；回應沒有 type 時為 None。
+    type: str | None
+    message: str | None
+
+    def __str__(self) -> str:
+        return f"{self.type}: {self.message}"
+
+
+@dataclass(frozen=True)
 class GraphQLResult:
     data: dict[str, Any]
     # 每個 NOT_FOUND 錯誤的 path，例如 ("r0",) 或 ("nodes", 3)。
     not_found_paths: tuple[tuple[str | int, ...], ...]
-    # NOT_FOUND 以外、只影響單一欄位的錯誤：path → 錯誤訊息。
-    field_errors: dict[tuple[str | int, ...], str]
+    # NOT_FOUND 以外、只影響單一欄位的錯誤：path → 錯誤。
+    field_errors: dict[tuple[str | int, ...], FieldError]
 
     def error_under(self, *prefix: str | int) -> str | None:
         """path 以 prefix 開頭的第一個欄位錯誤。"""
-        for path, message in self.field_errors.items():
+        for path, error in self.field_errors.items():
             if path[: len(prefix)] == prefix:
-                return message
+                return str(error)
         return None
 
 
@@ -147,7 +157,7 @@ class GitHubClient:
             raise GraphQLError(f"GraphQL 錯誤：{messages}")
         not_found = tuple(tuple(e["path"]) for e in errors if e.get("type") == "NOT_FOUND")
         field_errors = {
-            tuple(e["path"]): f"{e.get('type')}: {e.get('message')}"
+            tuple(e["path"]): FieldError(type=e.get("type"), message=e.get("message"))
             for e in errors
             if e.get("type") != "NOT_FOUND"
         }

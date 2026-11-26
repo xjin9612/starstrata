@@ -38,12 +38,12 @@ _BY_IDS_QUERY = (
 @dataclass(frozen=True)
 class IdsBatch:
     snapshots: list[RepoSnapshot]
-    # 不再查詢的 node ID：GitHub 回報 NOT_FOUND 或 node 本身的錯誤（例如 FORBIDDEN），
-    # 或 ID 不是 repo。
+    # 不再查詢的 node ID：GitHub 對 node 回報 NOT_FOUND 或 FORBIDDEN，或 ID 不是 repo。
     gone: list[str]
-    # gone 之中因 NOT_FOUND 以外的錯誤而停止查詢的 node 與錯誤訊息。
+    # gone 之中因 FORBIDDEN 而停止查詢的 node 與錯誤訊息。
     unavailable: list[str] = field(default_factory=list)
-    # 暫時查不到的 node 與原因：子欄位錯誤、沒有錯誤說明的 null、無法解析。不算 gone，下次照常查詢。
+    # 暫時查不到的 node 與原因：FORBIDDEN 以外的 node 錯誤、子欄位錯誤、沒有錯誤說明的 null、
+    # 無法解析。不算 gone，下次照常查詢。
     node_errors: list[str] = field(default_factory=list)
     # 整批查詢失敗的原因；此時這批的 ID 既不在 snapshots 也不在 gone。
     error: str | None = None
@@ -118,10 +118,10 @@ def fetch_by_ids(client: GitHubClient, node_ids: Sequence[str]) -> Iterator[IdsB
                     gone.append(requested)
                 elif ("nodes", i) in result.not_found_paths:
                     gone.append(requested)
-                elif ("nodes", i) in result.field_errors:
-                    # node 本身的錯誤視為持續性，停止查詢；再次上榜時恢復追蹤。
+                elif (error := result.field_errors.get(("nodes", i))) and error.type == "FORBIDDEN":
+                    # FORBIDDEN 視為持續性，停止查詢；再次上榜時恢復追蹤。
                     gone.append(requested)
-                    unavailable.append(f"{requested}: {result.field_errors[('nodes', i)]}")
+                    unavailable.append(f"{requested}: {error}")
                 else:
                     reason = result.error_under("nodes", i) or "沒有資料也沒有錯誤說明"
                     node_errors.append(f"{requested}: {reason}")

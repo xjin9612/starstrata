@@ -164,8 +164,8 @@ flowchart TD
 `repos.jsonl` 的規則：
 
 - `meta`：`description`、`topics`、`language`、`archived`、`created_at`。首次記錄或內容變動時才寫。
-- GitHub 對 repo 回報 NOT_FOUND，或 node 本身的錯誤（例如 FORBIDDEN）時，該行只有 `node_id` 與 `status: "gone"`。NOT_FOUND 以外的原因記在 `run.json` 的 `unavailable_repos`。
-- 暫時查不到的 repo（子欄位錯誤、沒有錯誤說明的 null、無法解析）不寫入 `repos.jsonl`，記在 `run.json` 的 `node_errors`，`repos` 來源狀態為 `partial`，下次照常查詢。
+- GitHub 對 repo 的 node 回報 NOT_FOUND 或 FORBIDDEN 時，該行只有 `node_id` 與 `status: "gone"`。FORBIDDEN 記在 `run.json` 的 `unavailable_repos`。
+- 暫時查不到的 repo（FORBIDDEN 以外的 node 錯誤、子欄位錯誤、沒有錯誤說明的 null、無法解析）不寫入 `repos.jsonl`，記在 `run.json` 的 `node_errors`，`repos` 來源狀態為 `partial`，下次照常查詢。
 - `open_issues` 只計 issue，不含 pull request。
 
 Trending 頁面只有 `full_name`。`collect` 在同一次執行中用 GraphQL 以名稱查出 `node_id`。
