@@ -440,7 +440,7 @@ JSON 檔：
 - repo 詳細頁的「Trending 上榜天數」是 `trending` 紀錄裡不重複的日期數。
 - 新上榜頁的 `from_search` 為 `true` 時，卡片寫「來自 Search，沒有今日 Trending 數字」；其他沒有今日新增數的 repo 顯示 `—`。
 - 報告的「新」標記與 `meta.reports_new` 用同一個條件：期間結束日距最新資料日期 7 天內。報告內文標上報告本身的語言，因為報告可能是以先前的 `i18n.locale` 產生的。
-- 「上次造訪後新出現」記在 `localStorage['starstrata-seen']`，最多 5,000 筆，超過時刪最舊的；第一次造訪不標記，存的 JSON 不是物件時當成第一次造訪；`localStorage` 無法使用時停用。
+- 「上次造訪後新出現」記在 `localStorage['starstrata-seen']`，最多 5,000 筆，超過時刪最舊的；第一次造訪不標記，存的值不是 JSON 物件時當成第一次造訪；`localStorage` 無法使用時停用。
 - 主題預設跟隨系統，可用頁首按鈕固定為淺色或深色，選擇存在 `localStorage`。
 - 返回上一頁時還原捲動位置、篩選、排序、已展開筆數、圖表期間與焦點，這些狀態存在 `sessionStorage`。
 

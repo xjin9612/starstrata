@@ -693,8 +693,19 @@ def test_repo_path_with_dot_segments_is_not_found(page: Page, base_url: str, pat
     assert requests == [f"{base_url}data/meta.json"]
 
 
-@pytest.mark.parametrize("stored", ["5", "[]", "null"])
-def test_seen_store_that_is_not_an_object_is_reset(page: Page, base_url: str, stored: str) -> None:
+def test_page_works_without_local_storage(page: Page, base_url: str) -> None:
+    page.add_init_script(
+        "Object.defineProperty(window, 'localStorage', { get() { throw new Error('blocked'); } })"
+    )
+    page.goto(base_url)
+    expect(page.locator(".card")).to_have_count(4)
+    expect(page.locator(".seen-dot")).to_have_count(0)
+
+
+@pytest.mark.parametrize("stored", ["5", "[]", "null", "{"])
+def test_seen_store_that_is_not_a_json_object_is_reset(
+    page: Page, base_url: str, stored: str
+) -> None:
     page.add_init_script(f"localStorage.setItem('starstrata-seen', '{stored}')")
     page.goto(base_url)
     expect(page.locator(".card")).to_have_count(4)
