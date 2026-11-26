@@ -539,10 +539,13 @@ function backHtml(fallbackHref = '#/trending', fallbackLabel = t('repo.toTrendin
 }
 
 async function viewRepo(route) {
+  const notFound = () => backHtml() + emptyHtml('quiet', t('repo.notFound'), t('repo.notFoundText', { name: `<b>${esc(route.full)}</b>` }), `<a class="btn" href="#/trending">${t('empty.viewTrending')}</a>`);
+  // 合法的 repo 路徑沒有空段、. 或 ..；瀏覽器會解析請求網址的 . 與 ..，讀到 repos/ 以外的檔案
+  if (route.full.split('/').some(s => s === '' || s === '.' || s === '..')) return notFound();
   let det;
   try { det = await getData('repos/' + route.full); }
   catch (e) {
-    if (e instanceof NotFound) return backHtml() + emptyHtml('quiet', t('repo.notFound'), t('repo.notFoundText', { name: `<b>${esc(route.full)}</b>` }), `<a class="btn" href="#/trending">${t('empty.viewTrending')}</a>`);
+    if (e instanceof NotFound) return notFound();
     throw e;
   }
   const full = det.full_name;

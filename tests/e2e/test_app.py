@@ -526,3 +526,15 @@ def test_skip_link_moves_focus_without_changing_route(page: Page, base_url: str)
     expect(page).to_have_url(f"{base_url}#/repo/o/steady")
     expect(page.locator("#view h2")).to_contain_text("o/steady")
     assert page.evaluate("history.length") == history_length
+
+
+@pytest.mark.parametrize(
+    "path", ["../meta", "o/..", "%2e%2e/meta", "o%2F..%2F../meta", "o//steady", "o/steady/"]
+)
+def test_repo_path_with_dot_segments_is_not_found(page: Page, base_url: str, path: str) -> None:
+    requests: list[str] = []
+    page.on("request", lambda r: requests.append(r.url) if "/data/" in r.url else None)
+    page.goto(f"{base_url}#/repo/{path}")
+    expect(page.get_by_text("找不到這個 repo")).to_be_visible()
+    page.wait_for_load_state("networkidle")
+    assert requests == [f"{base_url}data/meta.json"]
