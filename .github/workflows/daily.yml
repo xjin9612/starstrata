@@ -2,10 +2,10 @@ name: Daily
 
 on:
   schedule:
-    # 每天 UTC 21:17（台灣時間 05:17）。負載高時 GitHub 會延後排程的執行，每小時開頭負載最高，
-    # 負載夠高時排程可能被丟棄。
+    # 每天 UTC 21:17（台灣時間 05:17）與備援的 UTC 03:47（台灣時間 11:47）。負載高時 GitHub 會延後
+    # 排程的執行，每小時開頭負載最高，負載夠高時排程可能被丟棄。兩個時段都由 check job 檢查，
+    # 當天已收集完整時跳過。
     - cron: "17 21 * * *"
-    # 備援：UTC 03:47（台灣時間 11:47）。當天已收集完整時由 check job 跳過。
     - cron: "47 3 * * *"
   workflow_dispatch:
 
@@ -40,9 +40,12 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version-file: .python-version
+      # 先存進變數：腳本出錯時步驟失敗，daily 照常執行，check 顯示失敗。
       - name: 檢查今天是否已收集完整
         id: collected
-        run: echo "skip=$(python scripts/collected_today.py)" >> "$GITHUB_OUTPUT"
+        run: |
+          skip=$(python scripts/collected_today.py)
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
 
   daily:
     needs: check

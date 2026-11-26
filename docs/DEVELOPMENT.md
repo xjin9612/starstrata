@@ -157,7 +157,7 @@ flowchart TD
 | `trending.jsonl` | `period`、`language`（總榜為 `null`）、`rank`、`full_name`、`stars_in_period` |
 | `search.jsonl` | `rank`、`node_id`、`full_name` |
 | `repos.jsonl` | `node_id`、`full_name`、`stars`、`forks`、`watchers`、`open_issues`、選用的 `meta`；依 `node_id` 排序 |
-| `run.json` | 執行時間、各資料來源的狀態與錯誤、查不到的 Trending repo、停止查詢與暫時查不到的 repo、API 剩餘額度、當天合併後的狀態（`merged`）。`ingest` 不讀這個檔案 |
+| `run.json` | 執行時間、各資料來源的狀態與錯誤、查不到的 Trending repo、停止查詢與暫時查不到的 repo、API 剩餘額度、追蹤池是否由最新的 DB 算出（`tracking_fresh`）、當天合併後的狀態（`merged`）。`ingest` 不讀這個檔案 |
 | `notified.json` | 已發送的每日摘要與警示，由 `notify` 寫入 |
 | `alerts.jsonl` | 凍結後的當天警示：`node_id`、`daily_stars`、`baseline`；依 `node_id` 排序，沒有警示時是空檔案。見「爆紅判定」 |
 
@@ -567,10 +567,14 @@ updated = 2026-11-24
 - checkout 取分支最新的 commit，重跑或排隊的執行也看得到先前已 push 的當天資料。
 - 以 `uv sync --locked --no-dev --no-install-project` 只安裝執行需要的相依套件，不裝 `dev` 群組，也不建置 starstrata 本身；再以 `PYTHONPATH=src` 執行 `uv run --no-sync python -m starstrata`。
 - 設定 `concurrency`，同時只允許一個執行，後到的排隊等待。
-- 排程有兩個時段：UTC 21:17（主）與 UTC 03:47（備援）。GitHub 負載高時排程會延後，負載夠高時可能被丟棄，備援補上被丟棄的那次。
-- 排程觸發時，`check` job 先執行 `scripts/collected_today.py`：當天的 `run.json` 合併後沒有缺少的 Trending 榜、Search 成功過，也沒有缺快照的 repo，就跳過 `daily` 與 `deploy`。因為有 `concurrency`，後到的執行在前一次 push 完資料後才檢查，每天只會完整收集一次。
-- 手動執行不檢查，一律執行。`check` 失敗時 `daily` 照常執行。
-- 當天收集完整但通知或部署失敗時，備援會跳過，不會重試；要手動執行 `daily`。
+- 排程有兩個時段：UTC 21:17（主）與 UTC 03:47（備援）。GitHub 負載高時排程會延後，負載夠高時可能被丟棄（[官方文件](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)），備援補上被丟棄的那次。
+- 兩個時段的排程觸發時，`check` job 都先執行 `scripts/collected_today.py`，當天收集完整就跳過 `daily` 與 `deploy`。完整的條件：
+  - `run.json` 的 `merged` 沒有缺少的 Trending 榜、Search 成功過、沒有缺快照的 repo。
+  - 最後一次執行的 `sources` 三個來源都是 `ok`。以名稱查詢的 Trending repo 失敗時不會記進 `merged`。
+  - `tracking_fresh` 為 `true`。DB 無法讀取時要查詢的 repo 本身就缺，`merged` 看不出來。
+- 因為有 `concurrency`，後到的執行在前一次 push 完資料後才檢查。排程觸發的執行在當天收集完整後不再收集。
+- 手動執行不檢查，一律執行。`check` 失敗時 `daily` 照常執行，`check` 顯示失敗。
+- 當天收集完整後，其餘步驟（`ingest`、`backfill`、`report`、`notify`、上傳 DB、部署）失敗或 job 逾時，排程也會跳過，不會重試；要手動執行 `daily`。
 - 下載的 DB 解壓失敗時刪除，由 `ingest` 從快照重建。
 
 各步驟失敗時的處理：

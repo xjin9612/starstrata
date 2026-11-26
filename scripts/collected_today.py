@@ -23,16 +23,24 @@ def today(config: Path, now: datetime | None = None) -> date:
 
 
 def complete(data: Path, day: date) -> bool:
-    """day 的 run.json 合併後沒有缺少的 Trending 榜、Search 成功過，也沒有缺快照的 repo。"""
+    """day 的收集是否完整。
+
+    merged 只涵蓋依 node_id 查詢的 repo，以名稱查詢的 Trending repo 失敗時要看最後一次執行的
+    sources；DB 無法讀取時要查詢的 repo 本身就缺，要看 tracking_fresh。缺任何一項都視為不完整。
+    """
     path = data / f"{day:%Y}" / f"{day:%m}" / f"{day:%d}" / "run.json"
     if not path.is_file():
         return False
-    merged = json.loads(path.read_text(encoding="utf-8")).get("merged")
+    run = json.loads(path.read_text(encoding="utf-8"))
+    merged, sources = run.get("merged"), run.get("sources")
     return (
         isinstance(merged, dict)
         and merged.get("trending_missing") == []
         and merged.get("search_ok") is True
         and merged.get("repos_missing") == []
+        and isinstance(sources, dict)
+        and all(sources.get(s, {}).get("status") == "ok" for s in ("trending", "search", "repos"))
+        and run.get("tracking_fresh") is True
     )
 
 

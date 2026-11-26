@@ -247,13 +247,16 @@ def collect(
     day: date,
     data_root: Path,
     due_ids: Sequence[str],
+    tracking_fresh: bool,
     known_meta: Mapping[str, RepoMeta],
     sleep: Callable[[float], None] = time.sleep,
     clock: Callable[[], datetime] = lambda: datetime.now(UTC),
 ) -> CollectResult:
     """抓取所有資料來源並寫入 day 的快照目錄。
 
-    due_ids 是今天需要快照的追蹤中 repo；known_meta 是各 repo 最近一次記錄的 meta，
+    due_ids 是今天需要快照的追蹤中 repo；tracking_fresh 為 False 表示它不是由最新的 DB 算出
+    （匯入失敗或 DB 無法讀取），記在 run.json，備援排程依此重新收集。
+    known_meta 是各 repo 最近一次記錄的 meta，
     meta 與它不同或不在其中時才寫入 meta。
     同一天重跑時，這次失敗的 Trending 頁面與沒查到的 repo 保留該日期既有檔案中的資料；
     Search 失敗時保留既有的 search.jsonl。既有的列帶有 meta 時，新列也保留 meta，
@@ -312,6 +315,7 @@ def collect(
         "unavailable_repos": repos.unavailable,
         "node_errors": repos.node_errors,
         "rate_remaining": dict(client.rate_remaining),
+        "tracking_fresh": tracking_fresh,
         "merged": {
             "trending_missing": _trending_missing(cfg, kept_trending, trending),
             "search_ok": search_status.status == OK or _search_ok(previous),

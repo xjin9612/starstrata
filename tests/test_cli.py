@@ -66,6 +66,7 @@ def test_collect_runs_even_when_ingest_fails(
     monkeypatch.setattr(cli, "collect", fake_collect)
     assert main(_args(tmp_path, "collect")) == cli.EXIT_PARTIAL
     assert len(calls) == 1 and calls[0]["due_ids"] == []
+    assert calls[0]["tracking_fresh"] is False
 
 
 @pytest.mark.parametrize(

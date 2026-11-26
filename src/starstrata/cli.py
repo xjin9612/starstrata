@@ -98,7 +98,15 @@ def cmd_collect(args: argparse.Namespace, cfg: Config) -> int:
     due, meta, fresh = _tracking_inputs(args, cfg, day)
     log.info("收集 %s，追蹤中需要快照的 repo：%d", day.isoformat(), len(due))
     with GitHubClient(token) as client:
-        result = collect(client, cfg, day=day, data_root=args.data, due_ids=due, known_meta=meta)
+        result = collect(
+            client,
+            cfg,
+            day=day,
+            data_root=args.data,
+            due_ids=due,
+            tracking_fresh=fresh,
+            known_meta=meta,
+        )
     for name, source in result.run["sources"].items():
         log.info("%s：%s，%d 筆", name, source["status"], source["count"])
         for error in source["errors"]:

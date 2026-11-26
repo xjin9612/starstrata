@@ -29,7 +29,7 @@ def _clock() -> datetime:
 
 
 def _run(fake: FakeGitHub, cfg: Config, root: Path, **kwargs: object) -> dict[str, object]:
-    params: dict[str, object] = {"due_ids": [], "known_meta": {}} | kwargs
+    params: dict[str, object] = {"due_ids": [], "tracking_fresh": True, "known_meta": {}} | kwargs
     result = collect(
         fake.client(),
         cfg,
@@ -400,6 +400,15 @@ def test_trending_and_search_are_written_before_repo_queries(
         _run(fake_github, cfg, tmp_path)
     assert len(read_jsonl(_day(tmp_path) / "trending.jsonl")) == 3
     assert len(read_jsonl(_day(tmp_path) / "search.jsonl")) == 1
+
+
+@pytest.mark.parametrize("fresh", [True, False])
+def test_run_json_records_tracking_freshness(
+    fake_github: FakeGitHub, cfg: Config, tmp_path: Path, fresh: bool
+) -> None:
+    _setup_basic(fake_github)
+    run = _run(fake_github, cfg, tmp_path, tracking_fresh=fresh)
+    assert run["tracking_fresh"] is fresh
 
 
 def _merged(root: Path) -> dict[str, object]:
