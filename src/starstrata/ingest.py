@@ -140,9 +140,16 @@ def _insert_backfill(conn: sqlite3.Connection, node_id: str, path: Path) -> None
     seen: set[date] = set()
     for n, row in _read_objects(path, BackfillFileError):
         try:
-            week = Week(start=date.fromisoformat(row["week"]), days=tuple(row["days"]))
+            start, days = date.fromisoformat(row["week"]), row["days"]
         except (KeyError, TypeError, ValueError) as e:
             raise BackfillFileError(f"{path} 第 {n} 行格式不符：{row}") from e
+        if not (
+            isinstance(days, list)
+            and len(days) == 7
+            and all(type(d) is int and d >= 0 for d in days)
+        ):
+            raise BackfillFileError(f"{path} 第 {n} 行格式不符：{row}")
+        week = Week(start=start, days=tuple(days))
         if week.start in seen:
             raise BackfillFileError(f"{path} 第 {n} 行重複的週：{row['week']}")
         seen.add(week.start)
