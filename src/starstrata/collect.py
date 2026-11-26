@@ -12,7 +12,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from starstrata.config import Config
-from starstrata.github.http import GitHubClient, GitHubError
+from starstrata.github.http import GitHubClient, GitHubError, RateLimitExceeded
 from starstrata.github.repos import fetch_by_ids, fetch_by_names
 from starstrata.github.search import search_new_repos
 from starstrata.github.trending import TrendingParseError, fetch_trending
@@ -156,7 +156,10 @@ def _collect_repos(
                 results.canonical[name] = snap.full_name
             results.missing_names.extend(name_batch.missing)
             results.node_errors.extend(name_batch.node_errors)
-    except Exception as e:  # 額度用盡或非預期錯誤時，保留已取得的批次。
+    except RateLimitExceeded as e:
+        status.errors.append(f"以名稱查詢：{_describe(e)}")
+        return _settle_repos(results, status)
+    except Exception as e:  # 非預期錯誤時保留已取得的批次，繼續以 node ID 查詢。
         status.errors.append(f"以名稱查詢：{_describe(e)}")
 
     remaining = [i for i in node_ids if i not in results.snapshots]
@@ -179,7 +182,10 @@ def _collect_repos(
             results.node_errors.extend(id_batch.node_errors)
     except Exception as e:  # 額度用盡或非預期錯誤時，保留已取得的批次。
         status.errors.append(f"以 node ID 查詢：{_describe(e)}")
+    return _settle_repos(results, status)
 
+
+def _settle_repos(results: _RepoResults, status: SourceStatus) -> tuple[_RepoResults, SourceStatus]:
     if results.node_errors:
         status.errors.append(f"{len(results.node_errors)} 個 repo 查詢錯誤，見 node_errors")
     status.count = len(results.snapshots)

@@ -478,3 +478,53 @@ def test_search_ok_from_run_json_without_merged(
     _setup_failures(fake_github)
     _run(fake_github, cfg, tmp_path)
     assert _merged(tmp_path)["search_ok"] is expected
+
+
+def test_rate_limit_during_name_lookup_stops_repos(
+    fake_github: FakeGitHub, cfg: Config, tmp_path: Path
+) -> None:
+    _setup_basic(fake_github)
+    fake_github.graphql_rate_limited_from = 1
+    run = _run(fake_github, cfg, tmp_path, due_ids=["R_old"])
+    assert fake_github.graphql_calls == 1
+    assert run["sources"]["repos"]["errors"] == ["以名稱查詢：GraphQL 額度用盡"]  # type: ignore[index]
+
+
+def _many_trending_names(fake: FakeGitHub, count: int, monkeypatch: pytest.MonkeyPatch) -> None:
+    """總榜有 count 個 repo，以名稱查詢時每批 1 個。"""
+    from starstrata.github import repos
+
+    monkeypatch.setattr(repos, "NAMES_BATCH_SIZE", 1)
+    names = [f"o/n{i}" for i in range(count)]
+    fake.trending_pages["/trending?since=daily"] = trending_html(
+        [(n, "1 star today") for n in names]
+    )
+    fake.trending_pages["/trending/rust?since=daily"] = trending_html([(names[0], "1 star today")])
+    fake.repos = [repo_node(f"R_n{i}", n) for i, n in enumerate(names)]
+    fake.repos.append(repo_node("R_old", "y/old"))
+    fake.search_items = []
+
+
+def test_consecutive_name_batch_failures_skip_id_lookup(
+    fake_github: FakeGitHub, cfg: Config, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from starstrata.collect import MAX_CONSECUTIVE_BATCH_FAILURES
+
+    _many_trending_names(fake_github, MAX_CONSECUTIVE_BATCH_FAILURES + 1, monkeypatch)
+    fake_github.graphql_status_on_call = {n: 400 for n in range(1, 10)}
+    run = _run(fake_github, cfg, tmp_path, due_ids=["R_old"])
+    assert fake_github.graphql_calls == MAX_CONSECUTIVE_BATCH_FAILURES
+    assert run["sources"]["repos"]["errors"][-1] == "連續多批失敗，停止查詢"  # type: ignore[index]
+
+
+def test_successful_name_batch_resets_failure_count(
+    fake_github: FakeGitHub, cfg: Config, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _many_trending_names(fake_github, 5, monkeypatch)
+    # 失敗、失敗、成功、失敗、失敗：連續失敗數不到上限，之後照常以 node ID 查詢。
+    fake_github.graphql_status_on_call = {1: 400, 2: 400, 4: 400, 5: 400}
+    run = _run(fake_github, cfg, tmp_path, due_ids=["R_old"])
+    assert fake_github.graphql_calls == 6
+    ids = [r["node_id"] for r in read_jsonl(_day(tmp_path) / "repos.jsonl")]
+    assert ids == ["R_n2", "R_old"]
+    assert "連續多批失敗，停止查詢" not in run["sources"]["repos"]["errors"]  # type: ignore[index]
