@@ -86,6 +86,18 @@ def test_snapshot_gap_is_interpolated_and_conserves_total() -> None:
     assert [src for _, _, _, src in got] == ["s", "i", "i", "s"]
 
 
+@pytest.mark.parametrize(
+    ("first", "last", "gains"),
+    [(130, 100, [-10, -10, -10]), (130, 129, [0, -1, 0])],
+)
+def test_snapshot_gap_with_fewer_stars_keeps_negative_gains(
+    first: int, last: int, gains: list[int]
+) -> None:
+    out = call("buildSeries", {"points": [["2026-11-01", first, "s"], ["2026-11-04", last, "s"]]})
+    assert [p["n"] for p in out] == [None, *gains]
+    assert call("sumLast", out, 7, out[-1]["t"]) == last - first
+
+
 DAY_MS = 86_400_000
 
 

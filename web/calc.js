@@ -6,10 +6,9 @@ const DAY = 86400000;
 const toMs = d => Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10));
 const toDate = ms => new Date(ms).toISOString().slice(0, 10);
 
-// 由 points 與 daily 組出每日序列，n 為 null 表示當天新增量未知。
-// s 是來源：b 回補、s 快照、i 快照缺日時的線性補齊。
-// 回補只記有新增的日子，所以回補期間缺日的新增為 0；快照缺日時線性補齊累計，新增取累計差。
-// 第一筆快照沒有前一天可比較，新增未知。
+// 由 points 與 daily 組出每日序列；n 為 null 表示新增未知，第一筆快照沒有前一天可比，新增未知。
+// s 是來源：b 回補（缺日新增為 0）、s 快照、i 快照缺日的線性補齊。
+// 沒有 daily 的快照日與補齊的日子，新增取與前一天的累計差，star 減少時為負。
 function buildSeries(d) {
   if (!d.points?.length) return null;
   const dailyMap = new Map((d.daily || []).map(([dt, n, s]) => [dt, { n, s }]));
@@ -24,13 +23,13 @@ function buildSeries(d) {
     if (p.t === t) {
       const dm = dailyMap.get(date);
       c = p.c; s = dm ? dm.s : p.s;
-      n = dm ? dm.n : (prev && t !== firstSnap ? Math.max(0, c - prev.c) : null);
+      n = dm ? dm.n : (prev && t !== firstSnap ? c - prev.c : null);
     } else if (t < firstSnap) {
       c = p.c; s = 'b'; n = 0;
     } else {
       const q = points[pi + 1];
       c = Math.round(p.c + (q.c - p.c) * (t - p.t) / (q.t - p.t));
-      s = 'i'; n = Math.max(0, c - prev.c);
+      s = 'i'; n = c - prev.c;
     }
     out.push({ t, date, c, n, s });
   }

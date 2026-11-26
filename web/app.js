@@ -64,6 +64,7 @@ const isMissing = (meta, period, lang) => (meta.run?.trending_missing || []).som
 
 const $ = (s, r = document) => r.querySelector(s);
 const fmt = n => Number(n).toLocaleString('en-US');
+const signed = n => (n > 0 ? '+' : '') + fmt(n);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const splitName = full => { const i = full.indexOf('/'); return [full.slice(0, i), full.slice(i + 1)]; };
 const repoHref = full => '#/repo/' + full.split('/').map(encodeURIComponent).join('/');
@@ -313,7 +314,7 @@ function cardHtml(it, opts = {}) {
     ${opts.firstSeen && it.first_seen ? `<div class="created">${esc(t('card.firstSeen', { date: it.first_seen }))}</div>` : ''}
     <div class="nums">${it.period_stars == null
       ? (opts.nullLabel ? `<span class="per src">${opts.nullLabel}</span>` : `<span class="delta">—</span><span class="per">${opts.unit}</span>`)
-      : `<span class="delta">${it.period_stars > 0 ? '+' : ''}${fmt(it.period_stars)}</span><span class="per">${opts.unit}</span>`}${sparkHtml(it.spark)}</div>
+      : `<span class="delta">${signed(it.period_stars)}</span><span class="per">${opts.unit}</span>`}${sparkHtml(it.spark)}</div>
     ${desc}${ai}
   </article></li>`;
 }
@@ -561,7 +562,7 @@ async function viewRepo(route) {
   const none = `<dd class="none">${t('tile.none')}</dd>`;
   const statTile = (label, n) => {
     const v = series ? sumLast(series, n, end) : null;
-    return `<div class="kpi"><dt>${t(label)}</dt>${v === null ? none : `<dd class="acc">+${fmt(v)}${tileNote(n) ? `<small>${tileNote(n)}</small>` : ''}</dd>`}</div>`;
+    return `<div class="kpi"><dt>${t(label)}</dt>${v === null ? none : `<dd class="acc">${signed(v)}${tileNote(n) ? `<small>${tileNote(n)}</small>` : ''}</dd>`}</div>`;
   };
   const days = new Set((det.trending || []).map(r => r[0])).size;
   const ghUrl = 'https://github.com/' + full.split('/').map(encodeURIComponent).join('/');
@@ -708,7 +709,7 @@ function drawChart(box, full, kind, subEl, rangeKey) {
   }
 
   const vals = kind === 'bar' ? items.map(d => d.v ?? 0) : items.map(d => d.c);
-  const y = niceTicks(kind === 'bar' ? 0 : Math.min(...vals), Math.max(...vals));
+  const y = kind === 'bar' ? niceTicks(Math.min(0, ...vals), Math.max(0, ...vals)) : niceTicks(Math.min(...vals), Math.max(...vals));
   const sy = v => m.t + ph - (v - y.lo) / (y.hi - y.lo) * ph;
   const n = items.length;
   const sx = kind === 'bar' ? i => m.l + (i + 0.5) * pw / n : i => m.l + (n === 1 ? pw / 2 : i / (n - 1) * pw);
@@ -718,6 +719,7 @@ function drawChart(box, full, kind, subEl, rangeKey) {
     el('text', { x: m.l - 8, y: sy(v) + 5, 'text-anchor': 'end' }, svg).textContent = shortNum(v, y.step);
   }
   el('line', { x1: m.l, x2: W - m.r, y1: m.t + ph, y2: m.t + ph, class: 'axis-l' }, svg);
+  if (kind === 'bar' && y.lo < 0) el('line', { x1: m.l, x2: W - m.r, y1: sy(0), y2: sy(0), class: 'axis-l zero' }, svg);
   for (const tk of xTicks(data, pw)) {
     const xi = kind === 'bar' ? m.l + (tk.i + 0.5) * pw / data.length : m.l + (data.length === 1 ? pw / 2 : tk.i / (data.length - 1) * pw);
     el('line', { x1: xi, x2: xi, y1: m.t + ph, y2: m.t + ph + 4, class: 'axis-l' }, svg);
@@ -747,8 +749,8 @@ function drawChart(box, full, kind, subEl, rangeKey) {
     const bw = Math.max(1, pw / n - (pw / n > 4 ? 2 : 0));
     items.forEach((d, i) => {
       if (d.v === null) return;
-      const h = Math.max(d.v > 0 ? 1 : 0, m.t + ph - sy(d.v));
-      el('rect', { x: sx(i) - bw / 2, y: m.t + ph - h, width: bw, height: h, rx: bw > 6 ? 2 : 0, class: 'bar-' + d.s }, svg);
+      const h = Math.max(d.v !== 0 ? 1 : 0, Math.abs(sy(d.v) - sy(0)));
+      el('rect', { x: sx(i) - bw / 2, y: d.v < 0 ? sy(0) : sy(0) - h, width: bw, height: h, rx: bw > 6 ? 2 : 0, class: 'bar-' + d.s }, svg);
     });
   }
 
@@ -772,7 +774,7 @@ function drawChart(box, full, kind, subEl, rangeKey) {
     // 多日合計的推算組，註明其中幾天是推算
     const src = t(SRC_LABEL[d.s] || 'chart.backfill') + (d.days > 1 && d.iDays ? t('chart.estDays', { n: d.iDays, total: d.days }) : '');
     const dateLabel = kind === 'bar' && d.from !== d.to ? `${d.from} – ${d.to}` : (d.date || d.from);
-    const valLabel = kind === 'cum' ? `${fmt(d.c)} ★` : (d.v === null ? t('chart.noData') : `+${fmt(d.v)}`);
+    const valLabel = kind === 'cum' ? `${fmt(d.c)} ★` : (d.v === null ? t('chart.noData') : signed(d.v));
     tip.innerHTML = `<div class="t-date">${dateLabel}</div><div class="t-val">${valLabel}</div><div class="t-src ${d.s === 'b' ? '' : esc(d.s)}"><i></i>${src}</div>`;
     tip.hidden = false;
     const tw = tip.offsetWidth;

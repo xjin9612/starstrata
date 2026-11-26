@@ -236,6 +236,32 @@ def test_repo_with_estimated_days(page: Page, base_url: str) -> None:
     expect(page.locator(".legend").first).to_contain_text("推算")
 
 
+def test_repo_with_fewer_stars_shows_negative_gains(
+    page: Page, base_url: str, patch_json: Patch
+) -> None:
+    def reverse(body: Any) -> Any:
+        counts = [c for _, c, _ in body["points"]][::-1]
+        body["points"] = [[d, c, s] for (d, _, s), c in zip(body["points"], counts, strict=True)]
+        return body
+
+    # o/gappy 的快照是 11-16、11-20、11-24 的 40、56、72，反過來後每天推算 -4。
+    patch_json("repos/o/gappy", reverse)
+    page.goto(f"{base_url}#/repo/o/gappy")
+    expect(page.locator("h2")).to_contain_text("o/gappy")
+    assert _kpi(page, "近 7 日新增") == "-28含推算"
+    assert _kpi(page, "近 30 日新增") == "-32含推算"
+    chart = page.locator("#chartDaily")
+    zero = float(chart.locator("line.zero").get_attribute("y1") or "nan")
+    bars = chart.locator("svg > rect")
+    expect(bars).to_have_count(8)
+    for i in range(8):
+        assert float(bars.nth(i).get_attribute("y") or "nan") == pytest.approx(zero)
+        assert float(bars.nth(i).get_attribute("height") or "0") > 1
+    chart.focus()
+    chart.press("End")
+    expect(chart.locator(".t-val")).to_have_text("-4")
+
+
 def test_repo_with_note_and_translation(page: Page, base_url: str) -> None:
     page.goto(f"{base_url}#/repo/o/steady")
     note = page.locator(".note-box")
