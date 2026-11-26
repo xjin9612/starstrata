@@ -29,6 +29,7 @@
 {"key":"15661997a7177ed5","lang":"zh-TW","text":"25 MB 的輕量跨平台資料庫用戶端，支援 MySQL、PostgreSQL、SQLite、Redis、MongoDB、DuckDB、SQL Server、達夢等 100 多種資料庫，內建 AI、MCP Server、CLI，提供桌面版與 Docker。"}
 {"key":"159677093c9e7a5d","lang":"zh-TW","text":"iOS 27.x 的 MobileGestalt 編輯器，提供地區代碼調整、裝置預設與備份功能。"}
 {"key":"15bb7d100d9da5f1","lang":"zh-TW","text":"瀏覽器自動化框架與生態系。"}
+{"key":"15f95a7bef0e044e","lang":"zh-TW","text":"整合你付費訂閱的所有方案——Claude、ChatGPT、Copilot、GLM Coding Plan、Kimi Code 等——並在任何 agent 中使用它們：Claude Code、Codex、Claude Desktop……當其中一個額度用完時，下一個會自動接替。"}
 {"key":"163e264af7cf050b","lang":"zh-TW","text":"一個現代化的 JavaScript 與 TypeScript 執行環境。"}
 {"key":"16bea497cd1c2751","lang":"zh-TW","text":"「CLI-Anything：讓所有軟體都能由 Agent 操作」——CLI-Hub：https://clianything.cc/"}
 {"key":"16ca69a1cb8ffb63","lang":"zh-TW","text":"開源的健身與自體重量追蹤工具，已上架 App Store（iPhone 與 Apple Watch）並提供 Android APK。可規劃課表、記錄訓練、查看訓練到哪些肌群，並從 Strong、Hevy、FitNotes 匯入。可自架，也可只在手機上使用。"}
@@ -62,6 +63,7 @@
 {"key":"2926722ffa59f169","lang":"zh-TW","text":"Worktrunk 是管理 Git worktree 的 CLI，專為平行的 AI agent 工作流程設計。"}
 {"key":"2948c35a9fd047d8","lang":"zh-TW","text":"在 Android 裝置上執行的 AI agent，會操作 App 與網頁幫你把事情做完。"}
 {"key":"2b37f3f895973307","lang":"zh-TW","text":"GTA VI 可以在 PC 上跑了嗎？追蹤社群重新編譯與模擬進度的即時狀態，每日更新。"}
+{"key":"2b4394b4c02fde0d","lang":"zh-TW","text":"專為 agent 設計的 Headless 3D、VFX 與動態圖像引擎"}
 {"key":"2c2e669d8ff4cb7b","lang":"zh-TW","text":"適用於 Windows 的 Xbox Series 相容層 - 可原生執行主機遊戲程式碼、重新實作主機系統函式庫，並將 RDNA2 著色器重新編譯為 DXIL"}
 {"key":"2da7b8aea8828f4e","lang":"zh-TW","text":"適用於 AWS Trainium 的開放原始碼 LLM 推論引擎：具備 NKI megakernels、1M-token context、OpenAI 相容的 API。由 RunAnywhere 開發。"}
 {"key":"2e9758321ce57821","lang":"zh-TW","text":"Claude Code 與 Codex 的 AI 影片 skill：用 Remotion 製作電影感、可編輯的產品宣傳片，含 124 張鏡頭配方卡、150 個動態預覽、節拍同步、音效設計、Motion Workbench 與剪映（CapCut 中國版）匯出。"}
@@ -78,6 +80,7 @@
 {"key":"3355601b4b735c44","lang":"zh-TW","text":"Rust 套件管理工具。"}
 {"key":"33828c934cd4cce2","lang":"zh-TW","text":"Odoo：協助企業成長的開源應用程式。"}
 {"key":"348670b5a18ebd29","lang":"zh-TW","text":"從一張照片產生 AI 數位人說話影片：Renoise MCP 生成、5 種剪輯風格與 48 個創作者等級的包裝元件。適用 Claude Code、Codex、OpenClaw、WorkBuddy 等工具的 Agent skill。"}
+{"key":"350161d13c219954","lang":"zh-TW","text":"適用於 Google Antigravity (CLI/Desktop/IDE) 的非侵入式 MCP 加速器外掛：在不影響原生 UI 或 diff 的情況下，減少 LLM 輪次 (-34%)、token 配額 (-31%) 與上傳流量 (-40%)。"}
 {"key":"352a331655920639","lang":"zh-TW","text":"逆向工程 Android apk 檔案的工具。"}
 {"key":"353c98f4ec16e817","lang":"zh-TW","text":"模型火箭的空氣動力與軌跡模擬軟體。"}
 {"key":"356dfb29b89cae6c","lang":"zh-TW","text":"擺脫 AI 罐頭風格的設計 skill，適用 Claude Code、Cursor 與 Codex。"}
@@ -118,6 +121,7 @@
 {"key":"4d3284741cdec850","lang":"zh-TW","text":"免費的通用資料庫工具與 SQL 用戶端。"}
 {"key":"4df70089be2cffd3","lang":"zh-TW","text":"賦予 coding agents 美感的 Agent skills：藝術指導、參考圖片與瀏覽器檢查，告別千篇一律的 AI 網頁"}
 {"key":"4e9c52293574a134","lang":"zh-TW","text":"DeepTutor：終身個人化家教。https://deeptutor.info/"}
+{"key":"4ec9144472f92fdc","lang":"zh-TW","text":"目標：在 PC 上以不開啟光追的情況下，讓 Xbox Series 遊戲（你自己的 dump）達到穩定的 30+ fps，之後再追求更高。這是移植而非模擬：採用渲染器修補加上預先編譯 (ahead-of-time) shaders，以 RX 7900 XTX 為首要目標。不包含任何遊戲檔案。"}
 {"key":"4f99e09eaac514c5","lang":"zh-TW","text":"Apache Fineract。"}
 {"key":"50220f4a26cac7f2","lang":"zh-TW","text":"雲端原生的 Agentic AI｜Discord：https://bit.ly/kagentdiscord"}
 {"key":"5096668083c7ddd1","lang":"zh-TW","text":"詞光 · Word Atlas：附插圖的 IELTS 單字，共 7,298 個字，提供英式與美式發音及 FSRS 複習。開源 App，資料集採 CC BY 4.0 授權。"}
@@ -230,11 +234,13 @@
 {"key":"9c716ec421d95479","lang":"zh-TW","text":"屬於大眾的分散式 AI/LLM。私下或公開分享算力，驅動你的 agent 與聊天。"}
 {"key":"9cb218005b4f30d7","lang":"zh-TW","text":"避開常見的 App Store 與 Google Play 審核退件。公開的作業手冊與送審前檢查，收錄 124 種退件模式與修正方式、隱私清單與資料安全檢查、112 項追蹤中的法規期限（EU AI Act、DSA、COPPA、年齡相關法規），並附 AI 程式開發 agent 用的 skill。"}
 {"key":"9d49ebb8a2d71d55","lang":"zh-TW","text":"給所有人的個人理財 App（由所有人打造）。"}
+{"key":"9fd4f3c4c6764135","lang":"zh-TW","text":"Antigravity 的光學 UI、阻尼彈簧動態效果、512K 淺水瓶、像素吉祥物與雙模式思考套件 (GPL-3.0)"}
 {"key":"9fd86027d8a197c2","lang":"zh-TW","text":"極速的原生筆記 App 與富文字編輯器，支援 macOS、Windows 與 Linux。以 Rust + GPUI 打造，本機優先且設計精美。"}
 {"key":"a00a46145b0afdda","lang":"zh-TW","text":"給 Claude 的 MCP server，提供終端機控制、檔案系統搜尋與 diff 式檔案編輯能力。"}
 {"key":"a0841ad85d4bc00c","lang":"zh-TW","text":"GIF 工廠：依風格製作像素、人物與寵物、黏土吉祥物、光柵卡與動態海報 GIF 的 Skill。"}
 {"key":"a19f3433aab820ea","lang":"zh-TW","text":"LLM 驅動的多市場股票智慧分析系統：多源行情、即時新聞、決策看板與自動推播，支援零成本定時執行。LLM-powered multi-market stock analysis system with multi-source market data, real-time news, decision dashboard, automated notifications, and cost-free scheduled runs."}
 {"key":"a3d6e19240298ed8","lang":"zh-TW","text":"docs.github.com 的開源 repository。"}
+{"key":"a4ff3afbfe61e0ba","lang":"zh-TW","text":"讓人們與 AI coding agent 像隊友一樣協作的共用任務看板。原始碼可用、可自行架設。"}
 {"key":"a631b761bc5c1288","lang":"zh-TW","text":"極致的人聲合成器：唱歌、說話、Beatbox 等。"}
 {"key":"a651ca2d80adaf99","lang":"zh-TW","text":"給現代應用程式與服務的開源身分與存取管理。"}
 {"key":"a656d7761caea728","lang":"zh-TW","text":"一個自架 App 管理你的影集、電影與音樂。"}
@@ -271,6 +277,7 @@
 {"key":"ba0dee4a455e66c7","lang":"zh-TW","text":"Halo 是強大易用的開源架站工具，從個人部落格、知識庫到企業官網、線上商城，都能輕鬆實現，一站滿足多樣化的架站需求。"}
 {"key":"bad5acfc07da9b6c","lang":"zh-TW","text":"笑一個！幫這個 repo 按星，你的大頭貼就會從收據印表機印出來。"}
 {"key":"bc6d8a96c921deb0","lang":"zh-TW","text":"PaperOrchestra 是自動撰寫 AI 研究論文的多 agent 框架。"}
+{"key":"bccdb6ebbbd4c6f6","lang":"zh-TW","text":"Morphe Patches"}
 {"key":"bfc4c7ff8dd7d2e3","lang":"zh-TW","text":"經營 Instagram 帳號的 13 個 Claude skill：以 26 種評分過的開場公式產出 Reels，另有爆紅研究 skill、文案檢查工具與擬人化工具。免費，MIT 授權。"}
 {"key":"bfcaf0140de00e21","lang":"zh-TW","text":"用你現有的電腦做影片。FreeVideo 最低只需 8 GB VRAM 與 16 GB RAM 就能執行 MiniMax H3，並依你的硬體調整加速方式。"}
 {"key":"bff6bab7ce46369f","lang":"zh-TW","text":"為 AI 寫程式代理程式（AI coding agents）打造的正式環境級工程技能。"}
@@ -357,6 +364,7 @@
 {"key":"eeb6126a59e7fe7e","lang":"zh-TW","text":"Microsoft 推出的開源 AI 紅隊工具組，透過自動化掃描、自適應多輪攻擊與網頁介面測試生成式 AI 系統。"}
 {"key":"efd1a95904012e86","lang":"zh-TW","text":"自動化大量重構原始碼。"}
 {"key":"f1c7b960df7e09ab","lang":"zh-TW","text":"MR Office：最接近 Microsoft Office 的 AI 辦公套件開源編輯器，在瀏覽器中處理文件、試算表、簡報、PDF 與程式碼。每個編輯器都有 Copilot，和你一起編輯真正的 Word、Excel 與 PowerPoint 檔案；MCP server 讓 Claude、ChatGPT、Cursor 與 Codex 也能建立並編輯這些檔案；一行程式碼就能嵌入你的 App。"}
+{"key":"f24f80da9afb8484","lang":"zh-TW","text":"AutoClip｜開源的 OpusClip 替代方案 — 本機優先的 AI 剪輯與 MCP 服務器，零訂閱費用。一個連結，一鍵出片。開源 AI 影片剪輯桌面工具，將Podcast、訪談、課程等長影片自動剪成短影片，產生字幕、封面與發布文案，適配抖音、小紅書、TikTok、Reels 與 YouTube Shorts。"}
 {"key":"f3a6297dd2b04a6c","lang":"zh-TW","text":"Beta：真正免費、開源、本機優先的跨平台影片編輯器，可透過 JSON-RPC API 與 MCP 以程式控制。"}
 {"key":"f41108045516f609","lang":"zh-TW","text":"開源的生成式 UI 框架：agent 串流傳送版面資料，應用程式以 React、Angular、Lit、Flutter、SwiftUI 與 Jetpack Compose 的原生元件呈現。"}
 {"key":"f56cdfd8d4471a49","lang":"zh-TW","text":"Kubernetes 的宣告式持續部署。"}
@@ -371,5 +379,6 @@
 {"key":"fa5159714dd206df","lang":"zh-TW","text":"宣告式、高效且彈性的 JavaScript 使用者介面函式庫。"}
 {"key":"fdaa1fdd01a58907","lang":"zh-TW","text":"專注於 APK 的雙窗格 Android 檔案管理器。"}
 {"key":"fe59385fb0c5b5cf","lang":"zh-TW","text":"WorkBuddy、CodeBuddy 桌面版增強助理：簽到貓貓旅行成長計畫查詢、多帳號獨立備份、點選即切換；勿擾模式讓 AI 無人值守執行長任務；跨帳號對話遷移、異常中斷自動接續；暫存與快捷提示詞；毛玻璃主題等更多實用功能。"}
+{"key":"fe67380e555e7579","lang":"zh-TW","text":"避免常見的 App Store 與 Google Play 審查被拒。內含 125 種已記錄的拒審模式與修正方法的公開實戰手冊與送審前防護網、隱私權資訊清單（Privacy Manifest）與資料安全性檢查、117 項追蹤中的截止期限（EU AI Act、DSA、COPPA、年齡相關法規），以及專為 AI 程式碼代理人（AI coding agents）設計的技能。"}
 {"key":"ff0b659d9ab20378","lang":"zh-TW","text":"「雲端儲存版的 rsync」：支援 Google Drive、S3、Dropbox、Backblaze B2、OneDrive、Swift、Hubic、Wasabi、Google Cloud Storage、Azure Blob、Azure Files、Yandex Files。"}
 {"key":"ff2f7d7811251e5f","lang":"zh-TW","text":"適用 Windows、Linux、Hackintosh 與所有可從 EFI 開機系統的 UEFI 預載驅動 NVIDIA GPU 解鎖工具（Rust）：SEC2 清除 → FWSEC/WPR2 → 簽章 Booter → V67 四次寫入 payload，並讀回驗證。已在大多數 RTX 20、30、40 系列上驗證。"}
