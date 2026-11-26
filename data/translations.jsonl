@@ -89,6 +89,7 @@
 {"key":"3848750a3e9b34cf","lang":"zh-TW","text":"住在你終端機裡的開源 AI 程式開發 agent。"}
 {"key":"38a53e60f5d68461","lang":"zh-TW","text":"以 WebGL2 驅動的視覺化框架。"}
 {"key":"3aacdd92ef1b8c12","lang":"zh-TW","text":"Apache ZooKeeper。"}
+{"key":"3b0561c9fd2ea4c2","lang":"zh-TW","text":"🚀 Antigravity 2.0 Chinese Localization Suite & Injector. 專為 2.0 新版 Electron 架構量身打造的零相依中文語系包。基於 ASAR 實體層動態套件注入機制，完美中文化介面、系統選單、工作列匣與設定面板，支援一鍵極速安裝與無痕還原。"}
 {"key":"3bed5a2d4733d4f5","lang":"zh-TW","text":"Windows 上的 Android App 執行器：雙擊 APK 即可安裝，App 以獨立視窗與桌面圖示執行，內建 QEMU 執行環境。"}
 {"key":"3ce765b8b5e8c543","lang":"zh-TW","text":"給程式開發 agent 的本機影片編輯器：42 個 FFmpeg 工具，附機器可讀的契約與 MCP server，適用 Claude Code、Cursor 與 Codex。可剪輯、上字幕、重新構圖、調整響度、匯出各平台格式。不需雲端，也不需 API key。"}
 {"key":"40dde0941eab8178","lang":"zh-TW","text":"免費資源與資訊聚合雷達：定時蒐集 100 多個來源，以 AI 二次審查過濾假福利，依取得方式分級並隔離抽獎、試用與推廣，再透過 Telegram 即時推送。"}
@@ -291,6 +292,7 @@
 {"key":"c92f94e19048a123","lang":"zh-TW","text":"輕小說文庫（Wenku8.com）的第三方公益 Android App，始於 2014 年的初版 Material Design 風格、非營利，是 Play Store 上安裝檔最小的輕小說閱讀器。由於網站 API 遭大量濫用，目前已改用作者自架的 Cloudflare Worker API 中繼節點，否則網站關閉 API 後就無法使用。"}
 {"key":"c95b88bf660265b2","lang":"zh-TW","text":"在 PC 上執行 Xbox Series X|S 組建的進度筆記 (TomBox + rage9)"}
 {"key":"caf29e670360d5e2","lang":"zh-TW","text":"從任何電腦或手機操控 Claude Code、Codex 等工具的最佳方式。"}
+{"key":"cb88b1471f148e7f","lang":"zh-TW","text":"專為臭蟲追獵與外部紅隊演練打造的 Claude Code 技能包 - 包含 85 項技能、16 個斜線指令、橫跨 24 種核心弱點類別精選出的 681 種已揭露報告模式，以及企業身分與基礎設施攻擊矩陣。"}
 {"key":"cbaeb8fa88160a71","lang":"zh-TW","text":"為 LLM 打造的 Python 3D 建模。"}
 {"key":"cc59e0d6326e3670","lang":"zh-TW","text":"🤯 LobeHub - 團隊中的超級代理。將超級代理加入你團隊現有的聊天中。它們能自主處理工作，且每週不斷進化。"}
 {"key":"ce7e4eea257ebe33","lang":"zh-TW","text":"開源 GPS 追蹤平台，可自架或使用代管服務，支援 200 多種裝置協定。"}
