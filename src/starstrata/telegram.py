@@ -129,16 +129,20 @@ class TelegramSender:
             return
 
 
-def _retry_after(response: httpx.Response) -> int | None:
+def _json_object(response: httpx.Response) -> dict[str, Any]:
+    """回應的 JSON 物件；不是 JSON 或不是物件時回傳空 dict。"""
     try:
-        value = response.json().get("parameters", {}).get("retry_after")
+        data = response.json()
     except ValueError:
-        return None
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _retry_after(response: httpx.Response) -> int | None:
+    parameters = _json_object(response).get("parameters")
+    value = parameters.get("retry_after") if isinstance(parameters, dict) else None
     return value if isinstance(value, int) else None
 
 
 def _description(response: httpx.Response) -> str:
-    try:
-        return str(response.json().get("description", ""))[:200]
-    except ValueError:
-        return ""
+    return str(_json_object(response).get("description", ""))[:200]

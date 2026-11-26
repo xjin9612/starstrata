@@ -149,6 +149,18 @@ def test_errors_do_not_leak_token() -> None:
     assert TOKEN not in str(info2.value)
 
 
+@pytest.mark.parametrize(
+    "body", [[], "text", 3, {"parameters": [], "description": "x"}, {"parameters": None}]
+)
+@pytest.mark.parametrize("status", [400, 429])
+def test_non_object_error_body_raises_telegram_error(status: int, body: Any) -> None:
+    sleeps: list[float] = []
+    response = httpx.Response(status, json=body)
+    with pytest.raises(TelegramError, match=f"回應 {status}"):
+        _sender(httpx.MockTransport(lambda r: response), sleeps).send("x")
+    assert sleeps == []
+
+
 def test_cli_logging_hides_request_urls(caplog: pytest.LogCaptureFixture) -> None:
     main(["--config", "does-not-exist.toml", "ingest"])
     caplog.clear()

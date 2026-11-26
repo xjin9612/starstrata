@@ -114,6 +114,8 @@ def test_transport_errors_are_retried() -> None:
         (_ok('{"items": [', finish="MAX_TOKENS"), "回應中止：MAX_TOKENS"),
         (_ok("", parts=[{"text": "x", "thought": True}]), "沒有文字內容"),
         (httpx.Response(200, text="<html>"), "不是 JSON"),
+        (httpx.Response(200, json=[]), "不是 JSON 物件"),
+        (httpx.Response(200, json="text"), "不是 JSON 物件"),
     ],
 )
 def test_failures_raise_without_key(response: httpx.Response, message: str) -> None:

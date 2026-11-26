@@ -137,6 +137,8 @@ def _text(response: httpx.Response) -> str:
         data = response.json()
     except ValueError as e:
         raise GeminiError("Gemini 回應不是 JSON") from e
+    if not isinstance(data, dict):
+        raise GeminiError("Gemini 回應不是 JSON 物件")
     block = (data.get("promptFeedback") or {}).get("blockReason")
     if block:
         raise GeminiError(f"prompt 被擋下：{block}")
