@@ -575,7 +575,8 @@ updated = 2026-11-24
 - 只在 `main` 執行；從其他分支手動執行時整個 job 略過，資料與 DB release 只屬於 `main`。
 - checkout 取分支最新的 commit，重跑或排隊的執行也看得到先前已 push 的當天資料。
 - 以 `uv sync --locked --no-dev --no-install-project` 只安裝執行需要的相依套件，不裝 `dev` 群組，也不建置 starstrata 本身；再以 `PYTHONPATH=src` 執行 `uv run --no-sync python -m starstrata`。
-- 設定 `concurrency`，同時只允許一個執行，後到的排隊等待。
+- 設定 `concurrency`：同時只執行一個；最多一個在排隊，更新的會取代排隊中的（[官方文件](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#concurrency)）。
+- workflow 的 `TZ` 要與 `config.toml` 的 `schedule.timezone` 一致：快照 commit 訊息的日期（`date +%F`）用系統時區。
 - 排程有兩個時段：UTC 21:17（主）與 UTC 03:47（備援）。GitHub 負載高時排程會延後，負載夠高時可能被丟棄（[官方文件](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)），備援補上被丟棄的那次。
 - 兩個時段的排程觸發時，`check` job 都先執行 `scripts/collected_today.py`，當天收集完整就跳過 `daily` 與 `deploy`。完整的條件：
   - `run.json` 的 `merged` 沒有缺少的 Trending 榜、Search 成功過、沒有缺快照的 repo。
