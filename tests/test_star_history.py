@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 from starstrata.github.star_history import (
     PER_PAGE,
@@ -21,6 +21,14 @@ def test_estimate_requests() -> None:
     assert estimate_requests("2026-04-01T00:00:00Z", today) == 2
     assert estimate_requests("2011-09-04T22:48:12Z", today) == 27
     assert estimate_requests("1900-01-01T00:00:00Z", today) == 100
+
+
+def test_estimate_requests_adds_two_weeks() -> None:
+    today = date(2026, 11, 22)
+    # 202 天是 28 週，加 2 週剛好一頁；203 天是 29 週，加 2 週超過一頁。
+    assert PER_PAGE == 30
+    assert estimate_requests(f"{today - timedelta(days=202)}T00:00:00Z", today) == 1
+    assert estimate_requests(f"{today - timedelta(days=203)}T00:00:00Z", today) == 2
 
 
 def test_single_page_history(fake_github: FakeGitHub) -> None:

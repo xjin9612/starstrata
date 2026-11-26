@@ -555,6 +555,16 @@ def test_failed_rebuild_keeps_previous_db(cfg: Config, ingested: tuple[Path, Pat
     assert db_path.read_bytes() == before
 
 
+def test_rebuild_after_failed_rebuild_succeeds(cfg: Config, ingested: tuple[Path, Path]) -> None:
+    data, db_path = ingested
+    write_day(data, day(2), repos=[{"node_id": "R_a"}])
+    with pytest.raises(KeyError):
+        sync(db_path, cfg, data)
+    write_day(data, day(2), repos=[repo("R_a", 999)])
+    assert sync(db_path, cfg, data).rebuilt
+    assert _query(db_path, "SELECT stars FROM repo_daily WHERE date = '2026-11-02'") == [(999,)]
+
+
 def test_stale_search_hit_does_not_revive_repo_gone_that_day(
     cfg: Config, paths: tuple[Path, Path]
 ) -> None:
@@ -590,6 +600,32 @@ def test_name_lookup_prefers_live_repo(cfg: Config, paths: tuple[Path, Path]) ->
     sync(db_path, cfg, data)
     assert _query(db_path, "SELECT node_id FROM trending_entries") == [("R_new",)]
     assert _state(db_path, "R_old")[0] == "gone"
+
+
+def test_name_lookup_prefers_live_repo_over_newer_gone_repo(
+    cfg: Config, paths: tuple[Path, Path]
+) -> None:
+    data, db_path = paths
+    write_day(
+        data,
+        day(1),
+        repos=[repo("R_live", 9, full_name="o/same")],
+        search_rows=[search("R_live", "o/same")],
+    )
+    write_day(
+        data,
+        day(2),
+        repos=[repo("R_old", 5, full_name="o/same")],
+        search_rows=[search("R_old", "o/same")],
+    )
+    write_day(data, day(3), repos=[gone("R_old")])
+    write_day(data, day(4), trending_rows=[trending("o/same")])
+    sync(db_path, cfg, data)
+    assert _query(db_path, "SELECT node_id, last_snapshot FROM repos ORDER BY node_id") == [
+        ("R_live", "2026-11-01"),
+        ("R_old", "2026-11-02"),
+    ]
+    assert _query(db_path, "SELECT node_id FROM trending_entries") == [("R_live",)]
 
 
 def _random_history(data: Path, seed: int) -> int:

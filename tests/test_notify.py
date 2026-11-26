@@ -26,7 +26,7 @@ from starstrata.notify import (
     short_count,
     summary_message,
 )
-from starstrata.queries import AlertLine, RepoLine, TrendingLine
+from starstrata.queries import AlertLine, RepoLine, TrendingLine, top_gainers
 from starstrata.snapshots import RUN_FILE, day_dir, write_json
 from starstrata.telegram import Button
 from starstrata.translate import text_key
@@ -177,6 +177,19 @@ def test_trending_is_ordered_by_gain(cfg: Config, tmp_path: Path) -> None:
     ]
     assert section[9] == "      Python · ★1.5M"
     assert "o/r2" not in sent[0].text
+
+
+def test_top_gainers_exclude_flat_repos(cfg: Config, tmp_path: Path) -> None:
+    data = tmp_path / "data"
+    write_day(data, day(1), repos=[repo("R_up", 10, full_name="o/up"), repo("R_flat", 10)])
+    write_day(data, day(2), repos=[repo("R_up", 11, full_name="o/up"), repo("R_flat", 10)])
+    sync(tmp_path / "db.sqlite", cfg, data)
+    conn = db.connect(tmp_path / "db.sqlite")
+    try:
+        gainers = top_gainers(conn, day(2), 10)
+    finally:
+        conn.close()
+    assert [(g.node_id, g.delta) for g in gainers] == [("R_up", 1)]
 
 
 def test_translations_replace_descriptions(world: tuple[Any, Path]) -> None:

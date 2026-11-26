@@ -11,7 +11,7 @@ from starstrata.backfill import backfill_path, candidates, run_backfill
 from starstrata.config import BackfillConfig, Config, load_config
 from starstrata.github.star_history import PER_PAGE
 from starstrata.ingest import BackfillFileError, sync
-from starstrata.snapshots import read_jsonl
+from starstrata.snapshots import read_jsonl, write_jsonl
 from tests.conftest import FakeGitHub, history_weeks
 from tests.snapshot_builder import gone, meta, repo, search, write_day
 
@@ -151,9 +151,39 @@ def test_existing_file_is_not_fetched_again(
     path = backfill_path(data, "R_a")
     path.parent.mkdir(parents=True)
     path.write_text("", encoding="utf-8")
+    fake_github.histories["o/a"] = history_weeks("2026-11-15", [[1] * 7])
     fake_github.histories["o/c"] = []
     result = _run(fake_github, db_path, data, budget=10)
     assert result.done == ["R_c"]
+    assert [r.url.path for r in fake_github.requests] == ["/repos/o/c/stargazers/history"]
+    assert path.read_text(encoding="utf-8") == ""
+
+
+def _backfill_rows(db_path: Path) -> list[tuple[Any, ...]]:
+    conn = db.connect(db_path)
+    try:
+        return [tuple(r) for r in conn.execute("SELECT * FROM star_backfill ORDER BY node_id")]
+    finally:
+        conn.close()
+
+
+def test_removed_backfill_file_affects_only_its_repo(setup: tuple[Path, Path], cfg: Config) -> None:
+    data, db_path = setup
+    for node_id in ("R_a", "R_c"):
+        write_jsonl(backfill_path(data, node_id), [{"week": "2026-11-01", "days": [1] + [0] * 6}])
+    sync(db_path, cfg, data)
+    assert _backfill_rows(db_path) == [("R_a", "2026-11-01", 1), ("R_c", "2026-11-01", 1)]
+
+    backfill_path(data, "R_a").unlink()
+    sync(db_path, cfg, data)
+    assert _backfill_rows(db_path) == [("R_c", "2026-11-01", 1)]
+    conn = db.connect(db_path)
+    try:
+        backfilled = [r["node_id"] for r in conn.execute("SELECT node_id FROM backfilled")]
+        assert backfilled == ["R_c"]
+        assert [r["node_id"] for r in candidates(conn)] == ["R_a"]
+    finally:
+        conn.close()
 
 
 def test_changed_and_removed_backfill_files_resync(setup: tuple[Path, Path], cfg: Config) -> None:

@@ -144,6 +144,15 @@ def test_secondary_rate_limit_without_retry_after_stops() -> None:
         _client(_sequence(response)).rest_get("/x")
 
 
+def test_repeated_retry_after_stops_after_max_retries() -> None:
+    sleeps: list[float] = []
+    responses = [httpx.Response(429, headers={"retry-after": "1"})] * (MAX_RETRIES + 1)
+    client = _client(_sequence(*responses), sleeps)
+    with pytest.raises(RateLimitExceeded):
+        client.rest_get("/x")
+    assert sleeps == [1] * MAX_RETRIES
+
+
 def test_plain_forbidden_is_a_github_error() -> None:
     with pytest.raises(GitHubError, match="回應 403") as info:
         _client(_sequence(httpx.Response(403, text="Forbidden"))).rest_get("/x")
@@ -180,6 +189,12 @@ def test_graphql_not_found_is_returned_as_paths() -> None:
 
 def test_graphql_other_errors_raise() -> None:
     body = {"data": None, "errors": [{"type": "INTERNAL", "message": "oops"}]}
+    with pytest.raises(GraphQLError, match="oops"):
+        _client(_sequence(httpx.Response(200, json=body))).graphql("query { x }")
+
+
+def test_graphql_error_without_path_raises_even_with_data() -> None:
+    body = {"data": {"r0": None}, "errors": [{"type": "INTERNAL", "message": "oops"}]}
     with pytest.raises(GraphQLError, match="oops"):
         _client(_sequence(httpx.Response(200, json=body))).graphql("query { x }")
 

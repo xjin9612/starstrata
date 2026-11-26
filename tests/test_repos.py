@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import json
 
+import httpx
 import pytest
 
-from starstrata.github.http import RateLimitExceeded
+from starstrata.github.http import GitHubClient, RateLimitExceeded
 from starstrata.github.repos import IDS_BATCH_SIZE, NAMES_BATCH_SIZE, fetch_by_ids, fetch_by_names
 from starstrata.snapshots import RepoMeta
-from tests.conftest import FakeGitHub, repo_node
+from tests.conftest import TEST_TOKEN, FakeGitHub, repo_node
 
 
 def test_snapshot_fields_are_parsed(fake_github: FakeGitHub) -> None:
@@ -120,6 +121,26 @@ def test_unparseable_node_is_reported_not_gone(fake_github: FakeGitHub) -> None:
     [batch] = list(fetch_by_ids(fake_github.client(), ["R_a", "R_b"]))
     assert [s.node_id for s in batch.snapshots] == ["R_b"]
     assert batch.gone == [] and batch.node_errors == ["R_a: 無法解析"]
+
+
+def test_node_that_is_not_a_repository_is_gone() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"data": {"nodes": [{}]}})
+
+    client = GitHubClient(TEST_TOKEN, transport=httpx.MockTransport(handler))
+    [batch] = list(fetch_by_ids(client, ["U_user"]))
+    assert batch.gone == ["U_user"]
+    assert batch.unavailable == [] and batch.node_errors == []
+
+
+def test_unparseable_name_result_is_missing_with_error(fake_github: FakeGitHub) -> None:
+    broken = repo_node("R_a", "o/a")
+    del broken["stargazerCount"]
+    fake_github.repos = [broken, repo_node("R_b", "o/b")]
+    [batch] = list(fetch_by_names(fake_github.client(), ["o/a", "o/b"]))
+    assert list(batch.snapshots) == ["o/b"]
+    assert batch.missing == ["o/a"]
+    assert batch.node_errors == ["o/a: 無法解析"]
 
 
 @pytest.mark.parametrize("error_type", [None, "SERVICE_UNAVAILABLE", "INTERNAL"])

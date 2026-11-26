@@ -67,6 +67,14 @@ def test_repo_row_includes_meta_only_when_asked() -> None:
     }
 
 
+def test_day_with_only_run_json_is_not_a_snapshot_day(tmp_path: Path) -> None:
+    from starstrata.snapshots import list_snapshot_days
+
+    write_json(day_dir(tmp_path, date(2026, 11, 1)) / "run.json", {"date": "2026-11-01"})
+    write_jsonl(day_dir(tmp_path, date(2026, 11, 2)) / "search.jsonl", [])
+    assert list_snapshot_days(tmp_path) == [date(2026, 11, 2)]
+
+
 def test_node_file_stem_roundtrip_and_case_safety() -> None:
     from starstrata.snapshots import node_file_stem, node_id_from_stem
 
