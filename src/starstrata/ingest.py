@@ -51,6 +51,10 @@ class AlertsFileError(ConfigError):
     """alerts.jsonl 的內容不合格式，通常是手動修改造成的。"""
 
 
+class BackfillFileError(ConfigError):
+    """data/backfill/ 的回補檔內容不合格式。"""
+
+
 @dataclass
 class SyncResult:
     rebuilt: bool = False
@@ -124,16 +128,31 @@ def _sync_backfill(conn: sqlite3.Connection, data_root: Path) -> None:
             if known.get(node_id) == digest:
                 continue
             conn.execute("DELETE FROM star_backfill WHERE node_id = ?", (node_id,))
-            for row in read_jsonl(path):
-                week = Week(start=date.fromisoformat(row["week"]), days=tuple(row["days"]))
-                conn.executemany(
-                    "INSERT INTO star_backfill (node_id, date, stars_added) VALUES (?, ?, ?)",
-                    ((node_id, d.isoformat(), n) for d, n in expand(week)),
-                )
+            _insert_backfill(conn, node_id, path)
             conn.execute(
                 "INSERT OR REPLACE INTO backfilled (node_id, file_hash) VALUES (?, ?)",
                 (node_id, digest),
             )
+
+
+def _insert_backfill(conn: sqlite3.Connection, node_id: str, path: Path) -> None:
+    """格式不符或日期與其他週重疊時丟出 BackfillFileError。呼叫端負責交易。"""
+    seen: set[date] = set()
+    for n, row in _read_objects(path, BackfillFileError):
+        try:
+            week = Week(start=date.fromisoformat(row["week"]), days=tuple(row["days"]))
+        except (KeyError, TypeError, ValueError) as e:
+            raise BackfillFileError(f"{path} 第 {n} 行格式不符：{row}") from e
+        if week.start in seen:
+            raise BackfillFileError(f"{path} 第 {n} 行重複的週：{row['week']}")
+        seen.add(week.start)
+        try:
+            conn.executemany(
+                "INSERT INTO star_backfill (node_id, date, stars_added) VALUES (?, ?, ?)",
+                ((node_id, d.isoformat(), stars) for d, stars in expand(week)),
+            )
+        except sqlite3.IntegrityError as e:
+            raise BackfillFileError(f"{path} 第 {n} 行的日期與其他週重疊") from e
 
 
 def _settle_alerts(

@@ -10,7 +10,7 @@ from starstrata import db
 from starstrata.backfill import backfill_path, candidates, run_backfill
 from starstrata.config import BackfillConfig, Config, load_config
 from starstrata.github.star_history import PER_PAGE
-from starstrata.ingest import sync
+from starstrata.ingest import BackfillFileError, sync
 from starstrata.snapshots import read_jsonl
 from tests.conftest import FakeGitHub, history_weeks
 from tests.snapshot_builder import gone, meta, repo, search, write_day
@@ -176,6 +176,31 @@ def test_changed_and_removed_backfill_files_resync(setup: tuple[Path, Path], cfg
     path.unlink()
     sync(db_path, cfg, data)
     assert rows() == []
+
+
+_WEEK = '{"days":[1,0,0,0,0,0,0],"week":"2026-11-01"}'
+
+
+@pytest.mark.parametrize(
+    ("lines", "message"),
+    [
+        (['{"week":"2026-11-01"'], "第 1 行不是合法的 JSON"),
+        (["[1, 2]"], "第 1 行不是 JSON 物件"),
+        (['{"week":"2026-11-01"}'], "第 1 行格式不符"),
+        (['{"days":[1,0,0,0,0,0,0]}'], "第 1 行格式不符"),
+        ([_WEEK, "", _WEEK], "第 3 行重複的週"),
+        ([_WEEK, '{"days":[1,1,1,1,1,1,1],"week":"2026-10-30"}'], "第 2 行的日期與其他週重疊"),
+    ],
+)
+def test_malformed_backfill_file_is_rejected(
+    setup: tuple[Path, Path], cfg: Config, lines: list[str], message: str
+) -> None:
+    data, db_path = setup
+    path = backfill_path(data, "R_a")
+    path.parent.mkdir(parents=True)
+    path.write_text("".join(f"{line}\n" for line in lines), encoding="utf-8")
+    with pytest.raises(BackfillFileError, match=f"{path.name} {message}"):
+        sync(db_path, cfg, data)
 
 
 def test_unexpected_history_response_skips_repo(
