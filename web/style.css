@@ -44,7 +44,6 @@
   --shadow-pop: 0 6px 20px rgba(0, 0, 0, .45);
 }
 
-/* ===== 基礎 ===== */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: var(--sticky-h, 0px); }
 body {
@@ -62,7 +61,6 @@ button { font: inherit; color: inherit; }
 .mono { font-family: var(--font-mono); }
 .icon { flex: none; }
 
-/* ===== 頁首 ===== */
 .hdr { background: var(--header); color: var(--header-ink); position: relative; z-index: 20; }
 .hdr-in { max-width: var(--content-max); margin: 0 auto; padding: 12px var(--page-pad); display: flex; align-items: center; gap: 20px; }
 .brand { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; letter-spacing: -.01em; text-decoration: none; border-radius: var(--radius-sm); }
@@ -103,7 +101,6 @@ button { font: inherit; color: inherit; }
 .dd-empty { padding: 14px 10px; color: var(--muted); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .dd-empty .btn { height: 32px; padding: 0 12px; font-size: 14px; }
 
-/* ===== 主體 ===== */
 .wrap { flex: 1 0 auto; width: 100%; max-width: var(--content-max); margin: 0 auto; padding: 24px var(--page-pad) 40px; }
 .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 0; }
 .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px 20px; display: flex; flex-direction: column; gap: 2px; margin: 0; min-height: 88px; }
@@ -274,7 +271,6 @@ table.data { width: 100%; border-collapse: collapse; }
 .mult-bar { display: inline-block; vertical-align: middle; height: 8px; border-radius: 4px; background: var(--hot); margin-right: 8px; opacity: .85; }
 .added { color: var(--accent); font-weight: 700; }
 
-/* ===== repo 詳細頁 ===== */
 .back { margin: 20px 0 12px; }
 .d-head { display: grid; grid-template-columns: 1fr auto; gap: 8px 24px; align-items: start; }
 .d-head h2 { margin: 0; font-size: 28px; line-height: 36px; overflow-wrap: anywhere; }
@@ -348,7 +344,6 @@ table.data { width: 100%; border-collapse: collapse; }
 .chart-empty { height: 200px; display: grid; place-items: center; text-align: center; color: var(--muted); border: 1px dashed var(--control-border); border-radius: var(--radius-sm); padding: 16px; }
 .section-title { margin: 32px 0 12px; font-size: 20px; }
 
-/* ===== 頁尾 ===== */
 .foot { border-top: 1px solid var(--border); }
 .foot-in { max-width: var(--content-max); margin: 0 auto; padding: 16px var(--page-pad); display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; color: var(--muted); font-size: 14px; }
 .foot-in p { margin: 0; }
@@ -357,7 +352,6 @@ table.data { width: 100%; border-collapse: collapse; }
 .gh-link:hover { border-color: var(--accent); background: var(--accent-soft); }
 
 
-/* ===== 響應式 ===== */
 @media (min-width: 721px) {
   /* 桌面：篩選列接在分頁列下方一起吸頂 */
   .filters { position: sticky; top: var(--tabs-h, 49px); z-index: 14; }

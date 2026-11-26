@@ -2,9 +2,6 @@
 /* starstrata dashboard 前端。純原生 JavaScript，不經過建置。
  * 資料格式見 docs/DEVELOPMENT.md「Dashboard」；介面文字在 i18n.js。 */
 
-/* =====================================================================
- * 設定與語言
- * ===================================================================== */
 const DATA_BASE = 'data/';
 const PAGE_SIZE = 24;          // 新上榜與追蹤清單每次多顯示的筆數
 const SKELETON_DELAY = 150;    // 載入超過這個毫秒數才顯示骨架，避免閃爍
@@ -23,9 +20,6 @@ function applyStaticText() {
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => el.setAttribute('placeholder', t(el.dataset.i18nPlaceholder)));
 }
 
-/* =====================================================================
- * 資料讀取
- * ===================================================================== */
 class NotFound extends Error {}
 const cache = new Map();
 
@@ -46,9 +40,6 @@ function getData(path) {
   return p;
 }
 
-/* =====================================================================
- * 常數與工具
- * ===================================================================== */
 const LANG_NAMES = { python: 'Python', typescript: 'TypeScript', javascript: 'JavaScript', java: 'Java', go: 'Go', rust: 'Rust' };
 const LANG_COLORS = { Python: 'var(--lang-python)', TypeScript: 'var(--lang-typescript)', JavaScript: 'var(--lang-javascript)', Java: 'var(--lang-java)', Go: 'var(--lang-go)', Rust: 'var(--lang-rust)', Shell: 'var(--lang-shell)', C: 'var(--lang-c)', 'C++': 'var(--lang-cpp)' };
 const PERIOD_ORDER = ['daily', 'weekly', 'monthly'];
@@ -91,11 +82,8 @@ const ICON = {
   dark: '<svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z"/></svg>'
 };
 
-/* =====================================================================
- * 路由與歷史紀錄
- * 每筆歷史紀錄的 history.state 存 { id, from }；捲動位置、已展開筆數、點過的連結、
- * 圖表期間存在 entryStore[id]，並寫進 sessionStorage，重新整理也能還原。
- * ===================================================================== */
+// 每筆歷史紀錄的 history.state 存 { id, from }；捲動位置、已展開筆數、點過的連結、
+// 圖表期間存在 entryStore[id]，並寫進 sessionStorage，重新整理也能還原。
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 const STORE_KEY = 'starstrata-entries';
 let entryStore = {};
@@ -107,7 +95,6 @@ let lastScrollY = 0;
 let currentRoute = null;
 let prevEntryId = null;
 
-// Trending 的篩選寫在網址：#/trending?lang=python&period=weekly&sort=stars（預設值不寫）
 function parseRoute(hash = location.hash) {
   const raw = hash.replace(/^#\/?/, '');
   const qi = raw.indexOf('?');
@@ -131,6 +118,7 @@ function parseRoute(hash = location.hash) {
     hash
   };
 }
+// Trending 的篩選寫在網址：#/trending?lang=python&period=weekly&sort=stars（預設值不寫）
 function trendingHash(r) {
   const q = new URLSearchParams();
   if (r.lang !== 'all') q.set('lang', r.lang);
@@ -165,9 +153,6 @@ function routeLabel(r) {
   return t('route.' + r.name);
 }
 
-/* =====================================================================
- * 上次造訪後新出現：localStorage 記錄看過的 repo（最多 SEEN_MAX 筆）
- * ===================================================================== */
 const SEEN_KEY = 'starstrata-seen';
 let seenStore = {};
 try {
@@ -188,9 +173,6 @@ function recordSeen(names, date) {
   try { localStorage.setItem(SEEN_KEY, JSON.stringify(seenStore)); } catch (e) {}
 }
 
-/* =====================================================================
- * 共用區塊
- * ===================================================================== */
 let META = null;
 
 function renderHeaderAndNotice(meta) {
@@ -244,7 +226,6 @@ function renderTabs(route, meta) {
     `<a class="tab" href="#/${k}"${route.name === k || (k === 'reports' && route.name === 'report') ? ' aria-current="page"' : ''}>${t('route.' + k)}${extra}</a>`).join('');
 }
 
-/* ===== 卡片 ===== */
 function rankChange(it) {
   const prevDate = META?.trending_prev_date;
   if (!prevDate || !('prev_rank' in it)) return '';
@@ -343,7 +324,6 @@ function emptyHtml(kind, title, text, action = '') {
 }
 const errorHtml = () => emptyHtml('error', t('error.title'), t('error.text'), `<button type="button" class="btn" data-retry>${t('error.retry')}</button>`);
 
-/* ===== 載入骨架 ===== */
 const skCards = n => `<ol class="grid" aria-hidden="true">${Array.from({ length: n }, () => `<li><div class="card sk-card">
   <span class="sk w30"></span><span class="sk h24 w70"></span><span class="sk h28 w50"></span><span class="sk w90"></span><span class="sk w70"></span></div></li>`).join('')}</ol>`;
 function skeletonHtml(route) {
@@ -356,9 +336,6 @@ function skeletonHtml(route) {
   return `<div class="view-head">${title}</div>` + skCards(8);
 }
 
-/* =====================================================================
- * 頁面
- * ===================================================================== */
 // periods 為 null 時不顯示期間切換（追蹤清單）
 function filtersHtml(route, langs, periods, sorts = ['rank', 'stars']) {
   const chips = langs.map(l =>
@@ -472,7 +449,6 @@ async function viewAlerts(route, meta) {
     }).join('')}</tbody></table></div>`;
 }
 
-/* ===== 報告 ===== */
 // 期間結束日距最新資料日期 REPORT_NEW_DAYS 天內的報告標為新報告，與 meta.reports_new 一致
 const REPORT_NEW_DAYS = 7;
 const isNewReport = (r, meta) => !!meta.data_date && toMs(meta.data_date) - toMs(r.end) <= REPORT_NEW_DAYS * DAY;
@@ -525,8 +501,6 @@ async function viewReport(route) {
     ${nav}`;
 }
 
-/* ===== repo 詳細頁 ===== */
-// 每日序列、近 N 日新增、爆紅倍數都用 calc.js，由 tests/test_calc.py 測試。
 const RANGES = { '30': 30, '90': 90, '365': 365, all: Infinity };
 // 每日序列的來源標記：b 回補、s 每日實測、i 快照缺日的線性補齊（calc.js）
 const SRC_LABEL = { b: 'chart.backfill', s: 'chart.measured', i: 'chart.estimated' };
@@ -579,7 +553,7 @@ async function viewRepo(route) {
     <div class="kpi"><dt>${t('tile.days')}</dt><dd>${fmt(days)}<small>${t(days === 1 ? 'tile.dayUnitOne' : 'tile.dayUnit')}</small></dd></div>
   </dl>`;
 
-  const hasI = !!series?.some(p => p.s === 'i'); // 有快照缺日的補齊點時，圖例才列出「推算」
+  const hasI = !!series?.some(p => p.s === 'i');
   const rangeSeg = Object.keys(RANGES).map(k => `<button type="button" data-range="${k}" aria-pressed="${range === k}">${t('chart.r' + k)}</button>`).join('');
   const charts = series && series.length > 1 ? `
     <div class="range-row"><h3 class="sr">${t('chart.history')}</h3>
@@ -628,9 +602,6 @@ async function viewRepo(route) {
     ${tiles}${charts}${table}`;
 }
 
-/* =====================================================================
- * 圖表（原生 SVG）
- * ===================================================================== */
 const SVGNS = 'http://www.w3.org/2000/svg';
 function niceTicks(min, max, count = 4) {
   if (max === min) max = min + 1;
@@ -686,9 +657,8 @@ function drawChart(box, full, kind, subEl, rangeKey) {
 
   let items, binDays = 1;
   if (kind === 'bar') {
-    // 點數太多時分組（7 日／30 日合計），從最新一天往回切。
-    // 只在回補（b）與快照時期（s、i）的分界斷開：s 與 i 合在同一組，否則休眠 repo 每週會被切成
-    // 「6 天推算」與「1 天實測」交錯，合計高度忽高忽低。組內有任何一天是 i 就整組標為推算。
+    // 點數太多時分組（7 日／30 日合計），從最新一天往回切；只在回補（b）與快照時期（s、i）的分界斷開。
+    // 組內有任何一天是 i 就整組標為推算。
     if (data.length > pw / 3) binDays = data.length / 7 <= pw / 3 ? 7 : 30;
     const era = p => (p.s === 'b' ? 'b' : 'snap');
     items = [];
@@ -754,7 +724,6 @@ function drawChart(box, full, kind, subEl, rangeKey) {
     });
   }
 
-  // 游標互動
   const hover = el('g', { style: 'display:none' }, svg);
   const hl = kind === 'bar' ? el('rect', { class: 'bar-hl', y: m.t, height: ph }, hover) : null;
   const cross = el('line', { class: 'cross', y1: m.t, y2: m.t + ph }, hover);
@@ -808,16 +777,13 @@ function drawCharts() {
 }
 const chartRO = new ResizeObserver(() => drawCharts());
 
-/* =====================================================================
- * 繪製流程
- * mode：'new' 新頁面（捲到頂、焦點移到標題）｜'restore' 返回（還原捲動與焦點）｜
- *       'update' 同一頁更新（保留捲動）｜'init' 第一次載入
- * ===================================================================== */
 let renderToken = 0;
 // 頁面函式把要記錄的 repo 與圖表序列放在這次 render 的 route 上，
 // render 確認自己仍是最新的一次後才使用，被取代的 render 不會影響目前的頁面。
 function recordSeenLater(route, items, meta) { route.seen = { names: items.map(i => i.full_name), date: meta.data_date || '' }; }
 
+// mode：'new' 新頁面（捲到頂、焦點移到標題）｜'restore' 返回（還原捲動與焦點）｜
+//       'update' 同一頁更新（保留捲動）｜'init' 第一次載入
 async function render(mode = 'update') {
   const token = ++renderToken;
   const route = parseRoute();
@@ -875,7 +841,7 @@ async function render(mode = 'update') {
   afterPaint(mode, route, false);
 }
 
-// 處理捲動與焦點。骨架階段只捲到頂端，不移焦點；內容到了再完成還原。
+// restore 模式在骨架階段不捲動、不移焦點，內容到了才還原捲動與焦點。
 function afterPaint(mode, route, isSkeleton) {
   const view = $('#view');
   if (mode === 'restore') {
@@ -893,7 +859,6 @@ function afterPaint(mode, route, isSkeleton) {
   }
 }
 
-/* ===== 吸頂高度 ===== */
 function measureSticky() {
   const subH = $('#subnav').offsetHeight;
   const filters = $('#filters');
@@ -910,9 +875,6 @@ function updateStuck() {
 }
 window.addEventListener('resize', measureSticky);
 
-/* =====================================================================
- * 導覽事件
- * ===================================================================== */
 // #main 不是路由，改網址會觸發 hashchange 而換頁；只移動焦點
 $('.skip').addEventListener('click', e => { e.preventDefault(); $('#main').focus(); });
 
@@ -990,9 +952,6 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') document.querySelectorAll('.ai[aria-expanded="true"]').forEach(x => x.setAttribute('aria-expanded', 'false'));
 });
 
-/* =====================================================================
- * 主題：跟隨系統 → 淺色 → 深色
- * ===================================================================== */
 const THEMES = ['auto', 'light', 'dark'];
 let theme = 'auto';
 try { const v = localStorage.getItem('starstrata-theme'); if (THEMES.includes(v)) theme = v; } catch (e) {}
@@ -1013,9 +972,7 @@ $('#themeBtn').addEventListener('click', () => {
   $('#live').textContent = t('theme.label', { name: t('theme.' + theme) });
 });
 
-/* =====================================================================
- * 搜尋：先用 search-index（名稱），輸入 2 個字以上再載入 search-full（說明與 topics）
- * ===================================================================== */
+// 名稱搜尋用 search-index；輸入 2 個字以上才載入 search-full（說明與 topics）
 const MAX_RESULTS = 8;
 const q = $('#q'), panel = $('#qPanel'), listEl = $('#qList'), foot = $('#qFoot');
 const idx = { basic: { state: 'idle', rows: null }, full: { state: 'idle', map: null } };
@@ -1138,9 +1095,6 @@ document.addEventListener('keydown', e => {
   if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName) && !document.activeElement.isContentEditable) { e.preventDefault(); q.focus(); }
 });
 
-/* =====================================================================
- * 啟動
- * ===================================================================== */
 applyStaticText();
 applyTheme();
 if (!history.state?.id) history.replaceState({ id: newId(), from: null }, '');

@@ -34,7 +34,7 @@ LAST_DAY = date(2026, 11, 24)
 SEARCH_ONLY_NEW = 30
 GITHUB_REPO = "me/site"
 SITE_URL = "https://me.example/site/"
-# 最後一天的收集完成時間（台北 07:38）；page fixture 把瀏覽器時鐘固定在它之後 2 小時。
+# 最後一天的收集完成時間（台北 07:38）。
 COLLECTED_AT = "2026-11-23T23:38:00+00:00"
 NOW = datetime.fromisoformat(COLLECTED_AT) + timedelta(hours=2)
 NOTES = """["o/steady"]
