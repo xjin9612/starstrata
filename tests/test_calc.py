@@ -18,7 +18,9 @@ let input = '';
 process.stdin.on('data', c => { input += c; });
 process.stdin.on('end', () => {
   const { fn, args } = JSON.parse(input);
-  process.stdout.write(JSON.stringify(calc[fn](...args)));
+  // JSON 會把 Infinity、NaN 寫成 null；以字串輸出才能和 null 區分
+  const finite =(k, v) => (typeof v === 'number' && !Number.isFinite(v) ? String(v) : v);
+  process.stdout.write(JSON.stringify(calc[fn](...args), finite));
 });
 """
 
