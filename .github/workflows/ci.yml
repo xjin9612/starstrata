@@ -19,10 +19,12 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version-file: .python-version
-      # uv 的 checksum 內建在固定 SHA 的 setup-uv 裡，版本要在它的內建清單內；Dependabot 不會更新 version。
+      # uv 的 checksum 內建在固定 SHA 的 setup-uv 裡，require-checksums 讓不在內建清單的版本直接失敗。
+      # Dependabot 不會更新 version。
       - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         with:
           version: "0.13.6"
+          require-checksums: true
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"
@@ -48,10 +50,12 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version-file: .python-version
-      # uv 的 checksum 內建在固定 SHA 的 setup-uv 裡，版本要在它的內建清單內；Dependabot 不會更新 version。
+      # uv 的 checksum 內建在固定 SHA 的 setup-uv 裡，require-checksums 讓不在內建清單的版本直接失敗。
+      # Dependabot 不會更新 version。
       - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         with:
           version: "0.13.6"
+          require-checksums: true
       # 建置 starstrata 本身用的 setuptools 由 uv 另外下載，不在 uv.lock 的 hash 驗證範圍內。
       - name: 安裝相依套件（依 uv.lock 驗證 hash）
         run: uv sync --locked
