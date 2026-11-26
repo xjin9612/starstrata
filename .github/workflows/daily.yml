@@ -40,7 +40,7 @@ jobs:
         with:
           python-version-file: .python-version
       # uv 的 checksum 內建在固定 SHA 的 setup-uv 裡，版本要在它的內建清單內；Dependabot 不會更新 version。
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         with:
           version: "0.13.6"
           # 與 CI 的快取 key 相同但內容不同（不含 dev 群組），每天只跑一次，不使用快取。

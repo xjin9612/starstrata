@@ -20,7 +20,7 @@ jobs:
         with:
           python-version-file: .python-version
       # uv 的 checksum 內建在固定 SHA 的 setup-uv 裡，版本要在它的內建清單內；Dependabot 不會更新 version。
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         with:
           version: "0.13.6"
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -49,7 +49,7 @@ jobs:
         with:
           python-version-file: .python-version
       # uv 的 checksum 內建在固定 SHA 的 setup-uv 裡，版本要在它的內建清單內；Dependabot 不會更新 version。
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         with:
           version: "0.13.6"
       # 建置 starstrata 本身用的 setuptools 由 uv 另外下載，不在 uv.lock 的 hash 驗證範圍內。
