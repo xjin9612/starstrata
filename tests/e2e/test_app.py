@@ -86,6 +86,20 @@ def test_trending_rank_changes(page: Page, base_url: str) -> None:
     expect(down).to_have_attribute("title", "較 11-23 下降 2 名")
 
 
+def test_trending_rank_up(page: Page, base_url: str, patch_json: Patch) -> None:
+    def climb(body: Any) -> Any:
+        typed = next(it for it in body["daily"]["all"] if it["full_name"] == "o/typed")
+        typed["prev_rank"] = 6
+        return body
+
+    patch_json("trending", climb)
+    page.goto(base_url)
+    up = _card(page, "o/typed").locator(".rk-chg.up")
+    expect(up).to_have_text("↑2")
+    expect(up).to_have_attribute("title", "較 11-23 上升 2 名")
+    expect(_card(page, "o/typed").locator(".sr", has_text="較 11-23 上升 2 名")).to_have_count(1)
+
+
 def test_trending_filters_and_sort_in_url(page: Page, base_url: str) -> None:
     page.goto(base_url)
     page.locator('#filters [data-lang="python"]').click()

@@ -421,7 +421,7 @@ JSON 檔：
 
 規則：
 
-- 介面文字只寫在 `i18n.js`，程式用 `t(key, vars)` 取用。兩種語言的 key 與變數必須相同，新增文字時兩種語言一起補。`tests/test_i18n.py` 檢查 key 一致，e2e 測試檢查英文介面沒有中文。
+- 介面文字只寫在 `i18n.js`，程式用 `t(key, vars)` 取用。兩種語言的 key 與變數必須相同，新增文字時兩種語言一起補。`tests/test_i18n.py` 檢查 key 一致、`app.js` 用到的 key 都存在；以「字面前綴 + 變數」組成的 key，要在測試的 `_dynamic_keys` 列出變數的所有值。e2e 測試檢查英文介面沒有中文。
 - 介面語言取自 `site_page` 寫入的 `<html lang>`。千分位一律用 `en-US`；圖表刻度縮寫 `zh-TW` 用「萬」，`en` 用 k、M；日期寫 `YYYY-MM-DD`，時間依 `meta.timezone` 換算。
 - 插入 HTML 的資料一律先經過 `esc()` 跳脫，作者短評也一樣。報告的 `html` 已由 `report_html` 跳脫，直接插入。
 - 語言與期間的選項取自 `trending.json` 的 key。
