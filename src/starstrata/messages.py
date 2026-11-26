@@ -53,7 +53,7 @@ class Messages:
     alerts_heading: str
     alerts_table: str
     no_alerts: str
-    # 解讀缺漏與略過的行首文字，`report due` 依此判斷要不要重新產生。
+    # missing_marker 是 `report due` 判斷要重新產生的行首；以 skipped_marker 開頭的報告視為完整。
     missing_marker: str
     skipped_marker: str
     skipped_no_key: str

@@ -66,11 +66,7 @@ def period_before(kind: str, run_day: date) -> Period:
 
 
 def due_periods(run_day: date) -> list[Period]:
-    """run_day 之前最近一個完整的週與月。
-
-    每天都檢查這兩期：報告不存在時產生，讓漏跑的週一或 1 日之後自動補上；
-    標示缺漏的報告只在 should_retry 成立時重新產生。
-    """
+    """run_day 之前最近一個完整的週與月。"""
     return [period_before(WEEKLY, run_day), period_before(MONTHLY, run_day)]
 
 

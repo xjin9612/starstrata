@@ -182,10 +182,7 @@ class _Context:
 
 
 def _tracked(ctx: _Context) -> list[dict[str, Any]]:
-    """state 為 active 的 repo，依今日新增 star 由多到少，沒有今日新增的排最後。
-
-    period_stars 是最新資料日的日增 star；rank 是這個順序的名次，前端換排序時重新編號。
-    """
+    """period_stars 是最新資料日的日增 star；rank 是輸出順序的名次，前端換排序時重新編號。"""
     items = []
     for r in ctx.repos.values():
         if r.state != ACTIVE:

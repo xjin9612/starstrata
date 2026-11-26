@@ -228,13 +228,9 @@ def notify(
     messages: Messages,
     translations: Mapping[str, str] | None = None,
 ) -> NotifyResult:
-    """發送 day 的摘要與每則警示。
+    """發送 day 的摘要與每則警示；repos 收集完整時發送前先凍結當天警示，不完整時不凍結。
 
-    當天的 repos 收集完整時，發送前先凍結當天的警示（ingest.freeze_alerts），之後重跑或重建都不會
-    改變已發出的警示。不完整時不凍結，重跑補齊資料後重新判定，新的警示照常發送。
-    已發送的項目記在當天快照目錄的 notified.json，同一天重跑不會重複發送。
-    每發送成功一則就更新紀錄，中途失敗時已發送的項目不會再發。
-    當天尚未匯入快照時發送的提醒不記錄，補上快照後重跑會發送正式摘要。
+    已發送項目記在當天的 notified.json，每成功一則就寫入，重跑不重送；未匯入快照時發的提醒不記錄。
     """
     log_path = day_dir(data_root, day) / NOTIFIED_FILE
     summary_sent, sent_alerts = _load_log(log_path)

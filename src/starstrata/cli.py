@@ -28,7 +28,7 @@ from starstrata.telegram import TelegramError, TelegramSender
 
 log = logging.getLogger("starstrata")
 
-# 有資料來源失敗；已取得的資料照常寫入。
+# 部分工作失敗；已完成的部分照常寫入。
 EXIT_PARTIAL = 1
 # 設定錯誤或缺少必要的環境變數，沒有執行任何工作。
 EXIT_USAGE = 2
