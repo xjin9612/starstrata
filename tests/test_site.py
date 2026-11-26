@@ -326,6 +326,84 @@ def test_cli_site_copies_web_and_icon(tmp_path: Path) -> None:
     }
 
 
+def _site_sources(tmp_path: Path) -> tuple[list[str], list[Path]]:
+    """tmp_path/src 底下的完整 site 輸入，回傳 main 的共用參數與要保留的檔案。"""
+    src = tmp_path / "src"
+    write_day(src / "data", date(2026, 11, 1), repos=[repo("R_a", 1)])
+    (src / "web").mkdir()
+    (src / "web" / "index.html").write_text("<html></html>", encoding="utf-8")
+    (src / "reports" / "weekly").mkdir(parents=True)
+    (src / "reports" / "weekly" / "2026-W44.md").write_text("# r\n", encoding="utf-8")
+    (src / "notes.toml").write_text("", encoding="utf-8")
+    (src / "assets").mkdir()
+    (src / "assets" / "icon.svg").write_text("<svg/>", encoding="utf-8")
+    (src / "assets" / "social.png").write_bytes(b"png")
+    common = [
+        "--config",
+        str(REPO_ROOT / "config.toml"),
+        "--data",
+        str(src / "data"),
+        "--db",
+        str(src / "db.sqlite"),
+    ]
+    assert main([*common, "ingest"]) == 0
+    site = [
+        "--web",
+        str(src / "web"),
+        "--reports",
+        str(src / "reports"),
+        "--notes",
+        str(src / "notes.toml"),
+        "--icon",
+        str(src / "assets" / "icon.svg"),
+        "--social-preview",
+        str(src / "assets" / "social.png"),
+    ]
+    kept = [p for p in src.rglob("*") if p.is_file()]
+    return [*common, "site", *site], kept
+
+
+@pytest.mark.parametrize(
+    "out",
+    [
+        "src/data",
+        "src/web",
+        "src/reports",
+        "src/notes.toml",
+        "src/db.sqlite",
+        "src/assets",
+        "src/assets/icon.svg",
+        "src",
+        "cwd",
+        ".",
+        "src/data/x",
+        "src/web/sub",
+        "src/reports/weekly",
+    ],
+)
+def test_cli_site_refuses_out_over_sources(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, out: str
+) -> None:
+    (tmp_path / "cwd").mkdir()
+    monkeypatch.chdir(tmp_path / "cwd")
+    args, kept = _site_sources(tmp_path)
+    (tmp_path / "cwd" / "keep.txt").write_text("x", encoding="utf-8")
+    kept.append(tmp_path / "cwd" / "keep.txt")
+    before = {p: p.read_bytes() for p in kept}
+    assert main([*args, "--out", str(tmp_path / out)]) == 2
+    assert {p: p.read_bytes() for p in kept} == before
+    assert not (tmp_path / out / "data" / "meta.json").exists()
+
+
+def test_cli_site_accepts_out_inside_cwd(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    (tmp_path / "cwd").mkdir()
+    monkeypatch.chdir(tmp_path / "cwd")
+    args, _ = _site_sources(tmp_path)
+    assert main([*args, "--out", "_site"]) == 0
+    assert (tmp_path / "cwd" / "_site" / "data" / "meta.json").is_file()
+    assert (tmp_path / "cwd" / "_site" / "icon.svg").is_file()
+
+
 def test_translations_set_tr_fields(cfg: Config, tmp_path: Path) -> None:
     data = tmp_path / "data"
     write_day(

@@ -333,6 +333,12 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 
 `starstrata site` 清空輸出目錄，複製 `web/`、`assets/icon.svg` 與 `assets/social-preview.png`，填入 `index.html`，再從 SQLite 產生 JSON。
 
+輸出目錄由 `--out` 指定，預設 `_site`。比對前先解析成絕對路徑並展開符號連結。下列情況結束碼 `2`，不刪除也不產生任何檔案：
+
+- 輸出目錄等於或包含工作目錄。
+- 輸出目錄等於或包含 `--data`、`--web`、`--reports`、`--notes`、`--db`、`--icon`、`--social-preview` 任一路徑。
+- 輸出目錄位於上述任一路徑底下，例如 `--out data/x`。
+
 `index.html` 用 HTML 註解標出填入位置，未經處理時仍是合法的頁面：
 
 - `<html lang>`：`i18n.locale` 為 `zh-TW` 時填 `zh-Hant`，`en` 時填 `en`。

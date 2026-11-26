@@ -182,7 +182,29 @@ def cmd_backfill(args: argparse.Namespace, cfg: Config) -> int:
     return EXIT_PARTIAL if result.rate_limited else 0
 
 
+def _check_site_out(args: argparse.Namespace) -> None:
+    """--out 會被清空：不可等於或包含工作目錄與任何輸入路徑，也不可位於輸入路徑底下。"""
+    out = args.out.resolve()
+    sources = [
+        args.data,
+        args.web,
+        args.reports,
+        args.notes,
+        args.db,
+        args.icon,
+        args.social_preview,
+    ]
+    for path in [Path.cwd(), *sources]:
+        resolved = path.resolve()
+        if out == resolved or out in resolved.parents:
+            raise UsageError(f"--out {args.out} 會清空 {path}，請改用其他輸出目錄")
+    for path in sources:
+        if path.resolve() in out.parents:
+            raise UsageError(f"--out {args.out} 位於 {path} 底下，會覆寫來源，請改用其他輸出目錄")
+
+
 def cmd_site(args: argparse.Namespace, cfg: Config) -> int:
+    _check_site_out(args)
     _report_sync(sync(args.db, cfg, args.data))
     conn = db.connect(args.db)
     try:
