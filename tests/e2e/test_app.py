@@ -344,7 +344,7 @@ def test_search_without_results(page: Page, base_url: str) -> None:
 
 def test_tracked_list_from_kpi(page: Page, base_url: str) -> None:
     page.goto(f"{base_url}#/trending")
-    page.locator(".kpi-link").click()
+    page.locator('.kpi-link[href="#/tracked"]').click()
     expect(page).to_have_url(f"{base_url}#/tracked")
     expect(page.locator("#view h2")).to_have_text("追蹤中的 repo")
     expect(page.locator(".view-head.compact p")).to_have_text("全部語言・共 36 個・依今日新增排序")
@@ -353,6 +353,30 @@ def test_tracked_list_from_kpi(page: Page, base_url: str) -> None:
     page.locator("#moreTracked").click()
     expect(page.locator(".card")).to_have_count(36)
     expect(page.locator(".all-shown")).to_have_text("已顯示全部 36 筆")
+
+
+@pytest.mark.parametrize(
+    ("name", "route", "heading"),
+    [("（查看新上榜）", "#/new", "今日新上榜"), ("（查看爆紅警示）", "#/alerts", "爆紅警示")],
+    ids=["new", "alerts"],
+)
+def test_kpi_links_to_new_and_alerts(
+    page: Page, base_url: str, name: str, route: str, heading: str
+) -> None:
+    page.goto(f"{base_url}#/trending")
+    page.get_by_role("link", name=name).click()
+    expect(page).to_have_url(base_url + route)
+    expect(page.locator("#view h2")).to_have_text(heading)
+
+
+def test_kpi_has_no_new_and_hot_links_on_first_day(
+    page: Page, base_url: str, patch_json: Patch
+) -> None:
+    patch_json("meta", lambda meta: meta | {"is_first_day": True})
+    page.goto(f"{base_url}#/trending")
+    expect(page.locator(".kpi dd", has_text="首日，明天起計算")).to_have_count(2)
+    expect(page.locator(".kpi-link")).to_have_count(1)
+    expect(page.locator(".kpi-link")).to_have_attribute("href", "#/tracked")
 
 
 def test_tracked_sort_and_filter(page: Page, base_url: str) -> None:

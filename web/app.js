@@ -228,8 +228,8 @@ function renderKpis(meta) {
   $('#kpis').innerHTML = `
     <div class="kpi"><dt>${t('kpi.date')}</dt><dd class="mono">${esc(meta.data_date || '—')}${meta.collected_at ? `<small class="kpi-upd">${esc(t('kpi.updated', { time: fmtTime(meta.collected_at, meta.timezone || 'Asia/Taipei') }))}</small>` : ''}</dd></div>
     <div class="kpi"><dt>${t('kpi.tracked')}</dt><dd><a class="kpi-link" href="#/tracked">${fmt(meta.tracked_count)}<span class="sr">${t('kpi.trackedLink')}</span></a></dd></div>
-    <div class="kpi"><dt>${t('kpi.new')}</dt>${first ? fd : `<dd class="acc">${fmt(meta.new_count)}</dd>`}</div>
-    <div class="kpi"><dt>${t('kpi.hot')}</dt>${first ? fd : `<dd class="${hot ? 'hot' : ''}">${hot ? '▲ ' : ''}${fmt(hot)}</dd>`}</div>`;
+    <div class="kpi"><dt>${t('kpi.new')}</dt>${first ? fd : `<dd class="acc"><a class="kpi-link" href="#/new">${fmt(meta.new_count)}<span class="sr">${t('kpi.newLink')}</span></a></dd>`}</div>
+    <div class="kpi"><dt>${t('kpi.hot')}</dt>${first ? fd : `<dd class="${hot ? 'hot' : ''}"><a class="kpi-link" href="#/alerts">${hot ? '▲ ' : ''}${fmt(hot)}<span class="sr">${t('kpi.hotLink')}</span></a></dd>`}</div>`;
 }
 
 function renderTabs(route, meta) {

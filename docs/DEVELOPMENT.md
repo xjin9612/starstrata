@@ -413,7 +413,7 @@ JSON 檔：
 | 網址 | 頁面 |
 |---|---|
 | `#/trending?lang=<key>&period=<period>&sort=stars` | Trending，篩選與排序寫在網址，預設值不寫 |
-| `#/new`、`#/daily`、`#/alerts` | 新上榜、日增排行、爆紅警示 |
+| `#/new`、`#/daily`、`#/alerts` | 新上榜、日增排行、爆紅警示。數字列的「今日新上榜」「今日爆紅」也連到 `#/new`、`#/alerts`，首日不連結 |
 | `#/tracked?lang=<key>&sort=total\|recent` | 追蹤中的 repo，由數字列的「追蹤中 repo」進入，不在分頁列。排序預設依今日新增，預設值不寫 |
 | `#/reports?kind=weekly\|monthly` | 報告列表 |
 | `#/reports/<kind>/<period>` | 報告閱讀 |
