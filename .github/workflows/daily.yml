@@ -53,7 +53,7 @@ jobs:
     # check 被略過或失敗時照常執行，檢查本身出問題不能擋住收集。
     if: ${{ !cancelled() && github.ref == 'refs/heads/main' && needs.check.outputs.skip != 'true' }}
     runs-on: ubuntu-26.04
-    timeout-minutes: 60
+    timeout-minutes: 80
     permissions:
       contents: write
     outputs:
@@ -168,7 +168,7 @@ jobs:
               exit 0
             fi
             git rebase --abort 2> /dev/null || true
-            sleep $((attempt * 10))
+            if [ "$attempt" -lt 3 ]; then sleep $((attempt * 10)); fi
           done
           echo "::error::push 失敗三次"
           exit 1
@@ -191,7 +191,8 @@ jobs:
         if: ${{ !cancelled() && steps.ingest.outcome == 'success' }}
         run: uv run --no-sync python -m starstrata site --out _site
 
-      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+      - id: upload_site
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         if: ${{ !cancelled() && steps.build_site.outcome == 'success' }}
         with:
           path: _site
@@ -200,7 +201,7 @@ jobs:
 
       - name: 記錄 dashboard 已上傳
         id: site
-        if: ${{ !cancelled() && steps.build_site.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.upload_site.outcome == 'success' }}
         run: echo "uploaded=true" >> "$GITHUB_OUTPUT"
 
       - name: 各步驟結果

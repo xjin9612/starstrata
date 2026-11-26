@@ -593,7 +593,7 @@ updated = 2026-11-24
 | `collect`、`backfill`、`report`、`notify` | 後續步驟照常執行，job 最後標為失敗 |
 | `ingest` | 略過 `translate`、`backfill`、`report`、`notify`、上傳 DB 與 dashboard；照常 push 快照 |
 | `translate` | 後續步驟照常執行，不影響 job 結果；沒有譯文的說明顯示原文 |
-| push | 重試 3 次；仍失敗時不上傳 DB |
+| push | 最多嘗試 3 次；仍失敗時不上傳 DB |
 
 - push 步驟以 `always()` 執行，任何步驟失敗或 job 被取消後都會嘗試保住當天已收集的快照。
 - `collect`、`backfill`、`report` 設有步驟逾時。官方文件沒有說明步驟逾時是否套用 `continue-on-error`，尚未查證。
