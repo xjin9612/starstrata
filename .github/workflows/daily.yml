@@ -2,8 +2,11 @@ name: Daily
 
 on:
   schedule:
-    # 每天 UTC 21:17（台灣時間 05:17）。負載高時 GitHub 會延後排程的執行，每小時開頭負載最高。
+    # 每天 UTC 21:17（台灣時間 05:17）。負載高時 GitHub 會延後排程的執行，每小時開頭負載最高，
+    # 負載夠高時排程可能被丟棄。
     - cron: "17 21 * * *"
+    # 備援：UTC 03:47（台灣時間 11:47）。當天已收集完整時由 check job 跳過。
+    - cron: "47 3 * * *"
   workflow_dispatch:
 
 permissions:
@@ -21,9 +24,31 @@ env:
   PYTHONPATH: src
 
 jobs:
+  # 排程觸發時，當天已收集完整就跳過 daily。concurrency 讓同時觸發的執行排隊，
+  # 後到的執行在前一次 push 完資料後才檢查。手動執行一律不跳過。
+  check:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'schedule'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    outputs:
+      skip: ${{ steps.collected.outputs.skip }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.ref_name }}
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version-file: .python-version
+      - name: 檢查今天是否已收集完整
+        id: collected
+        run: echo "skip=$(python scripts/collected_today.py)" >> "$GITHUB_OUTPUT"
+
   daily:
+    needs: check
     # 資料與 DB release 只屬於 main，從其他分支手動執行時不做任何事。
-    if: github.ref == 'refs/heads/main'
+    # check 被略過或失敗時照常執行，檢查本身出問題不能擋住收集。
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && needs.check.outputs.skip != 'true' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:

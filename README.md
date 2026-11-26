@@ -49,7 +49,7 @@ starstrata collects GitHub trends every day and keeps them as a long-term histor
 4. In Settings → Pages → Build and deployment, set Source to **GitHub Actions**.
 5. Run the first collection in Actions → `Daily` → Run workflow, or with `gh workflow run daily.yml -R <owner>/<repo>`.
 
-The `Daily` workflow then runs every day at 21:17 UTC (05:17 in `Asia/Taipei`). GitHub may delay scheduled runs under high load. Each run:
+The `Daily` workflow then runs every day at 21:17 UTC (05:17 in `Asia/Taipei`). GitHub may delay scheduled runs under high load, or drop them when the load is high enough, so a backup run at 03:47 UTC (11:47 in `Asia/Taipei`) collects again only when that day's data is incomplete. Each run:
 
 - commits the day's snapshots to `data/` and reports to `reports/`;
 - uploads the SQLite database to the release tagged `db`;

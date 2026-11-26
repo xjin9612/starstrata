@@ -567,6 +567,10 @@ updated = 2026-11-24
 - checkout 取分支最新的 commit，重跑或排隊的執行也看得到先前已 push 的當天資料。
 - 以 `uv sync --locked --no-dev --no-install-project` 只安裝執行需要的相依套件，不裝 `dev` 群組，也不建置 starstrata 本身；再以 `PYTHONPATH=src` 執行 `uv run --no-sync python -m starstrata`。
 - 設定 `concurrency`，同時只允許一個執行，後到的排隊等待。
+- 排程有兩個時段：UTC 21:17（主）與 UTC 03:47（備援）。GitHub 負載高時排程會延後，負載夠高時可能被丟棄，備援補上被丟棄的那次。
+- 排程觸發時，`check` job 先執行 `scripts/collected_today.py`：當天的 `run.json` 合併後沒有缺少的 Trending 榜、Search 成功過，也沒有缺快照的 repo，就跳過 `daily` 與 `deploy`。因為有 `concurrency`，後到的執行在前一次 push 完資料後才檢查，每天只會完整收集一次。
+- 手動執行不檢查，一律執行。`check` 失敗時 `daily` 照常執行。
+- 當天收集完整但通知或部署失敗時，備援會跳過，不會重試；要手動執行 `daily`。
 - 下載的 DB 解壓失敗時刪除，由 `ingest` 從快照重建。
 
 各步驟失敗時的處理：
