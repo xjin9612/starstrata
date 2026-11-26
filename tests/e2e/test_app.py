@@ -538,3 +538,15 @@ def test_repo_path_with_dot_segments_is_not_found(page: Page, base_url: str, pat
     expect(page.get_by_text("找不到這個 repo")).to_be_visible()
     page.wait_for_load_state("networkidle")
     assert requests == [f"{base_url}data/meta.json"]
+
+
+@pytest.mark.parametrize("stored", ["5", "[]", "null"])
+def test_seen_store_that_is_not_an_object_is_reset(page: Page, base_url: str, stored: str) -> None:
+    page.add_init_script(f"localStorage.setItem('starstrata-seen', '{stored}')")
+    page.goto(base_url)
+    expect(page.locator(".card")).to_have_count(4)
+    expect(page.locator(".seen-dot")).to_have_count(0)
+    _loaded(page)
+    seen = page.evaluate("JSON.parse(localStorage.getItem('starstrata-seen'))")
+    assert isinstance(seen, dict)
+    assert {"o/steady", "hot/rocket", "late/single", "o/typed"} <= set(seen)

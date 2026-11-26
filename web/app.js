@@ -169,7 +169,10 @@ function routeLabel(r) {
  * ===================================================================== */
 const SEEN_KEY = 'starstrata-seen';
 let seenStore = {};
-try { seenStore = JSON.parse(localStorage.getItem(SEEN_KEY) || '{}') || {}; } catch (e) { seenStore = null; }
+try {
+  const v = JSON.parse(localStorage.getItem(SEEN_KEY) || '{}');
+  seenStore = v && typeof v === 'object' && !Array.isArray(v) ? v : {};
+} catch (e) { seenStore = null; }
 const prevSeen = new Set(seenStore ? Object.keys(seenStore) : []);
 const firstVisit = prevSeen.size === 0;
 function isUnseen(name) {
