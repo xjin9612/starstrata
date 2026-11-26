@@ -192,6 +192,7 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
   - `search_ok`：當天至少有一次 Search 成功。回傳 0 筆也算成功。
   - `repos_missing`：當天查詢過、合併後仍沒有資料的 `node_id`。
   - 先前的 `run.json` 沒有 `merged` 時，`search_ok` 改看它的 `sources.search.status`，`repos_missing` 視為空。
+  - 先前的 `run.json` 不是合法的 JSON 物件時記錄警告，視為沒有先前的執行。
 
 快照格式只能新增選用欄位。既有快照必須永遠能被 `ingest` 匯入。
 

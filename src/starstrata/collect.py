@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -34,6 +35,8 @@ from starstrata.snapshots import (
     write_json,
     write_jsonl,
 )
+
+log = logging.getLogger(__name__)
 
 # 連續抓 Trending 頁面之間的間隔秒數。
 TRENDING_PAGE_INTERVAL = 1.0
@@ -204,9 +207,17 @@ def _existing(path: Path) -> list[dict[str, Any]]:
 
 
 def _previous_run(path: Path) -> dict[str, Any]:
+    """同一天先前的 run.json；不存在、不是合法 JSON 或不是物件時回傳空物件。"""
     if not path.is_file():
         return {}
-    run: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        run = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        log.warning("%s 不是合法的 JSON，視為沒有先前的執行紀錄：%s", path, e)
+        return {}
+    if not isinstance(run, dict):
+        log.warning("%s 不是 JSON 物件，視為沒有先前的執行紀錄", path)
+        return {}
     return run
 
 

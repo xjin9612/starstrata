@@ -528,3 +528,20 @@ def test_successful_name_batch_resets_failure_count(
     ids = [r["node_id"] for r in read_jsonl(_day(tmp_path) / "repos.jsonl")]
     assert ids == ["R_n2", "R_old"]
     assert "連續多批失敗，停止查詢" not in run["sources"]["repos"]["errors"]  # type: ignore[index]
+
+
+@pytest.mark.parametrize("content", ['{"date": "2026-11-22"', "[]"])
+def test_unreadable_run_json_is_replaced(
+    fake_github: FakeGitHub,
+    cfg: Config,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    content: str,
+) -> None:
+    out = _day(tmp_path)
+    out.mkdir(parents=True)
+    (out / "run.json").write_text(content, encoding="utf-8")
+    _setup_basic(fake_github)
+    run = _run(fake_github, cfg, tmp_path)
+    assert json.loads((out / "run.json").read_text(encoding="utf-8")) == run
+    assert "run.json" in caplog.text
