@@ -489,7 +489,7 @@ updated = 2026-11-24
 - 提供給模型的資料：名稱、語言、topics、star 數、描述、README 前 4000 字元。README 用 `GH_PAT` 抓取，抓取失敗時略過該 repo 的 README。
 - repo 描述與 README 放在 `<repo>` 標籤內，內容中的 `<repo>`、`</repo>` 先替換掉。system prompt 指示模型把標籤內容當資料，不當指示。
 - 只採用輸入名單內的 `full_name`，其他回傳內容丟棄。
-- 解讀寫進報告前當純文字處理：移除網址與 email，跳脫 Markdown 符號（含 `<`、`>`，HTML 只會顯示成文字）。
+- 解讀與解讀失敗的錯誤訊息寫進報告前當純文字處理：壓成單行，移除網址與 email，跳脫 Markdown 符號（含 `<`、`>`，HTML 只會顯示成文字）。
 
 供應商：
 

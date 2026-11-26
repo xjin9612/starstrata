@@ -514,7 +514,7 @@ def generate(
         )
     except InterpretError as e:
         log.warning("解讀失敗：%s", e)
-        note = m.missing_marker + m.interpret_failed.format(error=e)
+        note = m.missing_marker + m.interpret_failed.format(error=_plain(str(e), m))
         return render(conn, period, top, None, note, model, m), False
     missing = [g.full_name for g in focus if g.full_name not in result]
     if not missing:

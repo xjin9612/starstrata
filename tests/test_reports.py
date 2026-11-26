@@ -251,6 +251,34 @@ def test_generate_interpreter_failure_marks_missing(world: tuple[Path, Path]) ->
     assert not ok and f"{ZH_TW.missing_marker}產生失敗（boom）" in text
 
 
+def test_interpreter_error_is_written_as_one_plain_quote_line(world: tuple[Path, Path]) -> None:
+    _, db_path = world
+
+    def failing(system: str, prompt: str, expected: Sequence[str]) -> dict[str, Interpretation]:
+        raise InterpretError("bad\n\nsee https://evil.example/x <b>*hi*</b>")
+
+    conn = db.connect(db_path)
+    try:
+        text, ok = generate(
+            conn,
+            WEEK,
+            llm_top_n=3,
+            model="m",
+            base_lookback_days=7,
+            interpreter=failing,
+            fetch_readme=None,
+            messages=ZH_TW,
+        )
+    finally:
+        conn.close()
+    assert not ok and has_missing(text)
+    lines = [line for line in text.splitlines() if line.startswith(ZH_TW.missing_marker)]
+    assert lines == [
+        f"{ZH_TW.missing_marker}產生失敗（bad see （網址已移除） \\<b\\>\\*hi\\*\\</b\\>）"
+    ]
+    assert "evil.example" not in text
+
+
 def test_generate_with_zero_top_n_needs_no_interpreter(world: tuple[Path, Path]) -> None:
     _, db_path = world
     conn = db.connect(db_path)
