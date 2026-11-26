@@ -14,8 +14,9 @@ from pathlib import Path
 from typing import Any
 
 from starstrata import gemini
+from starstrata.config import ConfigError
 from starstrata.db import OVERALL
-from starstrata.snapshots import read_jsonl, write_json, write_jsonl
+from starstrata.snapshots import write_json, write_jsonl
 
 log = logging.getLogger(__name__)
 
@@ -80,6 +81,10 @@ class TranslateError(Exception):
     """模型沒有回傳可用的譯文。"""
 
 
+class TranslationsFileError(ConfigError):
+    """translations.jsonl 的內容不合格式。訊息包含檔名與行號。"""
+
+
 # 輸入 (key, 原文) 清單，回傳 key → 譯文；可以缺漏部分 key。
 Translator = Callable[[Sequence[tuple[str, str]]], dict[str, str]]
 
@@ -95,7 +100,28 @@ def text_key(text: str) -> str:
 
 def _rows(data_root: Path) -> list[dict[str, Any]]:
     path = data_root / TRANSLATIONS_FILE
-    return read_jsonl(path) if path.is_file() else []
+    if not path.is_file():
+        return []
+    rows: list[dict[str, Any]] = []
+    with path.open(encoding="utf-8") as f:
+        for n, line in enumerate(f, start=1):
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError as e:
+                raise TranslationsFileError(f"{path} 第 {n} 行不是 JSON：{e}") from e
+            if not (
+                isinstance(row, dict)
+                and isinstance(row.get("key"), str)
+                and isinstance(row.get("text"), str)
+                and isinstance(row.get("lang", DEFAULT_LANG), str)
+            ):
+                raise TranslationsFileError(
+                    f"{path} 第 {n} 行格式不符：必須是物件，key、text 與選填的 lang 為字串"
+                )
+            rows.append(row)
+    return rows
 
 
 def load(data_root: Path, lang: str) -> dict[str, str]:

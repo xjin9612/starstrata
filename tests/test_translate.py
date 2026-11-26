@@ -22,6 +22,7 @@ from starstrata.translate import (
     MAX_TRANSLATION_LENGTH,
     TRANSLATIONS_FILE,
     TranslateError,
+    TranslationsFileError,
     load,
     load_failures,
     lookup,
@@ -79,6 +80,28 @@ def test_save_keeps_other_languages_and_writes_lang(tmp_path: Path) -> None:
         {"key": "a", "lang": "zh-TW", "text": "甲"},
         {"key": "b", "lang": "ja", "text": "い"},
     ]
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "not json",
+        "[]",
+        '"text"',
+        '{"text":"甲"}',
+        '{"key":"a"}',
+        '{"key":1,"text":"甲"}',
+        '{"key":"a","text":null}',
+        '{"key":"a","lang":1,"text":"甲"}',
+    ],
+)
+def test_malformed_line_names_file_and_line(tmp_path: Path, line: str) -> None:
+    path = tmp_path / TRANSLATIONS_FILE
+    path.write_text(f'{{"key":"a","text":"甲"}}\n\n{line}\n', encoding="utf-8")
+    with pytest.raises(TranslationsFileError, match=rf"{re.escape(str(path))} 第 3 行"):
+        load(tmp_path, "zh-TW")
+    with pytest.raises(TranslationsFileError):
+        save(tmp_path, "ja", {"b": "い"})
 
 
 def test_system_prompt_names_target() -> None:
@@ -355,6 +378,10 @@ def test_claude_translator() -> None:
         translate_with_claude(_claude("end_turn", None), "m", [("k", "x")], target="zh-TW")
 
 
+def _no_model_call(*args: Any, **kwargs: Any) -> str:
+    raise AssertionError("不應呼叫模型")
+
+
 def _args(tmp_path: Path, config: Path, *rest: str) -> list[str]:
     return [
         "--config",
@@ -383,6 +410,44 @@ def test_cli_failure_returns_zero(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
 
     monkeypatch.setattr("starstrata.gemini.generate_json", fail)
     assert main(_args(tmp_path, REPO_CONFIG, "translate")) == 0
+
+
+class _NoSender:
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        pass
+
+    def __enter__(self) -> _NoSender:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        pass
+
+    def send(self, text: str, **kwargs: object) -> None:
+        raise AssertionError("譯文檔格式錯誤時不應發送")
+
+
+@pytest.mark.parametrize("command", ["translate", "site", "notify"])
+def test_cli_malformed_translations_is_usage_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    command: str,
+) -> None:
+    monkeypatch.setenv("GEMINI_API_KEY", "key")
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "token")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "-100")
+    monkeypatch.delenv("TELEGRAM_THREAD_ID", raising=False)
+    monkeypatch.setattr("starstrata.gemini.generate_json", _no_model_call)
+    monkeypatch.setattr("starstrata.cli.TelegramSender", _NoSender)
+    write_day(tmp_path / "data", D1, repos=[repo("R_a", 1, meta=meta())])
+    (tmp_path / "data" / TRANSLATIONS_FILE).write_text("{oops\n", encoding="utf-8")
+    rest = {
+        "translate": [],
+        "site": ["--out", str(tmp_path / "_site"), "--reports", str(tmp_path / "reports")],
+        "notify": ["--date", D1.isoformat()],
+    }[command]
+    assert main(_args(tmp_path, REPO_CONFIG, command, *rest)) == 2
+    assert f"{TRANSLATIONS_FILE} 第 1 行不是 JSON" in caplog.text
 
 
 def test_cli_zero_limit_skips(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

@@ -122,7 +122,7 @@ uv run starstrata site                      # build the dashboard into _site/
 | `1` | Partial failure: a data source failed, the API rate limit ran out, a report summary failed, or Telegram failed. Data already fetched is kept |
 | `2` | Invalid configuration or a missing required environment variable; nothing was done |
 
-`translate` exits with `0` unless the configuration is invalid; translation failures are logged as warnings.
+`translate` exits with `0` unless the configuration or `data/translations.jsonl` is invalid; translation failures are logged as warnings.
 
 ## Troubleshooting and known limitations
 

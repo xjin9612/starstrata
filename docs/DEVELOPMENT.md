@@ -146,7 +146,7 @@ flowchart TD
 | `1` | `collect` 有資料來源失敗或匯入失敗、`backfill` 遇到 API 額度用盡、`report` 的解讀失敗，或 `notify` 發送失敗；已取得的資料照常寫入 |
 | `2` | 設定錯誤或缺少環境變數，沒有執行任何工作 |
 
-`translate` 除了設定錯誤以外一律回傳 `0`，翻譯失敗只記警告。
+`translate` 除了設定錯誤與 `data/translations.jsonl` 格式錯誤以外一律回傳 `0`，翻譯失敗只記警告。
 
 ## 快照格式
 
@@ -216,6 +216,7 @@ Trending 頁面解析結果為 0 筆時，該頁視為失敗。Search 結果為 
 - `lang` 是譯文的 BCP 47 語言代碼。沒有 `lang` 的列是 `zh-TW` 的譯文；寫入時每列都寫出 `lang`。各處只讀 `lang` 等於 `translation.target` 的列。
 - `key` 是說明文字正規化空白後 SHA-256 的前 16 個十六進位字元。說明改變時 `key` 跟著改變，需要重新翻譯；舊譯文保留。
 - `text` 是譯文。原文已是目標語言時，譯文與原文相同。
+- 某行不是 JSON 物件，或 `key`、`text`、`lang` 不是字串時，`translate`、`site`、`notify` 停止，結束碼 `2`。錯誤訊息含檔名與行號。`key`、`text` 必填。
 - `data/translation_failures.json` 記錄各 `key` 翻譯失敗的累計次數，鍵依字母排序；沒有失敗紀錄時刪除這個檔。
 - 譯文由模型產生，每次結果不同，所以存檔並 commit，不在重建 DB 時重新產生。SQLite 不存譯文，`notify` 與 `site` 直接讀這個檔。
 - 換了 `translation.target` 時，新語言從頭翻譯，其他語言的列保留；翻完前沒有譯文的說明顯示原文。

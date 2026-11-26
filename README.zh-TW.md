@@ -122,7 +122,7 @@ uv run starstrata site                      # 產生 dashboard 到 _site/
 | `1` | 部分失敗：資料來源失敗、API 額度用盡、報告解讀失敗或 Telegram 發送失敗；已取得的資料照常保存 |
 | `2` | 設定錯誤或缺少必要的環境變數，沒有執行任何工作 |
 
-`translate` 除了設定錯誤以外一律回傳 `0`，翻譯失敗只記警告。
+`translate` 除了設定錯誤與 `data/translations.jsonl` 格式錯誤以外一律回傳 `0`，翻譯失敗只記警告。
 
 ## 疑難排解與已知限制
 
