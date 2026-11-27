@@ -58,7 +58,9 @@
 {"key":"26afd3ad0de656d0","lang":"zh-TW","text":"AI agent 工具包：統一的 LLM API、agent loop、TUI、coding agent CLI"}
 {"key":"26c4f850847cdbd3","lang":"zh-TW","text":"把舊 Android 手機變成可自訂的桌面面板與觸控控制台，支援 Windows、Linux 與 macOS。提供 124 個小工具與 30 個範本，涵蓋系統狀態、AI 程式開發、媒體與自動化，支援 13 種語言。可用 USB 或配對 Wi-Fi 連線，不需要雲端。"}
 {"key":"26c79c27b220e82a","lang":"zh-TW","text":"VIctory 的開發中 fork：讓 Xbox Series 的遊戲能在 Windows PC 上渲染與執行。不包含遊戲檔案。"}
+{"key":"27b866426266e0a6","lang":"zh-TW","text":"島仔 Daozai 是一款用 Rust 構建的 Windows 桌面資訊島。抬眼就能看天氣、系統效能、藍牙電量、音樂歌詞、郵件驗證碼、行程、待辦和 AI 額度。內置外掛市集，可按需擴充功能。"}
 {"key":"27f3f68e63df8b34","lang":"zh-TW","text":"在 iOS 上原生執行真正的 Linux 核心。"}
+{"key":"281aa68b240556a9","lang":"zh-TW","text":"逐步將你的 App 改寫為 Rust，每個步驟都與原本的程式碼進行比對驗證。支援 TypeScript、JavaScript、Python、Go、Ruby、Java、C、PHP、C#、Kotlin 與 PowerShell。"}
 {"key":"28cef45e1dd36cd5","lang":"zh-TW","text":"全世界的法律都在 git 裡：任何條文、任何國家、任何日期，以及寫下每個字的那條法律。"}
 {"key":"2926722ffa59f169","lang":"zh-TW","text":"Worktrunk 是管理 Git worktree 的 CLI，專為平行的 AI agent 工作流程設計。"}
 {"key":"2948c35a9fd047d8","lang":"zh-TW","text":"在 Android 裝置上執行的 AI agent，會操作 App 與網頁幫你把事情做完。"}
@@ -80,6 +82,7 @@
 {"key":"3355601b4b735c44","lang":"zh-TW","text":"Rust 套件管理工具。"}
 {"key":"33828c934cd4cce2","lang":"zh-TW","text":"Odoo：協助企業成長的開源應用程式。"}
 {"key":"348670b5a18ebd29","lang":"zh-TW","text":"從一張照片產生 AI 數位人說話影片：Renoise MCP 生成、5 種剪輯風格與 48 個創作者等級的包裝元件。適用 Claude Code、Codex、OpenClaw、WorkBuddy 等工具的 Agent skill。"}
+{"key":"34cec1be81619f19","lang":"zh-TW","text":"揪咪 Jiumi：開源 Android 應用程式行為監測與管理 App，查看權限存取和網路活動。Android app activity & privacy monitor. No root required."}
 {"key":"350161d13c219954","lang":"zh-TW","text":"適用於 Google Antigravity (CLI/Desktop/IDE) 的非侵入式 MCP 加速器外掛：在不影響原生 UI 或 diff 的情況下，減少 LLM 輪次 (-34%)、token 配額 (-31%) 與上傳流量 (-40%)。"}
 {"key":"352a331655920639","lang":"zh-TW","text":"逆向工程 Android apk 檔案的工具。"}
 {"key":"353c98f4ec16e817","lang":"zh-TW","text":"模型火箭的空氣動力與軌跡模擬軟體。"}
@@ -152,6 +155,7 @@
 {"key":"5fd616dd27cc5656","lang":"zh-TW","text":"Apache Airflow：以程式撰寫、排程與監控工作流程的平台。"}
 {"key":"601256f47466db3a","lang":"zh-TW","text":"PC 重新編譯版遊戲的集中地：在同一個啟動器中尋找、安裝、更新與遊玩。"}
 {"key":"61acab1bc1450602","lang":"zh-TW","text":"監控你的 RAM，把任何「相當糟糕」的閒置容量直接回報給 OpenAI 的 CEO。"}
+{"key":"626743231cade046","lang":"zh-TW","text":"使用 Rust 開發的 Windows shell 替代方案：工作列、檔案總管、NTFS 搜尋、工作管理員、磁碟清理工具。單一安裝程式 exe。"}
 {"key":"627f898b200db2a9","lang":"zh-TW","text":"自由、輕量的 Android 串流前端。"}
 {"key":"62e701c421046368","lang":"zh-TW","text":"Bend 2：以證明阻擋 AI 錯誤的快速程式語言。安裝：curl -fsSL https://bend-lang.com/install.sh | sh"}
 {"key":"636f7de747161c2c","lang":"zh-TW","text":"沒有 Reels、動態消息與廣告的 Instagram：開源、可更新的 Android 版 Instagram App，保留私訊與限時動態。"}
@@ -182,6 +186,7 @@
 {"key":"73698b6cceb8dd62","lang":"zh-TW","text":"以 Rust 撰寫的 Flash Player 模擬器。"}
 {"key":"7523c91fc62f5318","lang":"zh-TW","text":"JavaScript 3D 圖形庫。"}
 {"key":"757eadf264f91adf","lang":"zh-TW","text":"輕鬆架設自己的 Git 服務。"}
+{"key":"767fd8a81428a7ae","lang":"zh-TW","text":"在一般 CPU 上進行快速的本機 LLM 推論。不需要 GPU，只需 8 GB RAM。相容於 OpenAI 的伺服器。"}
 {"key":"7827a95c18cae38d","lang":"zh-TW","text":"給股票投資人與交易者的 Claude Code skill：市場分析、技術線圖、經濟行事曆、選股工具與交易策略開發。"}
 {"key":"7966ced25099ff32","lang":"zh-TW","text":"為所有人設計的現代 Docker 管理工具。"}
 {"key":"7a42e25d76e2fc9a","lang":"zh-TW","text":"💫 協助你快速上手 SDD 或任何其他流程的工具包！"}
@@ -218,6 +223,7 @@
 {"key":"8f5a42a205fbc90e","lang":"zh-TW","text":"給長達一個月的單一工作階段（數十億 token）與小型上下文視窗（100K 就夠）使用的上下文壓縮外掛，數十億上下文就是你所需要的一切。"}
 {"key":"920e5c120307b972","lang":"zh-TW","text":"免費、離線檢查 Windows、Mac、Linux、iPhone 與 Android 上已知的商業間諜軟體，也檢查留下的安全缺口、可疑連結、電子郵件、檔案與 QR code、你的帳號、家用網路與附近的追蹤器。提供視窗介面，支援 27 種語言，資料不會離開你的電腦。"}
 {"key":"92f209e7344165c3","lang":"zh-TW","text":"一個真正有效的 agentic skills 框架與軟體開發方法論。"}
+{"key":"933af2d7d15b0219","lang":"zh-TW","text":"教導您的 agent 使用 Obsidian 以及 Markdown、Bases、JSON Canvas 等開放格式。"}
 {"key":"95486a2f9b31688d","lang":"zh-TW","text":"agent 工具版的 OpenRouter。加入社群：https://discord.gg/6mQYYfFMAn"}
 {"key":"9563d416c7c1814b","lang":"zh-TW","text":"一鍵替換影片中的角色：以 ComfyUI 與 MiniMax H3 打造的開源本機版 Higgsfield Genjutsu 替代方案，搭配 FLUX.3 Klein 重新打光。"}
 {"key":"95d723d2c141a652","lang":"zh-TW","text":"預先索引的程式碼知識圖譜，會在程式碼變更時自動同步，適用於 Claude Code、Codex、Gemini、Cursor、OpenCode、AntiGravity、Kiro、CoPilot 與 Hermes Agent —— 更少的 token、更少的工具呼叫、100% 本地執行"}
@@ -241,6 +247,7 @@
 {"key":"a19f3433aab820ea","lang":"zh-TW","text":"LLM 驅動的多市場股票智慧分析系統：多源行情、即時新聞、決策看板與自動推播，支援零成本定時執行。LLM-powered multi-market stock analysis system with multi-source market data, real-time news, decision dashboard, automated notifications, and cost-free scheduled runs."}
 {"key":"a3d6e19240298ed8","lang":"zh-TW","text":"docs.github.com 的開源 repository。"}
 {"key":"a4ff3afbfe61e0ba","lang":"zh-TW","text":"讓人們與 AI coding agent 像隊友一樣協作的共用任務看板。原始碼可用、可自行架設。"}
+{"key":"a6201a718ed1bbba","lang":"zh-TW","text":"目標：將 Xbox Series 遊戲（你自己的 dump）以 Series X 4K 解析度加光線追蹤移植到 PC 上，畫質優先對齊 Xbox（材質、光影），再追求 30+ fps。這是移植，不是模擬。優先支援 RX 7900 XTX。不包含任何遊戲檔案。"}
 {"key":"a631b761bc5c1288","lang":"zh-TW","text":"極致的人聲合成器：唱歌、說話、Beatbox 等。"}
 {"key":"a651ca2d80adaf99","lang":"zh-TW","text":"給現代應用程式與服務的開源身分與存取管理。"}
 {"key":"a656d7761caea728","lang":"zh-TW","text":"一個自架 App 管理你的影集、電影與音樂。"}
@@ -322,6 +329,7 @@
 {"key":"d5f5230f566dcd93","lang":"zh-TW","text":"社群維護的華為 Ascend 硬體 vLLM 外掛。"}
 {"key":"d6504b7ebf4363a4","lang":"zh-TW","text":"Claude Code 的學術研究 skill：研究 → 撰寫 → 審閱 → 修訂 → 定稿。"}
 {"key":"d6a5f4060f3aa306","lang":"zh-TW","text":"Termux：Android 上的終端機模擬器，可透過各種套件擴充。"}
+{"key":"d73e0693876d250b","lang":"zh-TW","text":"使用 Go 開發具備原生 UI 或網頁前端的桌面應用程式"}
 {"key":"d79cd209e997a832","lang":"zh-TW","text":"原生 Windows 影片動作捕捉，使用 ExMR、FlowHMR 與 GVHMR，提供接觸修正、人形骨架重定向與 FBX/VMD 匯出。"}
 {"key":"d7bcce213589e486","lang":"zh-TW","text":"Leonida 是 Grand Theft Auto 6 Xbox 版的原生 PC 重新編譯版。"}
 {"key":"d8466e4013a12dbf","lang":"zh-TW","text":"供求生與重建使用的離線知識 AI、地圖與影片。"}
@@ -349,6 +357,7 @@
 {"key":"e011bb4b0fa3c099","lang":"zh-TW","text":"避免常見的 App Store 與 Google Play 審核遭拒。內含 124 種記錄在案的拒絕模式與修復方法的實戰手冊與送審前防護、隱私清單與資料安全檢查、114 個追蹤中的截止期限（歐盟人工智慧法案、DSA、COPPA、年齡法規），以及專為 AI 編碼代理程式設計的技能。"}
 {"key":"e0da9f5ac838a6ef","lang":"zh-TW","text":"Ghidra 是一個軟體逆向工程（SRE）框架"}
 {"key":"e255dadb09191736","lang":"zh-TW","text":"Moby 專案：協作打造容器生態系，用來組裝以容器為基礎的系統。"}
+{"key":"e43347e727271b13","lang":"zh-TW","text":"Agent Native、基於 Rust 的高效能方式，可用於在 Web、iOS、macOS、Android、Linux 及其他平台建立應用程式。"}
 {"key":"e4aaf5e588f3edd7","lang":"zh-TW","text":"透過使用者名稱在各大社群網路搜尋社群媒體帳號"}
 {"key":"e4eb8aaa1f3709df","lang":"zh-TW","text":"Agent harness 效能最佳化系統：為 Claude Code、Codex、Opencode、Cursor 等工具提供 skill、直覺、記憶、安全性與研究優先的開發方式。"}
 {"key":"e52a02d4c2ca8865","lang":"zh-TW","text":"給 Claude Code 與 AI agent 的行銷 skill：CRO、文案、SEO、分析與成長工程。"}
