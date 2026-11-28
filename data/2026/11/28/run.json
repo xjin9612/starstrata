@@ -1,0 +1,36 @@
+{
+  "date": "2026-11-28",
+  "finished_at": "2026-11-28T03:18:57.589804+00:00",
+  "merged": {
+    "repos_missing": [],
+    "search_ok": true,
+    "trending_missing": []
+  },
+  "node_errors": [],
+  "rate_remaining": {
+    "graphql": 4993,
+    "search": 29
+  },
+  "sources": {
+    "repos": {
+      "count": 387,
+      "errors": [],
+      "gone": 2,
+      "status": "ok"
+    },
+    "search": {
+      "count": 100,
+      "errors": [],
+      "status": "ok"
+    },
+    "trending": {
+      "count": 346,
+      "errors": [],
+      "status": "ok"
+    }
+  },
+  "started_at": "2026-11-28T03:17:37.470487+00:00",
+  "tracking_fresh": true,
+  "unavailable_repos": [],
+  "unresolved_trending_repos": []
+}
